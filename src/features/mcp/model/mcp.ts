@@ -22,13 +22,20 @@ export interface McpActivity {
   summary: string;
 }
 
+/** Om skillen för Claude Code finns i användarens skillmapp och är aktuell. */
+export type SkillState = 'missing' | 'outdated' | 'current';
+
 export interface McpStatus {
   /** null tills servern lyssnar, eller om den inte kunde starta */
   url: string | null;
   sessions: number;
   activity: McpActivity[];
   error: string | null;
+  skill: { path: string; state: SkillState };
 }
+
+/** Var Claude Code letar efter personliga skills, relativt hemmappen. */
+export const SKILL_RELATIVE_PATH = '.claude/skills/reverik/SKILL.md';
 
 export function mcpUrl(port: number): string {
   return `http://${MCP_HOST}:${port}${MCP_PATH}`;

@@ -1,0 +1,126 @@
+.connect {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  font-size: 13px;
+}
+
+.connect__section {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.connect__section--grow {
+  flex: 1;
+  border-bottom: none;
+}
+
+.connect__heading {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.connect__text {
+  margin: 0 0 8px;
+}
+
+.connect__muted {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.connect__error {
+  margin: 0;
+  color: var(--danger);
+}
+
+.connect__code {
+  display: block;
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--bg);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.connect__code--muted {
+  color: var(--fg-muted);
+}
+
+.connect__command {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.connect__command .connect__code {
+  flex: 1;
+  margin: 0;
+}
+
+.connect__skill {
+  flex: 1;
+  padding: 6px 0;
+}
+
+.connect__skill.is-current {
+  color: var(--ok, var(--accent));
+}
+
+.connect__skill.is-outdated {
+  color: var(--warning, var(--fg));
+}
+
+.connect__activity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.connect__entry {
+  display: flex;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg);
+}
+
+.connect__entry--failed {
+  border-left-color: var(--danger);
+}
+
+.connect__time {
+  flex-shrink: 0;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+.connect__entry-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.connect__entry-head {
+  font-weight: 600;
+}
+
+.connect__entry-summary {
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}

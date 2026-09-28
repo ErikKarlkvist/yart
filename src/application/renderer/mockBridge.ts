@@ -37,6 +37,13 @@ export function installMockBridge(): void {
     for (const listener of listeners.get(event) ?? []) listener(payload);
   };
   const shell = new MockShell(emit);
+  const mockMcpStatus = {
+    url: 'http://127.0.0.1:7390/mcp',
+    sessions: 0,
+    activity: [],
+    error: null,
+    skill: { path: '/mock/home/.claude/skills/reverik/SKILL.md', state: 'missing' },
+  };
 
   const handlers: Record<string, (payload: unknown) => unknown> = {
     'app:info': () => ({ version: 'mock', electron: t('app.mockElectron'), platform: 'web' }),
@@ -60,11 +67,10 @@ export function installMockBridge(): void {
       (payload as { repoPath: string }).repoPath === demoPath ? builtin : [],
     'analysis:delete': () => builtin,
     'analysis:watch': () => undefined,
-    'mcp:status': () => ({
-      url: 'http://127.0.0.1:7390/mcp',
-      sessions: 0,
-      activity: [],
-      error: null,
+    'mcp:status': () => mockMcpStatus,
+    'mcp:install-skill': () => ({
+      ...mockMcpStatus,
+      skill: { ...mockMcpStatus.skill, state: 'current' },
     }),
     'terminal:open': (payload) => ({ id: shell.open(payload as { repoPath: string }) }),
     'terminal:write': (payload) => {

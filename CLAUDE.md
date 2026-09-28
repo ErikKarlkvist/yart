@@ -18,6 +18,8 @@ terminalpanelen finns kvar tills MCP-vägen är beprövad. Guiden byggs i
 - Renderern går att titta på i en vanlig webbläsare medan `npm run dev` kör: öppna
   Vite-adressen som skrivs ut. Då laddas `src/application/renderer/mockBridge.ts`
   i stället för preload-bryggan och svarar med demo-repot och fixturerna.
+  `npm run dev -- --rendererOnly` startar bara Vite utan Electron, samma sak finns
+  som `renderer` i `.claude/launch.json`.
 - Riktig Electron går att felsöka utifrån: `REVERIK_DEBUG_PORT=9333 npm run dev` öppnar
   DevTools-protokollet på porten. `REVERIK_USER_DATA=<mapp>` ger instansen en egen datamapp,
   så en testinstans kan köras bredvid den vanliga. Kör då med `--outDir` till en annan mapp

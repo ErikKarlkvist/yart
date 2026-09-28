@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { demoFlows } from '@/common/model/fixtures';
 import { nodeKindSchema, systemKindSchema, validateFlow } from '@/common/model/flow';
-import { buildGuide, errorsFileFor, isFlowFile } from './guide';
+import { buildGuide, buildSkill, errorsFileFor, isFlowFile, SKILL_VERSION } from './guide';
 
 describe('buildGuide', () => {
   const guide = buildGuide();
@@ -27,6 +27,29 @@ describe('buildGuide', () => {
     expect(demoFlows.some((flow) => flow.title === (parsed.ok ? parsed.flow.title : ''))).toBe(
       true,
     );
+  });
+});
+
+describe('buildSkill', () => {
+  const skill = buildSkill();
+
+  it('has the frontmatter Claude Code expects and a version marker', () => {
+    expect(skill.startsWith('---\nname: reverik\ndescription: ')).toBe(true);
+    expect(skill).toContain(`reverik-skill v${SKILL_VERSION}`);
+  });
+
+  it('delivers through the MCP tools and never through files in the repository', () => {
+    for (const tool of ['save_flow', 'save_document', 'save_review', 'list_analyses'])
+      expect(skill).toContain(`\`${tool}\``);
+    expect(skill).toContain('git rev-parse --show-toplevel');
+    expect(skill).not.toContain('.reverik/');
+    expect(skill).not.toContain('.errors.json');
+  });
+
+  it('shares the flow rules, schema and example with the guide', () => {
+    expect(skill).toContain('clear, human sentences in active voice');
+    expect(skill).toContain('interface Flow {');
+    expect(skill).toContain('"title": "Load the list"');
   });
 });
 

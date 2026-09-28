@@ -212,6 +212,7 @@ select:focus {
 
 .shell__side-pane > .terminal-panel,
 .shell__side-pane > .review-side,
+.shell__side-pane > .connect,
 .shell__side-pane > .shell__empty {
   flex: 1;
   min-width: 0;

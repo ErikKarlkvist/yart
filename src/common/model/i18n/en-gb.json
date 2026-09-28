@@ -187,5 +187,19 @@
   "mcp.listedAnalyses": "Listed {count} analyses",
   "mcp.noSuchAnalysis": "There is no {kind} named \"{name}\" in Reverik for this repository. Use list_analyses to see what exists.",
   "mcp.read": "Read {kind} \"{name}\"",
-  "app.mcpHint": "Agents such as Claude Code connect here to deliver flows, documents and reviews"
+  "app.mcpHint": "Open the Connect panel: how agents such as Claude Code deliver to Reverik",
+  "side.connect": "Connect",
+  "connect.serverHeading": "MCP server",
+  "connect.serverText": "Reverik listens here. Any agent that speaks MCP over HTTP can save flows, documents and reviews.",
+  "connect.claudeText": "Register it in Claude Code once, then ask for flows and reviews from any terminal:",
+  "connect.sessions": "{count} connected sessions",
+  "connect.skillHeading": "Skill for Claude Code",
+  "connect.skillText": "The skill tells Claude Code when to use Reverik and how to build good flows and reviews. It is installed in your personal skills folder.",
+  "connect.skill.missing": "Not installed",
+  "connect.skill.outdated": "Installed, older version",
+  "connect.skill.current": "Installed and up to date",
+  "connect.install": "Install",
+  "connect.update": "Update",
+  "connect.activityHeading": "Recent calls",
+  "connect.activityEmpty": "No tool calls yet. Ask your agent for a flow to see them here."
 }

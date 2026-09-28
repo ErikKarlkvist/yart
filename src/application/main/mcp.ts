@@ -2,16 +2,18 @@ import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { app } from 'electron';
 import { type AnalysisApi } from '@/features/analysis/main';
-import { buildGuide } from '@/features/analysis/model/guide';
+import { buildGuide, buildSkill } from '@/features/analysis/model/guide';
 import { type SavedAnalysis } from '@/features/analysis/model/analysis';
-import { type McpAnalysisSummary, type McpDeps } from '@/features/mcp/main/server';
+import { type McpRegistration } from '@/features/mcp/main';
+import { type McpAnalysisSummary } from '@/features/mcp/main/server';
 import { openAndRemember, readRecent } from '@/features/repo/main';
 
 /** Kopplar MCP-servern till analyserna och repolistan. */
-export function mcpDeps(analyses: AnalysisApi): Omit<McpDeps, 'onActivity'> {
+export function mcpDeps(analyses: AnalysisApi): McpRegistration {
   return {
     version: app.getVersion(),
     guide: buildGuide,
+    skill: buildSkill,
     listRepos: async () =>
       (await readRecent()).map(({ path, name, branch }) => ({ path, name, branch })),
     resolveRepo: async (path) => {
