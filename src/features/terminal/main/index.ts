@@ -2,8 +2,10 @@ import { app } from 'electron';
 import { emitEvent, handleChannel } from '@/common/main/ipc';
 import {
   closeTerminalChannel,
+  codexSessionEvent,
   openTerminalChannel,
   resizeTerminalChannel,
+  startCodexChannel,
   terminalDataEvent,
   terminalExitEvent,
   writeTerminalChannel,
@@ -23,6 +25,9 @@ export function registerTerminalHandlers({ prepare }: TerminalOptions = {}): voi
     onExit: (id, exitCode) => {
       emitEvent(terminalExitEvent, { id, exitCode });
     },
+    onCodexSession: (tabId, repoPath, sessionId) => {
+      emitEvent(codexSessionEvent, { tabId, repoPath, sessionId });
+    },
   });
 
   handleChannel(openTerminalChannel, async ({ repoPath, cols, rows }) => {
@@ -34,6 +39,9 @@ export function registerTerminalHandlers({ prepare }: TerminalOptions = {}): voi
   });
   handleChannel(writeTerminalChannel, ({ id, data }) => {
     sessions.write(id, data);
+  });
+  handleChannel(startCodexChannel, (request) => {
+    sessions.startCodex(request);
   });
   handleChannel(resizeTerminalChannel, ({ id, cols, rows }) => {
     sessions.resize(id, { cols, rows });

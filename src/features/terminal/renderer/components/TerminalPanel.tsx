@@ -1,9 +1,10 @@
 import '@xterm/xterm/css/xterm.css';
-import { type JSX, type ReactNode, useCallback, useRef } from 'react';
+import { type JSX, type ReactNode, useCallback, useRef, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { useStoredChoice } from '@/common/renderer/useStored';
 import { type Agent, AGENTS, agentStartCommand } from '../../model/agent';
+import { useTerminalApi } from '../TerminalContext';
 import { useTerminal } from '../hooks/useTerminal';
 import './terminal.css';
 
@@ -29,18 +30,16 @@ const AGENT_LABELS: Readonly<Record<Agent, string>> = {
  */
 export function TerminalPanel({ repoPath, guideFile, onHide, children }: Props): JSX.Element {
   const [agent, setAgent] = useStoredChoice<Agent>('reverik.agent', AGENTS, 'claude');
-  const startCommand = agentStartCommand(agent, guideFile);
 
   return (
     <section className="terminal-panel">
       {children}
       {repoPath ? (
         <Shell
-          key={repoPath}
+          key={`${repoPath}#${agent}`}
           repoPath={repoPath}
           agent={agent}
           guideFile={guideFile}
-          startCommand={startCommand}
           onAgentChange={setAgent}
           onHide={onHide}
         />
@@ -121,24 +120,33 @@ interface ShellProps {
   repoPath: string;
   agent: Agent;
   guideFile: string;
-  startCommand: string | null;
   onAgentChange: (next: string) => void;
   onHide: () => void;
 }
 
-function Shell({
-  repoPath,
-  agent,
-  guideFile,
-  startCommand,
-  onAgentChange,
-  onHide,
-}: ShellProps): JSX.Element {
+function Shell({ repoPath, agent, guideFile, onAgentChange, onHide }: ShellProps): JSX.Element {
   const screen = useRef<HTMLDivElement | null>(null);
-  const { exitCode, restart, run } = useTerminal(repoPath, screen, startCommand);
+  const { codexSessionForRepo } = useTerminalApi();
+  const [codexSessionId, setCodexSessionId] = useState(() => codexSessionForRepo(repoPath));
+  const startCommand = agentStartCommand(agent, guideFile, codexSessionId);
+  const { exitCode, restart, run, startCodex } = useTerminal(
+    repoPath,
+    screen,
+    agent,
+    startCommand,
+    codexSessionId,
+  );
+  const restartTerminal = useCallback(() => {
+    setCodexSessionId(codexSessionForRepo(repoPath));
+    restart();
+  }, [codexSessionForRepo, repoPath, restart]);
   const startAgent = useCallback(() => {
-    if (startCommand) run(startCommand);
-  }, [run, startCommand]);
+    const sessionId = agent === 'codex' ? codexSessionForRepo(repoPath) : null;
+    const command = agentStartCommand(agent, guideFile, sessionId);
+    if (!command) return;
+    if (agent === 'codex') startCodex(command, sessionId);
+    else run(command);
+  }, [agent, codexSessionForRepo, guideFile, repoPath, run, startCodex]);
 
   return (
     <>
@@ -146,7 +154,7 @@ function Shell({
         agent={agent}
         onAgentChange={onAgentChange}
         onHide={onHide}
-        onRestart={restart}
+        onRestart={restartTerminal}
         onStartAgent={startCommand && exitCode === null ? startAgent : undefined}
       />
       {agent === 'shell' && (
@@ -156,7 +164,7 @@ function Shell({
       {exitCode !== null && (
         <div className="terminal-panel__exited">
           <span>{t('terminal.exited', { code: exitCode })}</span>
-          <button type="button" onClick={restart}>
+          <button type="button" onClick={restartTerminal}>
             {t('terminal.restart')}
           </button>
         </div>

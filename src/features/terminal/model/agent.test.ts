@@ -8,9 +8,27 @@ describe('agentStartCommand', () => {
     );
   });
 
-  it('points codex at the guide in its first prompt', () => {
-    expect(agentStartCommand('codex', '.reverik/instructions.md')).toContain(
-      'codex "Read .reverik/instructions.md',
+  it('starts a new codex session when the tab has no saved session', () => {
+    expect(agentStartCommand('codex', '.reverik/instructions.md')).toBe(
+      'codex "Read .reverik/instructions.md now and follow it for the rest of this session."',
+    );
+  });
+
+  it('resumes the exact codex session saved for the tab', () => {
+    expect(
+      agentStartCommand(
+        'codex',
+        '.reverik/instructions.md',
+        '12345678-1234-1234-1234-123456789abc',
+      ),
+    ).toBe(
+      'codex resume 12345678-1234-1234-1234-123456789abc "Read .reverik/instructions.md now and follow it for the rest of this session."',
+    );
+  });
+
+  it('ignores an invalid saved session id', () => {
+    expect(agentStartCommand('codex', '.reverik/instructions.md', 'session-123')).not.toContain(
+      'codex resume',
     );
   });
 

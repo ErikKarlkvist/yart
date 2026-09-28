@@ -152,7 +152,7 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
       <StorageScopeContext.Provider value={scope}>
         <AppTabsContext.Provider value={titleApi}>
           <RepoProvider>
-            <Providers>
+            <Providers tabId={id}>
               <AppShell />
             </Providers>
           </RepoProvider>
@@ -163,11 +163,11 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
 }
 
 /** Providers som beror på valt repo. */
-function Providers({ children }: { children: JSX.Element }): JSX.Element {
+function Providers({ children, tabId }: { children: JSX.Element; tabId: number }): JSX.Element {
   const { repo } = useRepo();
   return (
     <AnalysisProvider repoPath={repo?.path ?? null}>
-      <TerminalProvider>{children}</TerminalProvider>
+      <TerminalProvider tabId={tabId}>{children}</TerminalProvider>
     </AnalysisProvider>
   );
 }

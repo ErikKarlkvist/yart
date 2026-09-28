@@ -2,10 +2,12 @@ import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import { type RefObject, useCallback, useEffect, useState } from 'react';
 import { invokeChannel, subscribeEvent } from '@/common/renderer/ipc';
+import { type Agent } from '../../model/agent';
 import {
   closeTerminalChannel,
   openTerminalChannel,
   resizeTerminalChannel,
+  startCodexChannel,
   terminalDataEvent,
   terminalExitEvent,
   writeTerminalChannel,
@@ -25,6 +27,7 @@ export interface TerminalState {
   restart: () => void;
   /** Kör ett kommando i skalet, som om användaren skrivit det och tryckt Enter. */
   run: (command: string) => void;
+  startCodex: (command: string, sessionId: string | null) => void;
 }
 
 /**
@@ -35,7 +38,9 @@ export interface TerminalState {
 export function useTerminal(
   repoPath: string,
   container: RefObject<HTMLDivElement | null>,
+  agent: Agent,
   startCommand: string | null,
+  codexSessionId: string | null,
 ): TerminalState {
   const [generation, setGeneration] = useState(0);
   // Taggas med nyckeln för aktuellt skal, så ett byte av repo eller omstart
@@ -45,7 +50,7 @@ export function useTerminal(
   const live = session?.key === key ? session : null;
   const exitCode = live?.exitCode ?? null;
   const sessionId = live?.id ?? null;
-  const { register } = useTerminalApi();
+  const { register, tabId } = useTerminalApi();
 
   useEffect(() => {
     const element = container.current;
@@ -80,8 +85,19 @@ export function useTerminal(
       setSession({ key, id: opened, exitCode: null });
       term.focus();
       // Skalet läser det köade när det är redo, så kommandot kan skickas direkt.
-      if (startCommand)
-        void invokeChannel(writeTerminalChannel, { id: opened, data: `${startCommand}\r` });
+      if (startCommand) {
+        if (agent === 'codex') {
+          void invokeChannel(startCodexChannel, {
+            id: opened,
+            command: startCommand,
+            repoPath,
+            tabId,
+            sessionId: codexSessionId,
+          });
+        } else {
+          void invokeChannel(writeTerminalChannel, { id: opened, data: `${startCommand}\r` });
+        }
+      }
       register((text) => {
         // Flera rader skickas som bracketed paste så TUI:n inte skickar iväg vid första radbrytningen
         const data = text.includes('\n') ? `\u001b[200~${text}\u001b[201~\r` : `${text}\r`;
@@ -122,7 +138,7 @@ export function useTerminal(
       term.dispose();
       if (id) void invokeChannel(closeTerminalChannel, { id });
     };
-  }, [repoPath, key, container, startCommand, register]);
+  }, [repoPath, key, container, agent, startCommand, codexSessionId, register, tabId]);
 
   const restart = useCallback(() => {
     setGeneration((g) => g + 1);
@@ -136,5 +152,20 @@ export function useTerminal(
     [sessionId],
   );
 
-  return { exitCode, restart, run };
+  const startCodex = useCallback(
+    (command: string, sessionId: string | null) => {
+      const currentId = session?.key === key ? session.id : null;
+      if (!currentId) return;
+      void invokeChannel(startCodexChannel, {
+        id: currentId,
+        command,
+        repoPath,
+        tabId,
+        sessionId,
+      });
+    },
+    [key, repoPath, session, tabId],
+  );
+
+  return { exitCode, restart, run, startCodex };
 }
