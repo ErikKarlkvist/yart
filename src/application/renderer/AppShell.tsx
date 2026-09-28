@@ -8,7 +8,7 @@ import { AgentPanel, useAgent } from '@/features/agent';
 import { AnalysisList, analysisTitle, useAnalyses } from '@/features/analysis';
 import { useTabTitle } from './AppTabsContext';
 import { BranchBar, RepoMenu, RepoPanel, useRepo } from '@/features/repo';
-import { ConnectPanel, useMcpStatus } from '@/features/mcp';
+import { ConnectPanel, useMcpStatus, useSetup } from '@/features/mcp';
 import { ThemeSelect } from './ThemeSelect';
 import { useStoredChoice, useStoredFlag, useStoredNumber } from '@/common/renderer/useStored';
 import { ReviewSidebar } from './ReviewSidebar';
@@ -26,6 +26,7 @@ export function AppShell(): JSX.Element {
   const [sideOpen, setSideOpen] = useState(false);
   const [sideMode, setSideMode] = useStoredChoice('reverik.sideMode', SIDE_MODES, 'agent');
   const agent = useAgent();
+  const { showGuide } = useSetup();
   const [sidebarWidth, setSidebarWidth] = useStoredNumber('reverik.sidebarWidth', 300);
   const [bottomHeight, setBottomHeight] = useStoredNumber('reverik.bottomHeight', 220);
   const [sideWidth, setSideWidth] = useStoredNumber('reverik.sideWidth', 460);
@@ -212,6 +213,14 @@ export function AppShell(): JSX.Element {
           </button>
         </span>
         <span className="shell__footer-tools">
+          <button
+            type="button"
+            className="text-button"
+            title={t('app.guideHint')}
+            onClick={showGuide}
+          >
+            <Icon name="info" size="sm" /> {t('app.guide')}
+          </button>
           {!logOpen && (
             <button
               type="button"

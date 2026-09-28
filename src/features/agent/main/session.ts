@@ -1,6 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { t } from '@/common/model/i18n';
+import { agentEnv } from './env';
 import {
   type AgentEntry,
   type AgentLaunch,
@@ -50,11 +51,13 @@ export class AgentSession {
 
   private start(): void {
     const { command, args } = this.launch();
-    // Miljön ärvs från appen, men inte det Claude Code sätter för att hindra nästlade sessioner
-    const { CLAUDECODE: _nested, ...env } = process.env;
     let child: ChildProcess;
     try {
-      child = spawn(command, args, { cwd: this.repoPath, env, stdio: ['pipe', 'pipe', 'pipe'] });
+      child = spawn(command, args, {
+        cwd: this.repoPath,
+        env: agentEnv(),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
     } catch (error) {
       this.fail(error);
       return;

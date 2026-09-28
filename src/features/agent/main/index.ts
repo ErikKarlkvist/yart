@@ -1,8 +1,9 @@
 import { app } from 'electron';
 import { emitEvent, handleChannel } from '@/common/main/ipc';
 import { t } from '@/common/model/i18n';
-import { agentEvent, askAgentChannel, stopAgentChannel } from '../ipc/channels';
+import { agentEvent, askAgentChannel, checkAgentChannel, stopAgentChannel } from '../ipc/channels';
 import { claudeLaunch } from '../model/protocol';
+import { checkClaude } from './check';
 import { AgentSession } from './session';
 
 /** Vad sessionerna behöver från resten av appen. */
@@ -53,6 +54,7 @@ export function registerAgentHandlers(deps: AgentDeps): void {
   handleChannel(stopAgentChannel, ({ repoPath }) => {
     sessions.get(repoPath)?.stop();
   });
+  handleChannel(checkAgentChannel, () => checkClaude());
 
   app.on('before-quit', () => {
     for (const running of sessions.values()) running.stop();

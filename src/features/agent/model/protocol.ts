@@ -44,6 +44,13 @@ const ALLOWED_TOOLS: readonly string[] = [
   'mcp__reverik__save_review',
 ];
 
+/** Om Claude Code går att köra i bakgrunden: finns den, och är den inloggad? */
+export interface AgentCheck {
+  installed: boolean;
+  version: string | null;
+  loggedIn: boolean;
+}
+
 export interface AgentLaunch {
   command: string;
   args: string[];

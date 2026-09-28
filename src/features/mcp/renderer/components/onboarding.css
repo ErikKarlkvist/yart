@@ -79,3 +79,35 @@
 .onboarding__done:hover {
   filter: brightness(1.08);
 }
+
+.onboarding__check {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  color: var(--fg-muted);
+}
+
+.onboarding__check.is-ok {
+  color: var(--ok, #3aa55d);
+}
+
+.onboarding__check.is-bad {
+  color: var(--danger);
+}
+
+.onboarding__external {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.onboarding__summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.onboarding__external .setup__step:first-of-type {
+  border-top: none;
+}

@@ -1,6 +1,5 @@
 import { type JSX } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
-import { useSetup } from '../SetupContext';
 import { type McpState } from '../useMcpStatus';
 import { AgentSetup } from './AgentSetup';
 import './connect.css';
@@ -10,7 +9,6 @@ import './connect.css';
  * anslutna sessioner och de senaste verktygsanropen.
  */
 export function ConnectPanel({ mcp }: { mcp: McpState }): JSX.Element {
-  const { showGuide } = useSetup();
   const { status } = mcp;
 
   return (
@@ -48,12 +46,6 @@ export function ConnectPanel({ mcp }: { mcp: McpState }): JSX.Element {
             ))}
           </ol>
         )}
-      </section>
-
-      <section className="connect__section">
-        <button type="button" className="text-button" onClick={showGuide}>
-          {t('connect.showGuide')}
-        </button>
       </section>
     </div>
   );
