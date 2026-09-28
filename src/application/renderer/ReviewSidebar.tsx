@@ -2,7 +2,7 @@ import { type JSX, useCallback, useEffect, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { formatFindings, type ReviewFinding, sortFindings } from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
-import { type SavedAnalysis, useAnalyses } from '@/features/analysis';
+import { type SavedAnalysis, type SavedFlowAnalysis, useAnalyses } from '@/features/analysis';
 import { FindingDetails } from '@/features/flow-graph';
 import { useTerminalApi } from '@/features/terminal';
 
@@ -10,7 +10,7 @@ interface ReviewGroup {
   key: string;
   base: string;
   head: string;
-  analyses: SavedAnalysis[];
+  analyses: SavedFlowAnalysis[];
 }
 
 /**
@@ -63,7 +63,9 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
   if (groups.length === 0)
     return (
       <p className="shell__empty shell__empty--padded">
-        {analyses.some((a) => a.review) ? t('side.pickReview') : t('side.empty')}
+        {analyses.some((a) => a.kind === 'flow' && a.review)
+          ? t('side.pickReview')
+          : t('side.empty')}
       </p>
     );
 
@@ -268,10 +270,13 @@ function groupReviews(
   analyses: readonly SavedAnalysis[],
   current: SavedAnalysis | null,
 ): ReviewGroup[] {
-  const review = current?.review;
+  const review = current?.kind === 'flow' ? current.review : undefined;
   if (!review) return [];
   const members = analyses.filter(
-    (a) => a.review?.baseLabel === review.baseLabel && a.review.headLabel === review.headLabel,
+    (a): a is SavedFlowAnalysis =>
+      a.kind === 'flow' &&
+      a.review?.baseLabel === review.baseLabel &&
+      a.review.headLabel === review.headLabel,
   );
   return [
     {

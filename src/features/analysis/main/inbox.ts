@@ -2,6 +2,7 @@ import { existsSync, type FSWatcher, watch } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { headRef, resolveCommit } from '@/common/main/git';
+import { type ReverikDocument, validateDocument } from '@/common/model/document';
 import { type Flow, validateFlow } from '@/common/model/flow';
 import { type Review, validateReviewDocument } from '@/common/model/review';
 import { t } from '@/common/model/i18n';
@@ -9,6 +10,7 @@ import { type InboxEvent } from '../ipc/channels';
 import { type AnalysisRef, type SavedAnalysis } from '../model/analysis';
 import {
   buildGuide,
+  DOCUMENTS_DIR,
   errorsFileFor,
   FLOWS_DIR,
   GUIDE_FILE,
@@ -24,15 +26,17 @@ export type ImportResult =
   /** Filen är redan importerad med samma innehåll, eller borttagen */
   | { type: 'unchanged' };
 
-export type InboxKind = 'flow' | 'review';
+export type InboxKind = 'flow' | 'review' | 'document';
 
 const INBOX_DIRS: Readonly<Record<InboxKind, string>> = {
   flow: FLOWS_DIR,
   review: REVIEWS_DIR,
+  document: DOCUMENTS_DIR,
 };
 
 type Parsed =
-  | { ok: true; flow: Flow; review?: Review; ref: AnalysisRef | null }
+  | { ok: true; kind: 'flow'; flow: Flow; review?: Review; ref: AnalysisRef | null }
+  | { ok: true; kind: 'document'; document: ReverikDocument; ref: AnalysisRef | null }
   | { ok: false; errors: string[] };
 
 /**
@@ -64,13 +68,22 @@ export async function importFlowFile(
   await rm(errorsPath, { force: true });
 
   const existing = (await store.list(repoPath)).find((a) => a.file === file);
-  if (
-    existing &&
-    JSON.stringify(existing.flow) === JSON.stringify(parsed.flow) &&
-    JSON.stringify(existing.review) === JSON.stringify(parsed.review) &&
-    existing.ref?.commit === parsed.ref?.commit
-  )
-    return { type: 'unchanged' };
+  if (existing?.kind === parsed.kind && existing.ref?.commit === parsed.ref?.commit) {
+    const unchanged =
+      parsed.kind === 'document'
+        ? existing.kind === 'document' &&
+          JSON.stringify(existing.document) === JSON.stringify(parsed.document)
+        : existing.kind === 'flow' &&
+          JSON.stringify(existing.flow) === JSON.stringify(parsed.flow) &&
+          JSON.stringify(existing.review) === JSON.stringify(parsed.review);
+    if (unchanged) return { type: 'unchanged' };
+  }
+  if (parsed.kind === 'document') {
+    return {
+      type: 'imported',
+      analysis: await store.upsertDocumentFromFile(repoPath, file, parsed.document, parsed.ref),
+    };
+  }
   return {
     type: 'imported',
     analysis: await store.upsertFromFile(repoPath, file, parsed.flow, parsed.review, parsed.ref),
@@ -92,6 +105,11 @@ async function parseAndVerify(repoPath: string, raw: string, kind: InboxKind): P
       ok: false,
       errors: [t('inbox.invalidJson', { message: e instanceof Error ? e.message : String(e) })],
     };
+  }
+  if (kind === 'document') {
+    const validated = validateDocument(json);
+    if (!validated.ok) return validated;
+    return { ok: true, kind, document: validated.document, ref: await headRef(repoPath) };
   }
   if (kind === 'review') {
     const validated = validateReviewDocument(json);
@@ -117,7 +135,9 @@ async function checkSources(repoPath: string, flow: Flow, review?: Review): Prom
   const verifyAt = ref && ref.commit !== head?.commit ? ref.commit : null;
   const errors = await verifySources(repoPath, flow, verifyAt);
   if (errors.length > 0) return { ok: false, errors };
-  return resolvedReview ? { ok: true, flow, review: resolvedReview, ref } : { ok: true, flow, ref };
+  return resolvedReview
+    ? { ok: true, kind: 'flow', flow, review: resolvedReview, ref }
+    : { ok: true, kind: 'flow', flow, ref };
 }
 
 /** Skriver guiden om den saknas eller är en äldre version. Skapar mappen vid behov. */

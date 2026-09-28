@@ -12,9 +12,11 @@ describe('buildGuide', () => {
     }
   });
 
-  it('tells the agent that the file is the only deliverable', () => {
-    expect(guide).toContain('only deliverable');
-    expect(guide).toContain('no Mermaid');
+  it('chooses between overview documents and detailed flow diagrams', () => {
+    expect(guide).toContain('Choose the deliverable that matches the question');
+    expect(guide).toContain('Do not create Mermaid');
+    expect(guide).toContain('clear, human sentences in active voice');
+    expect(guide).toContain('.reverik/documents/<kebab-case-name>.json');
   });
 
   it('embeds an example that validates against the schema', () => {

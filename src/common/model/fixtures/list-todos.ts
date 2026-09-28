@@ -170,13 +170,22 @@ export const listTodosFlow: Flow = {
     },
   ],
   steps: [
-    { edgeId: 'fetch', description: 'The hook fetches the list when the component mounts.' },
-    { edgeId: 'get', description: 'The client makes a GET.' },
-    { edgeId: 'route-to-service', description: 'The route calls the service.' },
-    { edgeId: 'cache-get', description: 'The service asks Redis. The key is missing.' },
-    { edgeId: 'find-all', description: 'The service goes to the repository instead.' },
-    { edgeId: 'select', description: 'All rows are read from Postgres, newest first.' },
-    { edgeId: 'cache-set', description: 'The list is cached for 60 seconds.' },
-    { edgeId: 'respond', description: 'The backend responds with the list.' },
+    { edgeId: 'fetch', description: 'The todos hook loads the list when the page opens.' },
+    { edgeId: 'get', description: 'The client requests the todo list from the API.' },
+    {
+      edgeId: 'route-to-service',
+      description: 'The API route passes the request to the todo service.',
+    },
+    {
+      edgeId: 'cache-get',
+      description: 'The service checks Redis for the cached todo list, but the key is missing.',
+    },
+    {
+      edgeId: 'find-all',
+      description: 'With no cached list, the service asks the repository to load all todos.',
+    },
+    { edgeId: 'select', description: 'The repository reads todos from Postgres, newest first.' },
+    { edgeId: 'cache-set', description: 'The service saves the list in Redis for 60 seconds.' },
+    { edgeId: 'respond', description: 'The API returns the todo list to the client.' },
   ],
 };

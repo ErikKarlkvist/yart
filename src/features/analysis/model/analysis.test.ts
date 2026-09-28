@@ -7,12 +7,18 @@ const base: SavedAnalysis = {
   repoPath: '/repo',
   origin: 'ai',
   createdAt: '2026-01-02T00:00:00.000Z',
+  kind: 'flow',
   flow: addTodoFlow,
 };
 
 describe('savedAnalysisSchema', () => {
   it('validerar en analys med fixture-flöde', () => {
     expect(savedAnalysisSchema.safeParse(base).success).toBe(true);
+  });
+
+  it('läser äldre sparade flöden utan typfält som flow', () => {
+    const { kind: _kind, ...legacy } = base;
+    expect(savedAnalysisSchema.parse(legacy).kind).toBe('flow');
   });
 
   it('avvisar trasigt flöde', () => {

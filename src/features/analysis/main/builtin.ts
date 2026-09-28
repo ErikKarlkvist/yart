@@ -10,6 +10,7 @@ export function builtinAnalyses(repoPath: string): SavedAnalysis[] {
     repoPath,
     origin: 'builtin',
     createdAt: '2026-01-01T00:00:00.000Z',
+    kind: 'flow',
     flow,
     ...(review ? { review } : {}),
   }));

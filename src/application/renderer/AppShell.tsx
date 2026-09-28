@@ -4,7 +4,7 @@ import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { Splitter } from '@/common/renderer/Splitter';
 import { invokeChannel } from '@/common/renderer/ipc';
-import { AnalysisList, GUIDE_FILE, useAnalyses } from '@/features/analysis';
+import { AnalysisList, analysisTitle, GUIDE_FILE, useAnalyses } from '@/features/analysis';
 import { useTabTitle } from './AppTabsContext';
 import { BranchBar, RepoMenu, RepoPanel, useRepo } from '@/features/repo';
 import { TerminalPanel, useTerminalApi } from '@/features/terminal';
@@ -18,7 +18,7 @@ const SIDE_MODES = ['terminal', 'review'] as const;
 export function AppShell(): JSX.Element {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const { repo } = useRepo();
-  const { current, select } = useAnalyses();
+  const { analyses, current, select } = useAnalyses();
   const [logOpen, setLogOpen] = useStoredFlag('reverik.logOpen', true);
   const [terminalOpen, setTerminalOpen] = useStoredFlag('reverik.terminalOpen', true);
   const [sideMode, setSideMode] = useStoredChoice('reverik.sideMode', SIDE_MODES, 'terminal');
@@ -49,7 +49,7 @@ export function AppShell(): JSX.Element {
     },
     [current, focusFinding],
   );
-  useTabTitle(repo ? (current ? `${repo.name} · ${current.flow.title}` : repo.name) : null);
+  useTabTitle(repo ? (current ? `${repo.name} · ${analysisTitle(current)}` : repo.name) : null);
 
   useEffect(() => {
     void invokeChannel(appInfoChannel, undefined).then(setInfo);
@@ -110,6 +110,10 @@ export function AppShell(): JSX.Element {
       <div className="shell__work">
         <Workspace
           analysis={current}
+          analyses={analyses}
+          onOpenFlow={(id) => {
+            select(id);
+          }}
           hasRepo={repo !== null}
           logOpen={logOpen}
           bottomHeight={bottomHeight}

@@ -1,11 +1,14 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { type ReverikDocument } from '@/common/model/document';
 import { type Flow } from '@/common/model/flow';
 import { type Review } from '@/common/model/review';
 import {
   type AnalysisRef,
   type SavedAnalysis,
+  type SavedDocumentAnalysis,
+  type SavedFlowAnalysis,
   savedAnalysesSchema,
   sortAnalyses,
 } from '../model/analysis';
@@ -21,12 +24,13 @@ export class AnalysisStore {
     return sortAnalyses(await this.read(repoPath));
   }
 
-  async save(repoPath: string, flow: Flow): Promise<SavedAnalysis> {
-    const analysis: SavedAnalysis = {
+  async save(repoPath: string, flow: Flow): Promise<SavedFlowAnalysis> {
+    const analysis: SavedFlowAnalysis = {
       id: randomUUID(),
       repoPath,
       origin: 'ai',
       createdAt: new Date().toISOString(),
+      kind: 'flow',
       flow,
     };
     await this.write(repoPath, [...(await this.read(repoPath)), analysis]);
@@ -43,20 +47,43 @@ export class AnalysisStore {
     flow: Flow,
     review?: Review,
     ref?: AnalysisRef | null,
-  ): Promise<SavedAnalysis> {
+  ): Promise<SavedFlowAnalysis> {
     const list = await this.read(repoPath);
     const existing = list.find((a) => a.file === file);
-    const analysis: SavedAnalysis = {
+    const analysis: SavedFlowAnalysis = {
       id: existing?.id ?? randomUUID(),
       repoPath,
       origin: 'ai',
       createdAt: new Date().toISOString(),
+      kind: 'flow',
       file,
       flow,
       ...(review ? { review } : {}),
       ...(ref ? { ref } : {}),
     };
     await this.write(repoPath, [...list.filter((a) => a.id !== analysis.id), analysis]);
+    return analysis;
+  }
+
+  async upsertDocumentFromFile(
+    repoPath: string,
+    file: string,
+    document: ReverikDocument,
+    ref?: AnalysisRef | null,
+  ): Promise<SavedDocumentAnalysis> {
+    const list = await this.read(repoPath);
+    const existing = list.find((analysis) => analysis.file === file);
+    const analysis: SavedDocumentAnalysis = {
+      id: existing?.id ?? randomUUID(),
+      repoPath,
+      origin: 'ai',
+      createdAt: new Date().toISOString(),
+      kind: 'document',
+      file,
+      document,
+      ...(ref ? { ref } : {}),
+    };
+    await this.write(repoPath, [...list.filter((item) => item.id !== analysis.id), analysis]);
     return analysis;
   }
 

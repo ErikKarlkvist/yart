@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { addTodoFlow, listTodosFlow } from '@/common/model/fixtures';
+import { type ReverikDocument } from '@/common/model/document';
 import { AnalysisStore } from './store';
 
 describe('AnalysisStore', () => {
@@ -30,5 +31,32 @@ describe('AnalysisStore', () => {
   it('håller isär repon', async () => {
     await store.save('/a', addTodoFlow);
     expect(await store.list('/b')).toEqual([]);
+  });
+
+  it('sparar och uppdaterar dokument med stabilt id', async () => {
+    const document: ReverikDocument = {
+      title: 'Overview',
+      summary: 'A short overview.',
+      content: 'The app calls the API.',
+      flowFiles: ['.reverik/flows/call-api.json'],
+    };
+    const first = await store.upsertDocumentFromFile(
+      '/repo',
+      '.reverik/documents/overview.json',
+      document,
+    );
+    const updated = await store.upsertDocumentFromFile(
+      '/repo',
+      '.reverik/documents/overview.json',
+      {
+        ...document,
+        summary: 'A clearer overview.',
+      },
+    );
+    const listed = await store.list('/repo');
+
+    expect(updated.id).toBe(first.id);
+    expect(listed).toHaveLength(1);
+    expect(listed[0]).toMatchObject({ kind: 'document', document: { title: 'Overview' } });
   });
 });

@@ -2,7 +2,7 @@ import { type JSX, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
 import { worstSeverity } from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
-import { refLabel, type SavedAnalysis } from '../../model/analysis';
+import { analysisTitle, refLabel, type SavedAnalysis } from '../../model/analysis';
 import { useAnalyses } from '../AnalysisContext';
 import './analysis.css';
 
@@ -66,36 +66,50 @@ export function AnalysisList(): JSX.Element {
             <ul className="analyses__list">
               {group.items.map((analysis) => {
                 const active = analysis.id === current?.id;
+                const title = analysisTitle(analysis);
+                const description =
+                  analysis.kind === 'document'
+                    ? analysis.document.summary
+                    : analysis.review
+                      ? t('review.compare', {
+                          base: analysis.review.baseLabel,
+                          head: analysis.review.headLabel,
+                        })
+                      : analysis.origin === 'builtin'
+                        ? t('analyses.builtin')
+                        : formatDate(analysis.createdAt);
                 return (
                   <li key={analysis.id} className={`analyses__item${active ? ' is-active' : ''}`}>
                     <button
                       type="button"
                       className="analyses__open"
-                      title={analysis.flow.question}
+                      title={
+                        analysis.kind === 'document'
+                          ? analysis.document.summary
+                          : analysis.flow.question
+                      }
                       onClick={() => {
                         select(active ? null : analysis.id);
                       }}
                     >
                       <span className="analyses__title">
-                        {analysis.review && (
+                        <span className="analyses__tag">
+                          {t(analysis.kind === 'document' ? 'analyses.document' : 'analyses.flow')}
+                        </span>
+                        {analysis.kind === 'flow' && analysis.review && (
                           <span
                             className={`analyses__tag is-${worstSeverity(analysis.review.findings) ?? 'none'}`}
                           >
                             <Icon name="warning" size="sm" /> {t('analyses.review')}
                           </span>
                         )}
-                        {analysis.flow.title}
+                        <span className="analyses__title-text">{title}</span>
                       </span>
                       <span className="analyses__meta">
-                        {analysis.review
-                          ? t('review.compare', {
-                              base: analysis.review.baseLabel,
-                              head: analysis.review.headLabel,
-                            })
-                          : analysis.origin === 'builtin'
-                            ? t('analyses.builtin')
-                            : formatDate(analysis.createdAt)}{' '}
-                        · {t('analyses.steps', { count: analysis.flow.steps.length })}
+                        {description}
+                        {analysis.kind === 'flow'
+                          ? ` · ${t('analyses.steps', { count: analysis.flow.steps.length })}`
+                          : ` · ${t('analyses.linkedFlows', { count: analysis.document.flowFiles.length })}`}
                       </span>
                     </button>
                     {analysis.origin !== 'builtin' && (

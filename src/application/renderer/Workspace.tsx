@@ -3,7 +3,12 @@ import { type FlowEdge, type SourceRef } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { Splitter } from '@/common/renderer/Splitter';
-import { InboxLog, type SavedAnalysis } from '@/features/analysis';
+import {
+  DocumentView,
+  InboxLog,
+  type SavedAnalysis,
+  type SavedFlowAnalysis,
+} from '@/features/analysis';
 import { FlowPlayer, FlowSummary, ReviewPanel } from '@/features/flow-graph';
 import { SourceView } from '@/features/repo';
 
@@ -18,6 +23,8 @@ const TAB_LABELS: Readonly<Record<PanelTab, string>> = {
 
 interface Props {
   analysis: SavedAnalysis | null;
+  analyses: readonly SavedAnalysis[];
+  onOpenFlow: (id: string) => void;
   hasRepo: boolean;
   logOpen: boolean;
   bottomHeight: number;
@@ -34,6 +41,8 @@ interface Props {
 /** Arbetsytan: grafen och den nedre panelen för den valda analysen. */
 export function Workspace({
   analysis,
+  analyses,
+  onOpenFlow,
   hasRepo,
   logOpen,
   bottomHeight,
@@ -66,12 +75,15 @@ export function Workspace({
     setSource(selected);
   }, []);
 
-  const shownSource = analysis ? source : null;
-  // Flikar utan innehåll faller tillbaka: kod kräver en källa, sammanfattning en analys.
+  const flowAnalysis = analysis?.kind === 'flow' ? analysis : null;
+  const documentAnalysis = analysis?.kind === 'document' ? analysis : null;
+  const relatedFlows = analyses.filter((item): item is SavedFlowAnalysis => item.kind === 'flow');
+  const shownSource = flowAnalysis ? source : null;
+  // Flikar utan innehåll faller tillbaka: dokument visar sin text i arbetsytan.
   const enabled: Record<PanelTab, boolean> = {
     code: shownSource !== null,
-    summary: analysis !== null,
-    review: analysis?.review !== undefined,
+    summary: flowAnalysis !== null,
+    review: flowAnalysis?.review !== undefined,
     log: true,
   };
   const activeTab: PanelTab = enabled[tab]
@@ -97,20 +109,22 @@ export function Workspace({
   return (
     <div className="workspace" style={{ '--bottom-height': `${bottomHeight}px` }}>
       <main className="workspace__canvas">
-        {analysis ? (
+        {flowAnalysis ? (
           <FlowPlayer
-            key={analysis.id}
-            flow={analysis.flow}
+            key={flowAnalysis.id}
+            flow={flowAnalysis.flow}
             onActiveEdgeChange={onActiveEdgeChange}
             onSelectSource={onSelectSource}
-            flowFile={analysis.file}
+            flowFile={flowAnalysis.file}
             onAsk={onAsk}
-            review={analysis.review}
+            review={flowAnalysis.review}
             focusedFindingId={focusedFindingId}
             focusSeq={focusSeq}
             onFocusFinding={onFocusFinding}
             beforeControls={logOpen ? splitter : null}
           />
+        ) : documentAnalysis ? (
+          <DocumentView analysis={documentAnalysis} flows={relatedFlows} onOpenFlow={onOpenFlow} />
         ) : (
           <p className="shell__empty">{hasRepo ? t('app.chooseAnalysis') : t('app.chooseRepo')}</p>
         )}
@@ -151,13 +165,13 @@ export function Workspace({
           </div>
           {activeTab === 'code' && shownSource ? (
             <SourceView source={shownSource} commit={analysis?.ref?.commit} />
-          ) : activeTab === 'summary' && analysis ? (
-            <FlowSummary flow={analysis.flow} />
-          ) : activeTab === 'review' && analysis?.review ? (
+          ) : activeTab === 'summary' && flowAnalysis ? (
+            <FlowSummary flow={flowAnalysis.flow} />
+          ) : activeTab === 'review' && flowAnalysis?.review ? (
             <ReviewPanel
-              flow={analysis.flow}
-              review={analysis.review}
-              commit={analysis.ref?.commit}
+              flow={flowAnalysis.flow}
+              review={flowAnalysis.review}
+              commit={flowAnalysis.ref?.commit}
               focusedFindingId={focusedFindingId}
               onFocus={onFocusFinding}
             />

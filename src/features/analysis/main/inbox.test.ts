@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeRepo } from '@/common/main/git.test';
 import { type Flow } from '@/common/model/flow';
-import { FLOWS_DIR, GUIDE_FILE, GUIDE_VERSION, REVIEWS_DIR } from '../model/guide';
+import { DOCUMENTS_DIR, FLOWS_DIR, GUIDE_FILE, GUIDE_VERSION, REVIEWS_DIR } from '../model/guide';
 import { importFlowFile, writeGuide } from './inbox';
 import { AnalysisStore } from './store';
 
@@ -48,6 +48,7 @@ describe('importFlowFile', () => {
     await writeFile(join(repo, 'a.ts'), 'line1\nline2\nline3\n');
     await writeFile(join(repo, 'b.ts'), 'only line');
     await mkdir(join(repo, FLOWS_DIR), { recursive: true });
+    await mkdir(join(repo, DOCUMENTS_DIR), { recursive: true });
     await mkdir(join(repo, REVIEWS_DIR), { recursive: true });
     store = new AnalysisStore(join(repo, '.store'));
   });
@@ -68,7 +69,27 @@ describe('importFlowFile', () => {
     const list = await store.list(repo);
     expect(list).toHaveLength(1);
     expect(list[0]?.file).toBe(`${FLOWS_DIR}/click.json`);
-    expect(list[0]?.flow.title).toBe('Click');
+    expect(list[0]?.kind).toBe('flow');
+    if (list[0]?.kind === 'flow') expect(list[0].flow.title).toBe('Click');
+  });
+
+  it('imports a document and links it to its related flows', async () => {
+    const document = {
+      title: 'Seat availability',
+      summary: 'The web app asks the API for open seats.',
+      content: 'The page requests availability for a selected date. The API checks bookings.',
+      flowFiles: [`${FLOWS_DIR}/click.json`],
+    };
+    await writeFile(join(repo, DOCUMENTS_DIR, 'overview.json'), JSON.stringify(document));
+
+    const result = await importFlowFile(store, repo, 'overview.json', 'document');
+
+    expect(result.type).toBe('imported');
+    if (result.type !== 'imported' || result.analysis.kind !== 'document')
+      throw new Error('expected document');
+    expect(result.analysis.document.title).toBe('Seat availability');
+    expect(result.analysis.file).toBe(`${DOCUMENTS_DIR}/overview.json`);
+    expect(result.analysis.document.flowFiles).toEqual([`${FLOWS_DIR}/click.json`]);
   });
 
   it('replaces the analysis when the same file is saved again', async () => {
@@ -214,7 +235,8 @@ describe('importFlowFile mot git', () => {
       if (result.type !== 'imported') return;
       expect(result.analysis.ref?.branch).toBe('feature');
       expect(result.analysis.ref?.commit).toMatch(/^[0-9a-f]{40}$/);
-      expect(result.analysis.review?.baseCommit).toMatch(/^[0-9a-f]{40}$/);
+      if (result.analysis.kind === 'flow')
+        expect(result.analysis.review?.baseCommit).toMatch(/^[0-9a-f]{40}$/);
     } finally {
       await rm(repo, { recursive: true, force: true });
     }

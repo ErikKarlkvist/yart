@@ -9,7 +9,7 @@ import {
   listAnalysesChannel,
   watchInboxChannel,
 } from '../../ipc/channels';
-import { type SavedAnalysis } from '../../model/analysis';
+import { analysisTitle, type SavedAnalysis } from '../../model/analysis';
 
 /** En rad i inkorgens logg: en import eller ett avvisat försök. */
 type InboxEntry = { at: string } & (
@@ -110,7 +110,7 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
               at,
               type: 'imported',
               file: event.file,
-              title: event.analysis.flow.title,
+              title: analysisTitle(event.analysis),
               id: event.analysis.id,
             }
           : { at, type: 'rejected', file: event.file, errors: event.errors };
