@@ -6,7 +6,7 @@ import { Splitter } from '@/common/renderer/Splitter';
 import {
   DocumentView,
   findingsForFlow,
-  InboxLog,
+  DeliveryLog,
   ReviewView,
   type SavedAnalysis,
   type SavedFlowAnalysis,
@@ -192,7 +192,7 @@ export function Workspace({
               onFocus={onFocusFinding}
             />
           ) : (
-            <InboxLog />
+            <DeliveryLog />
           )}
         </section>
       )}

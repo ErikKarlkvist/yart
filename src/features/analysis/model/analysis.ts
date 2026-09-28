@@ -25,8 +25,6 @@ const savedAnalysisBaseSchema = z.object({
   createdAt: z.string(),
   /** Namnet analysen sparades under. Samma namn och sort igen ersätter den. */
   name: analysisNameSchema,
-  /** Filen i repot analysen importerades från, relativt roten, när den kom via inkorgen. */
-  file: z.string().min(1).optional(),
   /** Branch och commit flödet beskriver. Saknas för inbyggda och repon utan git. */
   ref: analysisRefSchema.optional(),
 });
@@ -56,8 +54,8 @@ const analysisContentSchema = z.discriminatedUnion('kind', [
 
 /**
  * Äldre sparade analyser saknar kind och name, och flöden bar sin review
- * själva. Kind blir flow, name tas ur filnamnet eller id:t och reviewn blir
- * en jämförelse utan fynd, så gamla filer under userData går att läsa.
+ * själva. Kind blir flow, name tas ur inkorgsfilens namn eller id:t och
+ * reviewn blir en jämförelse utan fynd, så gamla filer under userData går att läsa.
  */
 export const savedAnalysisSchema = z.preprocess((value: unknown) => {
   if (typeof value !== 'object' || value === null) return value;

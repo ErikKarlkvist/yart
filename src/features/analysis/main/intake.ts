@@ -48,7 +48,6 @@ export async function intakeAnalysis(
   kind: IntakeKind,
   name: string,
   json: unknown,
-  file?: string,
 ): Promise<IntakeResult> {
   const parsed = await parseAndVerify(store, repoPath, json, kind);
   if (!parsed.ok) return { type: 'rejected', errors: parsed.errors };
@@ -57,7 +56,7 @@ export async function intakeAnalysis(
   if (existing && existing.ref?.commit === parsed.ref?.commit && sameContent(existing, parsed)) {
     return { type: 'unchanged', analysis: existing };
   }
-  const shared = { name, ...(file ? { file } : {}), ref: parsed.ref };
+  const shared = { name, ref: parsed.ref };
   const input: NewAnalysis =
     parsed.kind === 'document'
       ? { ...shared, kind: 'document', document: parsed.document }

@@ -188,7 +188,7 @@
 }
 
 /* Inkorgsloggen i nedre panelen */
-.inbox {
+.delivery {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -198,7 +198,7 @@
   font-size: 13px;
 }
 
-.inbox__entry {
+.delivery__entry {
   display: flex;
   gap: 12px;
   padding: 6px 10px;
@@ -207,22 +207,22 @@
   background: var(--bg);
 }
 
-.inbox__entry--rejected {
+.delivery__entry--rejected {
   border-left-color: var(--danger);
 }
 
-.inbox__time {
+.delivery__time {
   flex-shrink: 0;
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
 
-.inbox__body {
+.delivery__body {
   min-width: 0;
 }
 
-.inbox__errors {
+.delivery__errors {
   margin: 4px 0 0;
   padding-left: 16px;
   color: var(--danger);

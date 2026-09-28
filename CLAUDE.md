@@ -5,9 +5,9 @@ Appen har ingen egen AI. En agent (Claude Code eller annan) körs fristående oc
 levererar flöden, dokument och reviewer via MCP-servern som appen startar på
 `http://127.0.0.1:7390/mcp` (`src/features/mcp/`). Verktygens JSON-scheman kommer
 från zod-schemana i `src/common/model/`, så beskrivningar där är dokumentation för
-modellen. Den äldre vägen, JSON till `.reverik/` i repot som appen bevakar, och
-terminalpanelen finns kvar tills MCP-vägen är beprövad. Guiden byggs i
-`src/features/analysis/model/guide.ts`.
+modellen. Skillen för Claude Code, som också serveras som MCP-resurs, byggs i
+`src/features/analysis/model/skill.ts` och installeras från appens Anslut-panel.
+Frågor från grafen och reviewuppdrag kopieras som färdiga prompter till urklipp.
 
 ## Kommandon
 
@@ -25,8 +25,6 @@ terminalpanelen finns kvar tills MCP-vägen är beprövad. Guiden byggs i
   så en testinstans kan köras bredvid den vanliga. Kör då med `--outDir` till en annan mapp
   inuti projektet, annars hittar main inte `node_modules`. `REVERIK_MCP_PORT=<port>` låser
   MCP-servern till en port; annars tar den första lediga från 7390 och uppåt.
-  `node-pty` är ett native-modul med prebuilds. npm tappar körrättigheten på dess
-  `spawn-helper`, så `postinstall` kör `scripts/fix-node-pty.mjs` som rättar det.
 
 Pre-commit-hooken (husky + lint-staged) kör eslint --fix och prettier på staged filer,
 sedan `tsc -b` och testerna. Committa inte med `--no-verify`.

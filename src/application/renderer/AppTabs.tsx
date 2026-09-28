@@ -4,7 +4,6 @@ import { Icon } from '@/common/renderer/Icon';
 import { readStoredJson, StorageScopeContext, writeStored } from '@/common/renderer/storage';
 import { AnalysisProvider } from '@/features/analysis';
 import { RepoProvider, useRepo } from '@/features/repo';
-import { TerminalProvider } from '@/features/terminal';
 import { AppShell } from './AppShell';
 import { AppTabsContext } from './AppTabsContext';
 
@@ -30,10 +29,10 @@ function isTabsState(value: unknown): value is TabsState {
 }
 
 /**
- * Appen i flikar. Varje flik är ett eget fönster med eget repo, egna brancher,
- * egen analys och egen terminal. Alla hålls monterade så agenter kör vidare
- * i bakgrunden. Flikarna sparas och återtas vid start, deras innehåll via
- * flikens eget lagringsprefix.
+ * Appen i flikar. Varje flik är ett eget fönster med eget repo, egna brancher
+ * och egen analys. Alla hålls monterade så uppspelningar och val behålls.
+ * Flikarna sparas och återtas vid start, deras innehåll via flikens eget
+ * lagringsprefix.
  */
 export function AppTabs(): JSX.Element {
   const [tabs, setTabs] = useState<TabsState>(() => readStoredJson(TABS_KEY, isTabsState) ?? FRESH);
@@ -152,7 +151,7 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
       <StorageScopeContext.Provider value={scope}>
         <AppTabsContext.Provider value={titleApi}>
           <RepoProvider>
-            <Providers tabId={id}>
+            <Providers>
               <AppShell />
             </Providers>
           </RepoProvider>
@@ -163,11 +162,7 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
 }
 
 /** Providers som beror på valt repo. */
-function Providers({ children, tabId }: { children: JSX.Element; tabId: number }): JSX.Element {
+function Providers({ children }: { children: JSX.Element }): JSX.Element {
   const { repo } = useRepo();
-  return (
-    <AnalysisProvider repoPath={repo?.path ?? null}>
-      <TerminalProvider tabId={tabId}>{children}</TerminalProvider>
-    </AnalysisProvider>
-  );
+  return <AnalysisProvider repoPath={repo?.path ?? null}>{children}</AnalysisProvider>;
 }

@@ -9,7 +9,7 @@ interface Props {
   onCancel: () => void;
 }
 
-/** Frågerutan som ligger över grafen när något pekats ut. Enter skickar, Escape stänger. */
+/** Frågerutan som ligger över grafen när något pekats ut. Enter kopierar frågan, Escape stänger. */
 export function AskComposer({ target, onSend, onCancel }: Props): JSX.Element {
   const [question, setQuestion] = useState('');
   const label = askLabel(target);
@@ -54,7 +54,7 @@ export function AskComposer({ target, onSend, onCancel }: Props): JSX.Element {
         title={t('ask.send')}
         aria-label={t('ask.send')}
       >
-        <Icon name="chat" />
+        <Icon name="copy" />
       </button>
       <button
         type="button"

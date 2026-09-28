@@ -32,7 +32,6 @@ import {
   faServer,
   faSun,
   faTriangleExclamation,
-  faTerminal,
   faWindowMaximize,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -51,7 +50,6 @@ const ICONS = {
   restart: faRotateLeft,
   close: faXmark,
   chevronRight: faChevronRight,
-  terminal: faTerminal,
   // Nod- och systemtyper i grafen
   app: faDesktop,
   api: faServer,

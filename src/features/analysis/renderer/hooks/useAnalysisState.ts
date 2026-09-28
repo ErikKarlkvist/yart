@@ -4,23 +4,22 @@ import { readStoredJson, useScopedKey, writeStored } from '@/common/renderer/sto
 import { useIpcEvent } from '@/common/renderer/useIpcEvent';
 import {
   deleteAnalysisChannel,
-  type ImportVia,
-  type InboxEvent,
-  inboxEvent,
+  type DeliveredVia,
+  type DeliveryEvent,
+  deliveryEvent,
   listAnalysesChannel,
-  watchInboxChannel,
 } from '../../ipc/channels';
 import { t } from '@/common/model/i18n';
 import { analysisTitle, type SavedAnalysis } from '../../model/analysis';
 
-/** En rad i inkorgens logg: en import eller ett avvisat försök. */
-type InboxEntry = { at: string; source: string } & (
+/** En rad i leveransloggen: en sparad analys eller ett avvisat försök. */
+type DeliveryEntry = { at: string; source: string } & (
   { type: 'imported'; title: string; id: string } | { type: 'rejected'; errors: string[] }
 );
 
-/** Var analysen kom ifrån, som det visas i loggen. */
-function describeVia(via: ImportVia): string {
-  return via.kind === 'file' ? via.file : t('inbox.viaMcp', { client: via.client, tool: via.tool });
+/** Vem som levererade, som det visas i loggen. */
+function describeVia(via: DeliveredVia): string {
+  return t('log.via', { client: via.client, tool: via.tool });
 }
 
 export interface AnalysisState {
@@ -28,9 +27,9 @@ export interface AnalysisState {
   current: SavedAnalysis | null;
   error: string | null;
   /** Nyast först */
-  inbox: InboxEntry[];
-  /** Senaste avvisade filen, tills något importeras eller användaren stänger den */
-  rejection: InboxEntry | null;
+  deliveries: DeliveryEntry[];
+  /** Senaste avvisade leveransen, tills något sparas eller användaren stänger den */
+  rejection: DeliveryEntry | null;
   select: (id: string | null) => void;
   remove: (id: string) => Promise<void>;
   dismissRejection: () => void;
@@ -65,8 +64,8 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [selection, setSelection] = useState<Tagged<string> | null>(null);
   const [loadError, setLoadError] = useState<Tagged<string> | null>(null);
-  const [inboxLog, setInboxLog] = useState<Tagged<InboxEntry[]> | null>(null);
-  const [rejectionState, setRejection] = useState<Tagged<InboxEntry> | null>(null);
+  const [log, setLog] = useState<Tagged<DeliveryEntry[]> | null>(null);
+  const [rejectionState, setRejection] = useState<Tagged<DeliveryEntry> | null>(null);
 
   const rememberSelection = useCallback(
     (next: Tagged<string> | null) => {
@@ -91,7 +90,6 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
           setSelection(last);
       })
       .catch(fail);
-    invokeChannel(watchInboxChannel, { repoPath }).catch(fail);
     return () => {
       cancelled = true;
     };
@@ -106,12 +104,12 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
     [repoPath, rememberSelection],
   );
 
-  const onInbox = useCallback(
-    (event: InboxEvent) => {
+  const onDelivery = useCallback(
+    (event: DeliveryEvent) => {
       if (event.repoPath !== repoPath) return;
       const at = new Date().toISOString();
       const source = describeVia(event.via);
-      const entry: InboxEntry =
+      const entry: DeliveryEntry =
         event.type === 'imported'
           ? {
               at,
@@ -121,14 +119,13 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
               id: event.analysis.id,
             }
           : { at, source, type: 'rejected', errors: event.errors };
-      setInboxLog((log) => ({
+      setLog((current) => ({
         repoPath,
-        value: [entry, ...(log?.repoPath === repoPath ? log.value : [])],
+        value: [entry, ...(current?.repoPath === repoPath ? current.value : [])],
       }));
       if (event.type === 'imported') {
         setLoaded({ repoPath, list: event.list });
-        // Bara en fil som just sparats tar över valet, inte skanningen vid start
-        if (!event.initial) select(event.analysis.id);
+        select(event.analysis.id);
         setRejection(null);
       } else {
         setRejection({ repoPath, value: entry });
@@ -136,7 +133,7 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
     },
     [repoPath, select],
   );
-  useIpcEvent(inboxEvent, onInbox);
+  useIpcEvent(deliveryEvent, onDelivery);
 
   const analyses = useMemo(
     () => (loaded?.repoPath === repoPath ? loaded.list : []),
@@ -144,7 +141,7 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
   );
   const error = loadError?.repoPath === repoPath ? loadError.value : null;
   const currentId = selection?.repoPath === repoPath ? selection.value : null;
-  const inbox = inboxLog?.repoPath === repoPath ? inboxLog.value : [];
+  const deliveries = log?.repoPath === repoPath ? log.value : [];
   const rejection = rejectionState?.repoPath === repoPath ? rejectionState.value : null;
 
   const remove = useCallback(
@@ -162,5 +159,5 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
   }, []);
 
   const current = analyses.find((a) => a.id === currentId) ?? null;
-  return { analyses, current, error, inbox, rejection, select, remove, dismissRejection };
+  return { analyses, current, error, deliveries, rejection, select, remove, dismissRejection };
 }

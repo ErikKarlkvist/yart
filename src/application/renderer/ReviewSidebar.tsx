@@ -9,7 +9,6 @@ import {
 import { Icon } from '@/common/renderer/Icon';
 import { reviewFor, type SavedFlowAnalysis, useAnalyses } from '@/features/analysis';
 import { FindingDetails } from '@/features/flow-graph';
-import { useTerminalApi } from '@/features/terminal';
 
 /** Fynden i en review grupperade per flöde. Utan flöde hamnar de sist. */
 interface FindingGroup {
@@ -22,7 +21,7 @@ interface FindingGroup {
 /**
  * Full review i högerpanelen: den valda reviewn, eller reviewn som pekar på
  * det valda flödet, med fynden per flöde. Markerade fynd kan kopieras som
- * text eller skickas till agenten, över alla flöden på en gång.
+ * text att klistra in hos agenten, över alla flöden på en gång.
  */
 interface Props {
   /** Öppnar fyndet i flödets Review-flik och spolar dit i grafen */
@@ -31,12 +30,9 @@ interface Props {
 
 export function ReviewSidebar({ onFocus }: Props): JSX.Element {
   const { analyses, current, select } = useAnalyses();
-  const terminal = useTerminalApi();
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
   const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  // Instruktionen till agenten, fältet visas när man tryckt på Send
-  const [instruction, setInstruction] = useState<string | null>(null);
 
   const review = reviewFor(analyses, current);
   const groups = review ? groupFindings(review.review, analyses) : [];
@@ -87,18 +83,6 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
     void navigator.clipboard.writeText(text()).then(() => {
       setCopied(true);
     });
-  };
-  const send = (): void => {
-    if (instruction === null) return;
-    terminal.send(
-      t('side.prompt', {
-        base: review.review.baseLabel,
-        head: review.review.headLabel,
-        findings: text(),
-        instruction: instruction.trim() || t('side.defaultInstruction'),
-      }),
-    );
-    setInstruction(null);
   };
 
   return (
@@ -213,57 +197,10 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
           })}
         </section>
       </div>
-      {instruction !== null && (
-        <div className="review-side__compose">
-          <textarea
-            className="review-side__instruction"
-            autoFocus
-            rows={3}
-            value={instruction}
-            placeholder={t('side.defaultInstruction')}
-            onChange={(event) => {
-              setInstruction(event.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) send();
-              else if (event.key === 'Escape') setInstruction(null);
-            }}
-          />
-          <div className="review-side__compose-actions">
-            <span className="review-side__hint">
-              {t('side.composeHint', { count: chosenCount })}
-            </span>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => {
-                setInstruction(null);
-              }}
-            >
-              {t('ask.cancel')}
-            </button>
-            <button type="button" className="review-side__send" onClick={send}>
-              <Icon name="chat" size="sm" /> {t('side.sendNow')}
-            </button>
-          </div>
-        </div>
-      )}
       <div className="review-side__actions">
         <button type="button" disabled={chosenCount === 0} onClick={copy}>
           <Icon name="copy" size="sm" /> {copied ? t('side.copied') : t('side.copy')}
           {chosenCount > 0 && !copied && ` (${chosenCount})`}
-        </button>
-        <button
-          type="button"
-          className="review-side__send"
-          disabled={chosenCount === 0 || instruction !== null}
-          title={t('side.sendHint')}
-          onClick={() => {
-            setInstruction('');
-          }}
-        >
-          <Icon name="chat" size="sm" /> {t('side.send')}
-          {chosenCount > 0 && ` (${chosenCount})`}
         </button>
       </div>
     </div>

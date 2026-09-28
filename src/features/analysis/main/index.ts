@@ -3,18 +3,16 @@ import { app } from 'electron';
 import { emitEvent, handleChannel } from '@/common/main/ipc';
 import {
   deleteAnalysisChannel,
-  type ImportVia,
-  inboxEvent,
+  type DeliveredVia,
+  deliveryEvent,
   listAnalysesChannel,
-  watchInboxChannel,
 } from '../ipc/channels';
 import { type SavedAnalysis } from '../model/analysis';
 import { builtinAnalyses } from './builtin';
-import { FlowInbox } from './inbox';
 import { intakeAnalysis, type IntakeKind, type IntakeResult } from './intake';
 import { AnalysisStore } from './store';
 
-/** Det andra features, i praktiken MCP-servern, får göra med analyserna. */
+/** Det MCP-servern får göra med analyserna. */
 export interface AnalysisApi {
   list: (repoPath: string) => Promise<SavedAnalysis[]>;
   get: (
@@ -22,13 +20,13 @@ export interface AnalysisApi {
     kind: SavedAnalysis['kind'],
     name: string,
   ) => Promise<SavedAnalysis | null>;
-  /** Validerar, sparar och berättar för renderern, som när en fil landar i inkorgen. */
+  /** Validerar, sparar och berättar för renderern. */
   deliver: (
     repoPath: string,
     kind: IntakeKind,
     name: string,
     json: unknown,
-    via: ImportVia,
+    via: DeliveredVia,
   ) => Promise<IntakeResult>;
 }
 
@@ -38,19 +36,11 @@ export function registerAnalysisHandlers(): AnalysisApi {
     ...builtinAnalyses(repoPath),
     ...(await store.list(repoPath)),
   ];
-  const inbox = new FlowInbox(store, listAll, (event) => {
-    emitEvent(inboxEvent, event);
-  });
 
   handleChannel(listAnalysesChannel, ({ repoPath }) => listAll(repoPath));
   handleChannel(deleteAnalysisChannel, async ({ repoPath, id }) => {
     await store.delete(repoPath, id);
     return listAll(repoPath);
-  });
-  handleChannel(watchInboxChannel, ({ repoPath }) => inbox.watch(repoPath));
-
-  app.on('before-quit', () => {
-    inbox.stop();
   });
 
   return {
@@ -60,20 +50,17 @@ export function registerAnalysisHandlers(): AnalysisApi {
     deliver: async (repoPath, kind, name, json, via) => {
       const result = await intakeAnalysis(store, repoPath, kind, name, json);
       if (result.type === 'imported') {
-        emitEvent(inboxEvent, {
+        emitEvent(deliveryEvent, {
           type: 'imported',
           repoPath,
           via,
           analysis: result.analysis,
           list: await listAll(repoPath),
-          initial: false,
         });
       } else if (result.type === 'rejected') {
-        emitEvent(inboxEvent, { type: 'rejected', repoPath, via, errors: result.errors });
+        emitEvent(deliveryEvent, { type: 'rejected', repoPath, via, errors: result.errors });
       }
       return result;
     },
   };
 }
-
-export { writeGuide } from './inbox';

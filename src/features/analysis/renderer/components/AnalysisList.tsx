@@ -25,12 +25,12 @@ export function AnalysisList(): JSX.Element {
       {rejection?.type === 'rejected' && (
         <div className="analyses__error analyses__rejection">
           <div className="analyses__rejection-head">
-            <span>{t('inbox.rejected', { source: rejection.source })}</span>
+            <span>{t('log.rejected', { source: rejection.source })}</span>
             <button
               type="button"
               className="icon-button icon-button--quiet"
-              title={t('inbox.dismiss')}
-              aria-label={t('inbox.dismiss')}
+              title={t('log.dismiss')}
+              aria-label={t('log.dismiss')}
               onClick={dismissRejection}
             >
               <Icon name="close" size="sm" />
@@ -41,7 +41,7 @@ export function AnalysisList(): JSX.Element {
               <li key={message}>{message}</li>
             ))}
           </ul>
-          <p className="analyses__rejection-hint">{t('inbox.errorsWritten')}</p>
+          <p className="analyses__rejection-hint">{t('log.errorsReturned')}</p>
         </div>
       )}
       {analyses.length === 0 && !error && <p className="analyses__muted">{t('analyses.empty')}</p>}

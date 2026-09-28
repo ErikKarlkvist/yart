@@ -33,7 +33,7 @@ interface Props {
   beforeControls?: ReactNode;
   /** Namnet flödet är sparat under, så agenten kan spara om det */
   flowName?: string | undefined;
-  /** Tar emot frågan om en nod eller ett anrop, färdig att skicka till agenten */
+  /** Tar emot frågan om en nod eller ett anrop, färdig att ge till agenten */
   onAsk?: ((prompt: string) => void) | undefined;
   /** Finns när flödet beskriver en ändring: `flow` är då flödet efter den */
   compare?: FlowCompare | undefined;

@@ -155,7 +155,7 @@ select:focus {
 
 .shell {
   display: grid;
-  grid-template-columns: var(--sidebar-width, 300px) 1fr var(--terminal-width, 460px);
+  grid-template-columns: var(--sidebar-width, 300px) 1fr var(--side-width, 460px);
   grid-template-rows: 1fr 28px;
   grid-template-areas:
     'sidebar work side'
@@ -163,7 +163,7 @@ select:focus {
   height: 100%;
 }
 
-.shell--terminal-closed {
+.shell--side-closed {
   grid-template-columns: var(--sidebar-width, 300px) 1fr;
   grid-template-areas:
     'sidebar work'
@@ -186,13 +186,21 @@ select:focus {
   padding: 6px 8px 0;
 }
 
+.shell__side-spacer {
+  flex: 1;
+}
+
+.shell__copied {
+  color: var(--fg-muted);
+}
+
 .shell__side-body {
   position: relative;
   flex: 1;
   min-height: 0;
 }
 
-/* Båda panelerna monterade, den inaktiva gömd med opacity så terminalen behåller måtten */
+/* Båda panelerna monterade, den inaktiva gömd med opacity så måtten behålls */
 .shell__side-pane {
   position: absolute;
   inset: 0;
@@ -210,7 +218,6 @@ select:focus {
   pointer-events: auto;
 }
 
-.shell__side-pane > .terminal-panel,
 .shell__side-pane > .review-side,
 .shell__side-pane > .connect,
 .shell__side-pane > .shell__empty {
@@ -706,7 +713,7 @@ button.tab.is-active {
 }
 
 /*
- * display: none skulle nolla grafens och terminalens mått. visibility räcker
+ * display: none skulle nolla grafens mått. visibility räcker
  * inte heller, React Flow sätter visibility: visible inline på sina noder.
  * opacity kan barn inte häva, och z-index lägger den aktiva överst.
  */

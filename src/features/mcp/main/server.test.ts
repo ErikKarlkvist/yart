@@ -22,7 +22,7 @@ function textOf(result: unknown): string {
 function fakeDeps(activity: McpActivity[], delivered: Delivered[]): McpDeps {
   return {
     version: '0.0.0',
-    guide: () => '# Guide',
+    skill: () => '# Guide',
     listRepos: () => Promise.resolve([{ path: '/repo', name: 'repo', branch: 'main' }]),
     resolveRepo: (path) => Promise.resolve(path === '/repo' ? '/repo' : null),
     listAnalyses: () =>

@@ -5,10 +5,7 @@ import { candidatePorts, MCP_ACTIVITY_LIMIT, type McpActivity, type McpStatus } 
 import { type McpDeps, type McpServerHandle, startMcpServer } from './server';
 import { installSkill, skillPath, skillState } from './skill';
 
-export type McpRegistration = Omit<McpDeps, 'onActivity'> & {
-  /** Skillen som installeras för Claude Code */
-  skill: () => string;
-};
+export type McpRegistration = Omit<McpDeps, 'onActivity'>;
 
 /** Startar MCP-servern vid appstart och svarar renderern på hur det gick. */
 export function registerMcpHandlers(deps: McpRegistration): void {

@@ -4,17 +4,18 @@ import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { Splitter } from '@/common/renderer/Splitter';
 import { invokeChannel } from '@/common/renderer/ipc';
-import { AnalysisList, analysisTitle, GUIDE_FILE, useAnalyses } from '@/features/analysis';
+import { AnalysisList, analysisTitle, useAnalyses } from '@/features/analysis';
 import { useTabTitle } from './AppTabsContext';
 import { BranchBar, RepoMenu, RepoPanel, useRepo } from '@/features/repo';
 import { ConnectPanel, useMcpStatus } from '@/features/mcp';
-import { TerminalPanel, useTerminalApi } from '@/features/terminal';
 import { ThemeSelect } from './ThemeSelect';
 import { useStoredChoice, useStoredFlag, useStoredNumber } from '@/common/renderer/useStored';
 import { ReviewSidebar } from './ReviewSidebar';
 import { Workspace } from './Workspace';
 
-const SIDE_MODES = ['terminal', 'review', 'connect'] as const;
+const SIDE_MODES = ['review', 'connect'] as const;
+/** Hur länge kvittot på en kopierad prompt visas i sidfoten */
+const COPIED_MS = 2000;
 
 export function AppShell(): JSX.Element {
   const [info, setInfo] = useState<AppInfo | null>(null);
@@ -23,11 +24,13 @@ export function AppShell(): JSX.Element {
   const mcp = useMcpStatus();
   const [logOpen, setLogOpen] = useStoredFlag('reverik.logOpen', true);
   // En ny appstart börjar med arbetsytan. Varje flik håller sedan sitt eget öppet/stängt-läge.
-  const [terminalOpen, setTerminalOpen] = useState(false);
-  const [sideMode, setSideMode] = useStoredChoice('reverik.sideMode', SIDE_MODES, 'terminal');
+  const [sideOpen, setSideOpen] = useState(false);
+  const [sideMode, setSideMode] = useStoredChoice('reverik.sideMode', SIDE_MODES, 'review');
+  // Kvitto i sidfoten när en prompt kopierats till urklipp
+  const [copied, setCopied] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useStoredNumber('reverik.sidebarWidth', 300);
   const [bottomHeight, setBottomHeight] = useStoredNumber('reverik.bottomHeight', 220);
-  const [terminalWidth, setTerminalWidth] = useStoredNumber('reverik.terminalWidth', 460);
+  const [sideWidth, setSideWidth] = useStoredNumber('reverik.sideWidth', 460);
   // Valt fynd taggas med analysen. Räknaren låter samma fynd fokuseras igen.
   const [focused, setFocused] = useState<{ analysisId: string; findingId: string } | null>(null);
   const [focusSeq, setFocusSeq] = useState(0);
@@ -46,6 +49,13 @@ export function AppShell(): JSX.Element {
     },
     [current, select, setLogOpen],
   );
+  const openSide = useCallback(
+    (mode: (typeof SIDE_MODES)[number]) => {
+      setSideMode(mode);
+      setSideOpen(true);
+    },
+    [setSideMode],
+  );
   const onFocusInCurrent = useCallback(
     (findingId: string | null) => {
       if (current) focusFinding(current.id, findingId);
@@ -58,19 +68,25 @@ export function AppShell(): JSX.Element {
     void invokeChannel(appInfoChannel, undefined).then(setInfo);
   }, []);
 
-  const hideTerminal = useCallback(() => {
-    setTerminalOpen(false);
-  }, [setTerminalOpen]);
-  // Frågor från grafen går till agenten i terminalen. Är panelen stängd öppnas den och frågan köas.
-  const terminal = useTerminalApi();
-  const onAsk = useCallback(
-    (prompt: string) => {
-      setTerminalOpen(true);
-      setSideMode('terminal');
-      terminal.send(prompt);
-    },
-    [terminal, setTerminalOpen, setSideMode],
-  );
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => {
+      setCopied(false);
+    }, COPIED_MS);
+    return () => {
+      clearTimeout(id);
+    };
+  }, [copied]);
+  // Appen har ingen egen agent: frågor och reviewuppdrag kopieras som färdiga
+  // prompter som användaren klistrar in hos sin agent.
+  const onAsk = useCallback((prompt: string) => {
+    navigator.clipboard
+      .writeText(prompt)
+      .then(() => {
+        setCopied(true);
+      })
+      .catch(console.error);
+  }, []);
   const onRunReview = useCallback(
     (base: string, head: string) => {
       onAsk(t('branch.reviewPrompt', { base, head }));
@@ -81,7 +97,7 @@ export function AppShell(): JSX.Element {
   const shellClass = [
     'shell',
     logOpen ? '' : 'shell--log-closed',
-    terminalOpen ? '' : 'shell--terminal-closed',
+    sideOpen ? '' : 'shell--side-closed',
   ]
     .filter(Boolean)
     .join(' ');
@@ -91,7 +107,7 @@ export function AppShell(): JSX.Element {
       className={shellClass}
       style={{
         '--sidebar-width': `${sidebarWidth}px`,
-        '--terminal-width': `${terminalWidth}px`,
+        '--side-width': `${sideWidth}px`,
       }}
     >
       <aside className="shell__sidebar">
@@ -130,17 +146,17 @@ export function AppShell(): JSX.Element {
         />
       </div>
 
-      {terminalOpen && (
+      {sideOpen && (
         <div className="shell__side">
           <Splitter
             orientation="vertical"
-            size={terminalWidth}
+            size={sideWidth}
             min={320}
             max={900}
             inverted
             edge="start"
-            onResize={setTerminalWidth}
-            label={t('panel.resizeTerminal')}
+            onResize={setSideWidth}
+            label={t('panel.resizeSide')}
           />
           <div className="tab-strip shell__side-modes" role="tablist">
             {SIDE_MODES.map((mode) => (
@@ -157,17 +173,20 @@ export function AppShell(): JSX.Element {
                 {t(`side.${mode}`)}
               </button>
             ))}
+            <span className="shell__side-spacer" />
+            <button
+              type="button"
+              className="icon-button icon-button--quiet"
+              title={t('panel.hideSide')}
+              aria-label={t('panel.hideSide')}
+              onClick={() => {
+                setSideOpen(false);
+              }}
+            >
+              <Icon name="close" size="sm" />
+            </button>
           </div>
           <div className="shell__side-body">
-            {/* Terminalen hålls monterad i reviewläget så agenten kör vidare */}
-            <div className={`shell__side-pane${sideMode === 'terminal' ? ' is-active' : ''}`}>
-              <TerminalPanel
-                repoPath={repo?.path ?? null}
-                repoName={repo?.name ?? ''}
-                guideFile={GUIDE_FILE}
-                onHide={hideTerminal}
-              />
-            </div>
             <div className={`shell__side-pane${sideMode === 'review' ? ' is-active' : ''}`}>
               <ReviewSidebar onFocus={focusFinding} />
             </div>
@@ -186,13 +205,13 @@ export function AppShell(): JSX.Element {
               ? `v${info.version} · Electron ${info.electron} · ${info.platform}`
               : t('app.starting')}
           </span>
+          {copied && <span className="shell__copied">{t('app.copiedPrompt')}</span>}
           <button
             type="button"
             className="text-button"
             title={t('app.mcpHint')}
             onClick={() => {
-              setSideMode('connect');
-              setTerminalOpen(true);
+              openSide('connect');
             }}
           >
             <Icon name="link" size="sm" />{' '}
@@ -216,17 +235,16 @@ export function AppShell(): JSX.Element {
               <Icon name="chevronUp" size="sm" /> {t('panel.show')}
             </button>
           )}
-          {!terminalOpen && (
+          {!sideOpen && (
             <button
               type="button"
               className="text-button"
-              title={t('panel.showTerminal')}
+              title={t('panel.showSide')}
               onClick={() => {
-                setSideMode('terminal');
-                setTerminalOpen(true);
+                openSide('review');
               }}
             >
-              <Icon name="play" size="sm" /> {t('panel.showTerminal')}
+              <Icon name="warning" size="sm" /> {t('panel.showSide')}
             </button>
           )}
           <ThemeSelect />

@@ -14,7 +14,6 @@ import {
 /** Det som sparas: namnet, var det kom ifrån och innehållet per sort. */
 export type NewAnalysis = {
   name: string;
-  file?: string;
   ref?: AnalysisRef | null;
 } & (
   | { kind: 'flow'; flow: Flow; compare?: FlowCompare }
@@ -59,7 +58,6 @@ export class AnalysisStore {
         origin: 'ai' as const,
         createdAt: new Date().toISOString(),
         name: input.name,
-        ...(input.file ? { file: input.file } : {}),
         ...(input.ref ? { ref: input.ref } : {}),
       };
       const analysis: SavedAnalysis =

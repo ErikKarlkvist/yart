@@ -35,7 +35,8 @@ type McpDeliverResult =
 /** Vad servern behöver från resten av appen. Kopplas ihop i application. */
 export interface McpDeps {
   version: string;
-  guide: () => string;
+  /** Skillen, som också serveras som resurs till alla MCP-klienter */
+  skill: () => string;
   listRepos: () => Promise<McpRepo[]>;
   /** Normaliserar sökvägen och gör repot känt för appen. null om det inte är en mapp. */
   resolveRepo: (path: string) => Promise<string | null>;
@@ -275,7 +276,7 @@ function createSession(deps: McpDeps): McpServer {
       description: 'How to build good flows, documents and reviews for Reverik.',
       mimeType: 'text/markdown',
     },
-    (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: deps.guide() }] }),
+    (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: deps.skill() }] }),
   );
 
   server.registerTool(

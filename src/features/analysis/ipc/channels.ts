@@ -11,27 +11,22 @@ export const deleteAnalysisChannel = defineChannel<
   SavedAnalysis[]
 >('analysis:delete');
 
-/**
- * Börjar bevaka `.reverik/` i repot och skriver guiden AI:n läser.
- * Anropas när ett repo väljs. Resultatet av importer kommer som `inboxEvent`.
- */
-export const watchInboxChannel = defineChannel<{ repoPath: string }>('analysis:watch');
+/** Vem som levererade: MCP-verktyget och klienten som anropade det. */
+export interface DeliveredVia {
+  tool: string;
+  client: string;
+}
 
-/** Vägen en analys kom in: en fil i inkorgen eller ett MCP-anrop från en agent. */
-export type ImportVia =
-  { kind: 'file'; file: string } | { kind: 'mcp'; tool: string; client: string };
-
-export type InboxEvent =
+/** En agent har levererat en analys, eller fått den avvisad. */
+export type DeliveryEvent =
   | {
       type: 'imported';
       repoPath: string;
-      via: ImportVia;
+      via: DeliveredVia;
       analysis: SavedAnalysis;
-      /** Hela listan efter importen, så renderern slipper hämta om */
+      /** Hela listan efter leveransen, så renderern slipper hämta om */
       list: SavedAnalysis[];
-      /** Från skanningen när repot öppnas, inte en fil som just sparades */
-      initial: boolean;
     }
-  | { type: 'rejected'; repoPath: string; via: ImportVia; errors: string[] };
+  | { type: 'rejected'; repoPath: string; via: DeliveredVia; errors: string[] };
 
-export const inboxEvent = defineEvent<InboxEvent>('analysis:inbox');
+export const deliveryEvent = defineEvent<DeliveryEvent>('analysis:delivery');

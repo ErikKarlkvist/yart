@@ -1,7 +1,7 @@
 # Reverik
 
 PoC: en Electron-app som visar dataflöden i en kodbas som animerade
-sekvensdiagram, och reviewar ändringar mot dem.
+sekvensdiagram, med dokument och reviewer som pekar in i dem.
 
 Appen har ingen egen AI. Man öppnar ett lokalt repo i appen och kör valfri
 AI-agent fristående, till exempel Claude Code i en terminal. Agenten kopplas
@@ -13,8 +13,10 @@ fil och rad som finns, och ritar upp resultatet.
 claude mcp add --transport http reverik http://127.0.0.1:7390/mcp
 ```
 
-Adressen står i appens sidfot. Agenten anger repots rot i varje anrop, så den
-kan köras från vilken mapp som helst.
+Adressen står i appens sidfot, och Anslut-panelen installerar en skill som lär
+Claude Code när och hur Reverik används. Agenten anger repots rot i varje anrop,
+så den kan köras från vilken mapp som helst. Äldre versioner skapade en mapp
+`.reverik/` i repot; den används inte längre och kan tas bort.
 
 I `demo/todo-app` finns en liten app att analysera: React-frontend,
 Express-backend, Postgres och Redis, med inbyggda analyser och en demo-review.
