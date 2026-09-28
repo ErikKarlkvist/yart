@@ -20,7 +20,8 @@ export function AppShell(): JSX.Element {
   const { repo } = useRepo();
   const { analyses, current, select } = useAnalyses();
   const [logOpen, setLogOpen] = useStoredFlag('reverik.logOpen', true);
-  const [terminalOpen, setTerminalOpen] = useStoredFlag('reverik.terminalOpen', true);
+  // En ny appstart börjar med arbetsytan. Varje flik håller sedan sitt eget öppet/stängt-läge.
+  const [terminalOpen, setTerminalOpen] = useState(false);
   const [sideMode, setSideMode] = useStoredChoice('reverik.sideMode', SIDE_MODES, 'terminal');
   const [sidebarWidth, setSidebarWidth] = useStoredNumber('reverik.sidebarWidth', 300);
   const [bottomHeight, setBottomHeight] = useStoredNumber('reverik.bottomHeight', 220);
@@ -159,6 +160,7 @@ export function AppShell(): JSX.Element {
             <div className={`shell__side-pane${sideMode === 'terminal' ? ' is-active' : ''}`}>
               <TerminalPanel
                 repoPath={repo?.path ?? null}
+                repoName={repo?.name ?? ''}
                 guideFile={GUIDE_FILE}
                 onHide={hideTerminal}
               />
@@ -198,10 +200,11 @@ export function AppShell(): JSX.Element {
               className="text-button"
               title={t('panel.showTerminal')}
               onClick={() => {
+                setSideMode('terminal');
                 setTerminalOpen(true);
               }}
             >
-              <Icon name="terminal" size="sm" /> {t('panel.showTerminal')}
+              <Icon name="play" size="sm" /> {t('panel.showTerminal')}
             </button>
           )}
           <ThemeSelect />

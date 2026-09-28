@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AGENTS, agentStartCommand } from './agent';
+import { AGENTS, agentStartCommand, codexInitialPrompt } from './agent';
 
 describe('agentStartCommand', () => {
   it('gives claude the guide as system prompt', () => {
@@ -8,28 +8,34 @@ describe('agentStartCommand', () => {
     );
   });
 
-  it('starts a new codex session when the tab has no saved session', () => {
-    expect(agentStartCommand('codex', '.reverik/instructions.md')).toBe(
-      'codex "Read .reverik/instructions.md now and follow it for the rest of this session."',
-    );
+  it('does not create a new codex chat just because a terminal opened', () => {
+    expect(agentStartCommand('codex', '.reverik/instructions.md')).toBeNull();
   });
 
-  it('resumes the exact codex session saved for the tab', () => {
+  it('resumes the exact saved codex session without submitting an extra prompt', () => {
     expect(
       agentStartCommand(
         'codex',
         '.reverik/instructions.md',
         '12345678-1234-1234-1234-123456789abc',
       ),
-    ).toBe(
-      'codex resume 12345678-1234-1234-1234-123456789abc "Read .reverik/instructions.md now and follow it for the rest of this session."',
-    );
+    ).toBe('codex resume 12345678-1234-1234-1234-123456789abc');
   });
 
   it('ignores an invalid saved session id', () => {
-    expect(agentStartCommand('codex', '.reverik/instructions.md', 'session-123')).not.toContain(
-      'codex resume',
+    expect(agentStartCommand('codex', '.reverik/instructions.md', 'session-123')).toBeNull();
+  });
+
+  it('uses the actual first request so new chat titles are useful', () => {
+    expect(codexInitialPrompt('.reverik/instructions.md', 'Reverik', 3, 'Fix tab startup')).toBe(
+      'Fix tab startup\n\nBefore responding, read .reverik/instructions.md and follow its instructions.',
     );
+  });
+
+  it('distinguishes an intentionally started idle chat by repository and tab', () => {
+    const prompt = codexInitialPrompt('.reverik/instructions.md', 'Tickster', 3);
+    expect(prompt).toContain('Tickster, tab 3');
+    expect(prompt).toContain('.reverik/instructions.md');
   });
 
   it('starts nothing for a plain shell', () => {

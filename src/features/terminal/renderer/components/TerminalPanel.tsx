@@ -1,16 +1,24 @@
 import '@xterm/xterm/css/xterm.css';
-import { type JSX, type ReactNode, useCallback, useRef, useState } from 'react';
+import { type JSX, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
+import { invokeChannel, subscribeEvent } from '@/common/renderer/ipc';
 import { useStoredChoice } from '@/common/renderer/useStored';
-import { type Agent, AGENTS, agentStartCommand } from '../../model/agent';
+import {
+  codexSessionEvent,
+  listCodexChatsChannel,
+  type CodexChatSummary,
+} from '../../ipc/channels';
+import { type Agent, AGENTS, agentStartCommand, codexInitialPrompt } from '../../model/agent';
 import { useTerminalApi } from '../TerminalContext';
-import { useTerminal } from '../hooks/useTerminal';
+import { useTerminal, type TerminalPromptAction } from '../hooks/useTerminal';
 import './terminal.css';
 
 interface Props {
   /** Skalet startar i den här mappen. */
   repoPath: string | null;
+  /** Används för att ge nya Codex-chattar en titel som går att känna igen. */
+  repoName: string;
   /** Guiden agenten ska läsa, relativt repots rot. */
   guideFile: string;
   onHide: () => void;
@@ -24,11 +32,14 @@ const AGENT_LABELS: Readonly<Record<Agent, string>> = {
   shell: t('terminal.agent.shell'),
 };
 
-/**
- * Terminal för valfri AI-agent, startad i repots rot. Vald agent sparas
- * mellan starter. Byte av agent ger nytt startkommando, och skalet startar om.
- */
-export function TerminalPanel({ repoPath, guideFile, onHide, children }: Props): JSX.Element {
+/** Terminal for an agent or shell, started in the selected repository. */
+export function TerminalPanel({
+  repoPath,
+  repoName,
+  guideFile,
+  onHide,
+  children,
+}: Props): JSX.Element {
   const [agent, setAgent] = useStoredChoice<Agent>('reverik.agent', AGENTS, 'claude');
 
   return (
@@ -38,6 +49,7 @@ export function TerminalPanel({ repoPath, guideFile, onHide, children }: Props):
         <Shell
           key={`${repoPath}#${agent}`}
           repoPath={repoPath}
+          repoName={repoName}
           agent={agent}
           guideFile={guideFile}
           onAgentChange={setAgent}
@@ -59,9 +71,25 @@ interface BarProps {
   onHide: () => void;
   onRestart?: (() => void) | undefined;
   onStartAgent?: (() => void) | undefined;
+  chats?: readonly CodexChatSummary[] | undefined;
+  chatId?: string | null;
+  chatDisabled?: boolean;
+  onChatChange?: ((id: string | null) => void) | undefined;
+  startLabel?: string;
 }
 
-function Bar({ agent, onAgentChange, onHide, onRestart, onStartAgent }: BarProps): JSX.Element {
+function Bar({
+  agent,
+  onAgentChange,
+  onHide,
+  onRestart,
+  onStartAgent,
+  chats,
+  chatId,
+  chatDisabled,
+  onChatChange,
+  startLabel,
+}: BarProps): JSX.Element {
   return (
     <header className="terminal-panel__bar">
       <span className="terminal-panel__tools">
@@ -80,12 +108,35 @@ function Bar({ agent, onAgentChange, onHide, onRestart, onStartAgent }: BarProps
             </option>
           ))}
         </select>
+        {agent === 'codex' && chats && onChatChange && (
+          <select
+            className="terminal-panel__chat"
+            value={chatId ?? ''}
+            disabled={chatDisabled}
+            title={t('terminal.chatHint')}
+            aria-label={t('terminal.chatLabel')}
+            onChange={(event) => {
+              onChatChange(event.target.value || null);
+            }}
+          >
+            <option value="">{t('terminal.newChat')}</option>
+            {chats.map((chat) => (
+              <option key={chat.id} value={chat.id}>
+                {chat.title} ·{' '}
+                {new Date(chat.updatedAt).toLocaleString(undefined, {
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })}
+              </option>
+            ))}
+          </select>
+        )}
         {onStartAgent && (
           <button
             type="button"
             className="icon-button icon-button--quiet"
-            title={t('terminal.startAgent')}
-            aria-label={t('terminal.startAgent')}
+            title={startLabel ?? t('terminal.startAgent')}
+            aria-label={startLabel ?? t('terminal.startAgent')}
             onClick={onStartAgent}
           >
             <Icon name="play" size="sm" />
@@ -118,35 +169,100 @@ function Bar({ agent, onAgentChange, onHide, onRestart, onStartAgent }: BarProps
 
 interface ShellProps {
   repoPath: string;
+  repoName: string;
   agent: Agent;
   guideFile: string;
   onAgentChange: (next: string) => void;
   onHide: () => void;
 }
 
-function Shell({ repoPath, agent, guideFile, onAgentChange, onHide }: ShellProps): JSX.Element {
+function Shell({
+  repoPath,
+  repoName,
+  agent,
+  guideFile,
+  onAgentChange,
+  onHide,
+}: ShellProps): JSX.Element {
   const screen = useRef<HTMLDivElement | null>(null);
-  const { codexSessionForRepo } = useTerminalApi();
-  const [codexSessionId, setCodexSessionId] = useState(() => codexSessionForRepo(repoPath));
-  const startCommand = agentStartCommand(agent, guideFile, codexSessionId);
-  const { exitCode, restart, run, startCodex } = useTerminal(
+  const { tabId: currentTabId, codexSessionForRepo, rememberCodexSession } = useTerminalApi();
+  const [storedChatId, setSelectedChatId] = useState(() => codexSessionForRepo(repoPath));
+  const [chats, setChats] = useState<readonly CodexChatSummary[]>([]);
+  const [chatsLoaded, setChatsLoaded] = useState(false);
+  const selectedChatId =
+    chatsLoaded && storedChatId && !chats.some((chat) => chat.id === storedChatId)
+      ? null
+      : storedChatId;
+  const startCommand = agent === 'codex' ? null : agentStartCommand(agent, guideFile);
+  const [agentStarted, setAgentStarted] = useState(() => startCommand !== null);
+  const agentStartedRef = useRef(startCommand !== null);
+  const refreshChats = useCallback(() => {
+    void invokeChannel(listCodexChatsChannel, { repoPath })
+      .then((nextChats) => {
+        setChats(nextChats);
+        setChatsLoaded(true);
+      })
+      .catch(() => {
+        setChats([]);
+      });
+  }, [repoPath]);
+  useEffect(() => {
+    refreshChats();
+    return subscribeEvent(codexSessionEvent, (event) => {
+      if (event.repoPath !== repoPath) return;
+      refreshChats();
+      if (event.tabId === currentTabId) setSelectedChatId(event.sessionId);
+    });
+  }, [currentTabId, refreshChats, repoPath]);
+  const onPrompt = useCallback(
+    (prompt: string): TerminalPromptAction => {
+      if (agent !== 'codex' || agentStartedRef.current) return { type: 'shell' };
+
+      agentStartedRef.current = true;
+      setAgentStarted(true);
+      return {
+        type: 'codex',
+        prompt: selectedChatId
+          ? prompt
+          : codexInitialPrompt(guideFile, repoName, currentTabId, prompt),
+        sessionId: selectedChatId,
+      };
+    },
+    [agent, currentTabId, guideFile, repoName, selectedChatId],
+  );
+  const { exitCode, ready, restart, run, startCodex } = useTerminal(
     repoPath,
     screen,
     agent,
     startCommand,
-    codexSessionId,
+    onPrompt,
   );
   const restartTerminal = useCallback(() => {
-    setCodexSessionId(codexSessionForRepo(repoPath));
+    agentStartedRef.current = false;
+    setAgentStarted(false);
     restart();
-  }, [codexSessionForRepo, repoPath, restart]);
+  }, [restart]);
+  const selectChat = useCallback(
+    (sessionId: string | null) => {
+      setSelectedChatId(sessionId);
+      rememberCodexSession(repoPath, sessionId);
+    },
+    [rememberCodexSession, repoPath],
+  );
   const startAgent = useCallback(() => {
-    const sessionId = agent === 'codex' ? codexSessionForRepo(repoPath) : null;
-    const command = agentStartCommand(agent, guideFile, sessionId);
-    if (!command) return;
-    if (agent === 'codex') startCodex(command, sessionId);
-    else run(command);
-  }, [agent, codexSessionForRepo, guideFile, repoPath, run, startCodex]);
+    if (agentStartedRef.current) return;
+    agentStartedRef.current = true;
+    setAgentStarted(true);
+    if (agent === 'codex') {
+      startCodex(
+        selectedChatId ? null : codexInitialPrompt(guideFile, repoName, currentTabId),
+        selectedChatId,
+      );
+      return;
+    }
+    const command = agentStartCommand(agent, guideFile);
+    if (command) run(command);
+  }, [agent, currentTabId, guideFile, repoName, run, selectedChatId, startCodex]);
 
   return (
     <>
@@ -154,8 +270,17 @@ function Shell({ repoPath, agent, guideFile, onAgentChange, onHide }: ShellProps
         agent={agent}
         onAgentChange={onAgentChange}
         onHide={onHide}
+        chats={agent === 'codex' ? chats : undefined}
+        chatId={selectedChatId}
+        chatDisabled={agentStarted}
+        onChatChange={selectChat}
+        startLabel={
+          agent === 'codex' && selectedChatId ? t('terminal.resumeChat') : t('terminal.startAgent')
+        }
         onRestart={restartTerminal}
-        onStartAgent={startCommand && exitCode === null ? startAgent : undefined}
+        onStartAgent={
+          agent !== 'shell' && ready && exitCode === null && !agentStarted ? startAgent : undefined
+        }
       />
       {agent === 'shell' && (
         <p className="terminal-panel__hint">{t('terminal.shellHint', { guide: guideFile })}</p>

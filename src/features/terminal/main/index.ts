@@ -3,6 +3,7 @@ import { emitEvent, handleChannel } from '@/common/main/ipc';
 import {
   closeTerminalChannel,
   codexSessionEvent,
+  listCodexChatsChannel,
   openTerminalChannel,
   resizeTerminalChannel,
   startCodexChannel,
@@ -11,6 +12,7 @@ import {
   writeTerminalChannel,
 } from '../ipc/channels';
 import { TerminalSessions } from './sessions';
+import { listCodexSessions } from './codexSessions';
 
 export interface TerminalOptions {
   /** Körs innan skalet startar i ett repo, t.ex. för att se till att guiden agenten läser finns. */
@@ -37,6 +39,7 @@ export function registerTerminalHandlers({ prepare }: TerminalOptions = {}): voi
     });
     return { id: sessions.open(repoPath, { cols, rows }) };
   });
+  handleChannel(listCodexChatsChannel, ({ repoPath }) => listCodexSessions(repoPath));
   handleChannel(writeTerminalChannel, ({ id, data }) => {
     sessions.write(id, data);
   });

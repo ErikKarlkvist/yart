@@ -10,7 +10,7 @@ export interface TerminalApi {
   register: (sender: TerminalSender | null) => void;
   /** Codex-sessionen sparas per repo i lagringsutrymmet för den aktuella fliken. */
   codexSessionForRepo: (repoPath: string) => string | null;
-  rememberCodexSession: (repoPath: string, sessionId: string) => void;
+  rememberCodexSession: (repoPath: string, sessionId: string | null) => void;
 }
 
 export const TerminalContext = createContext<TerminalApi | null>(null);

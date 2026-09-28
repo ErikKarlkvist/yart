@@ -43,14 +43,21 @@ export function TerminalProvider({
     [sessionStorageKey],
   );
   const rememberCodexSession = useCallback(
-    (repoPath: string, sessionId: string) => {
+    (repoPath: string, sessionId: string | null) => {
       try {
         const stored: unknown = JSON.parse(readStored(sessionStorageKey) ?? '{}');
         const sessions =
           typeof stored === 'object' && stored !== null ? (stored as Record<string, unknown>) : {};
-        writeStored(sessionStorageKey, JSON.stringify({ ...sessions, [repoPath]: sessionId }));
+        const next =
+          sessionId === null
+            ? Object.fromEntries(Object.entries(sessions).filter(([path]) => path !== repoPath))
+            : { ...sessions, [repoPath]: sessionId };
+        writeStored(sessionStorageKey, JSON.stringify(next));
       } catch {
-        writeStored(sessionStorageKey, JSON.stringify({ [repoPath]: sessionId }));
+        writeStored(
+          sessionStorageKey,
+          sessionId ? JSON.stringify({ [repoPath]: sessionId }) : '{}',
+        );
       }
     },
     [sessionStorageKey],

@@ -10,11 +10,7 @@ export function isCodexSessionId(value: unknown): value is string {
   return typeof value === 'string' && CODEX_SESSION_ID.test(value);
 }
 
-/**
- * Kommandot som skrivs in i skalet när terminalen öppnas. Claude Code får
- * guiden som tillägg till systemprompten. Codex återupptar bara sessionen som
- * hör till fliken, annars startar den en ny. null betyder bara ett skal.
- */
+/** Command to resume an existing agent session on this tab, if there is one. */
 export function agentStartCommand(
   agent: Agent,
   guideFile: string,
@@ -24,10 +20,21 @@ export function agentStartCommand(
     case 'claude':
       return `claude --append-system-prompt-file ${guideFile}`;
     case 'codex':
-      return isCodexSessionId(codexSessionId)
-        ? `codex resume ${codexSessionId} "Read ${guideFile} now and follow it for the rest of this session."`
-        : `codex "Read ${guideFile} now and follow it for the rest of this session."`;
+      return isCodexSessionId(codexSessionId) ? `codex resume ${codexSessionId}` : null;
     case 'shell':
       return null;
   }
+}
+
+/** Första turen i en ny chatt innehåller både Reverik-guiden och den riktiga frågan. */
+export function codexInitialPrompt(
+  guideFile: string,
+  repoName: string,
+  tabId: number,
+  request?: string,
+): string {
+  if (request?.trim()) {
+    return `${request.trim()}\n\nBefore responding, read ${guideFile} and follow its instructions.`;
+  }
+  return `This is the Reverik chat for ${repoName}, tab ${tabId}. Read ${guideFile} and follow its instructions. Reply briefly that you are ready, then wait for my request.`;
 }

@@ -1,6 +1,6 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
-import { type RefObject, useCallback, useEffect, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { invokeChannel, subscribeEvent } from '@/common/renderer/ipc';
 import { type Agent } from '../../model/agent';
 import {
@@ -24,11 +24,16 @@ interface Session {
 export interface TerminalState {
   /** null tills skalet startat, sedan avslutningskoden när det dött */
   exitCode: number | null;
+  ready: boolean;
   restart: () => void;
   /** Kör ett kommando i skalet, som om användaren skrivit det och tryckt Enter. */
   run: (command: string) => void;
-  startCodex: (command: string, sessionId: string | null) => void;
+  startCodex: (prompt: string | null, sessionId: string | null) => void;
 }
+
+export type TerminalPromptAction =
+  { type: 'shell' } | { type: 'codex'; prompt: string; sessionId: string | null };
+export type TerminalPromptRouter = (prompt: string) => TerminalPromptAction;
 
 /**
  * Äger xterm-instansen och skalet bakom den. Startar om när repot byts eller
@@ -40,7 +45,7 @@ export function useTerminal(
   container: RefObject<HTMLDivElement | null>,
   agent: Agent,
   startCommand: string | null,
-  codexSessionId: string | null,
+  onPrompt: TerminalPromptRouter,
 ): TerminalState {
   const [generation, setGeneration] = useState(0);
   // Taggas med nyckeln för aktuellt skal, så ett byte av repo eller omstart
@@ -51,6 +56,10 @@ export function useTerminal(
   const exitCode = live?.exitCode ?? null;
   const sessionId = live?.id ?? null;
   const { register, tabId } = useTerminalApi();
+  const promptRouter = useRef(onPrompt);
+  useEffect(() => {
+    promptRouter.current = onPrompt;
+  }, [onPrompt]);
 
   useEffect(() => {
     const element = container.current;
@@ -86,20 +95,20 @@ export function useTerminal(
       term.focus();
       // Skalet läser det köade när det är redo, så kommandot kan skickas direkt.
       if (startCommand) {
-        if (agent === 'codex') {
-          void invokeChannel(startCodexChannel, {
-            id: opened,
-            command: startCommand,
-            repoPath,
-            tabId,
-            sessionId: codexSessionId,
-          });
-        } else {
-          void invokeChannel(writeTerminalChannel, { id: opened, data: `${startCommand}\r` });
-        }
+        void invokeChannel(writeTerminalChannel, { id: opened, data: `${startCommand}\r` });
       }
       register((text) => {
-        // Flera rader skickas som bracketed paste så TUI:n inte skickar iväg vid första radbrytningen
+        const action = promptRouter.current(text);
+        if (action.type === 'codex') {
+          void invokeChannel(startCodexChannel, {
+            id: opened,
+            repoPath,
+            tabId,
+            sessionId: action.sessionId,
+            prompt: action.prompt,
+          });
+          return;
+        }
         const data = text.includes('\n') ? `\u001b[200~${text}\u001b[201~\r` : `${text}\r`;
         void invokeChannel(writeTerminalChannel, { id: opened, data });
       });
@@ -138,7 +147,7 @@ export function useTerminal(
       term.dispose();
       if (id) void invokeChannel(closeTerminalChannel, { id });
     };
-  }, [repoPath, key, container, agent, startCommand, codexSessionId, register, tabId]);
+  }, [repoPath, key, container, agent, startCommand, register, tabId]);
 
   const restart = useCallback(() => {
     setGeneration((g) => g + 1);
@@ -153,19 +162,19 @@ export function useTerminal(
   );
 
   const startCodex = useCallback(
-    (command: string, sessionId: string | null) => {
+    (prompt: string | null, sessionId: string | null) => {
       const currentId = session?.key === key ? session.id : null;
       if (!currentId) return;
       void invokeChannel(startCodexChannel, {
         id: currentId,
-        command,
         repoPath,
         tabId,
         sessionId,
+        prompt,
       });
     },
     [key, repoPath, session, tabId],
   );
 
-  return { exitCode, restart, run, startCodex };
+  return { exitCode, ready: sessionId !== null, restart, run, startCodex };
 }

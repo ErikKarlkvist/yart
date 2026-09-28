@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { type IPty, spawn } from 'node-pty';
 import { type TerminalSize } from '../ipc/channels';
 import { snapshotCodexSessionFiles, waitForNewCodexSession } from './codexSessions';
+import { codexShellCommand } from './codexCommand';
 import { terminalShell } from './shell';
 
 interface Listeners {
@@ -12,10 +13,15 @@ interface Listeners {
 
 interface CodexStart {
   id: string;
-  command: string;
   repoPath: string;
   tabId: number;
   sessionId: string | null;
+  prompt: string | null;
+}
+
+interface TerminalSession {
+  pty: IPty;
+  shellFile: string;
 }
 
 /**
@@ -24,8 +30,9 @@ interface CodexStart {
  * även när appen startats från Finder.
  */
 export class TerminalSessions {
-  private readonly sessions = new Map<string, IPty>();
+  private readonly sessions = new Map<string, TerminalSession>();
   private readonly codexTrackers = new Map<string, AbortController>();
+  private readonly codexStarted = new Set<string>();
   private codexStartQueue = Promise.resolve();
 
   constructor(private readonly listeners: Listeners) {}
@@ -40,36 +47,44 @@ export class TerminalSessions {
       rows: size.rows,
       env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
     });
-    this.sessions.set(id, pty);
+    this.sessions.set(id, { pty, shellFile: shell.file });
     pty.onData((data) => {
       this.listeners.onData(id, data);
     });
     pty.onExit(({ exitCode }) => {
       this.sessions.delete(id);
+      this.codexStarted.delete(id);
+      this.codexTrackers.get(id)?.abort();
+      this.codexTrackers.delete(id);
       this.listeners.onExit(id, exitCode);
     });
     return id;
   }
 
   write(id: string, data: string): void {
-    this.sessions.get(id)?.write(data);
+    this.sessions.get(id)?.pty.write(data);
   }
 
-  startCodex({ id, command, repoPath, tabId, sessionId }: CodexStart): void {
+  startCodex({ id, repoPath, tabId, sessionId, prompt }: CodexStart): void {
+    const session = this.sessions.get(id);
+    if (!session || this.codexStarted.has(id)) return;
+    const command = codexShellCommand(session.shellFile, sessionId, prompt);
+    if (!command) return;
+    this.codexStarted.add(id);
+
     if (sessionId) {
-      this.sessions.get(id)?.write(`${command}\r`);
+      session.pty.write(`${command}\r`);
       return;
     }
 
     const start = async (): Promise<void> => {
-      const pty = this.sessions.get(id);
-      if (!pty) return;
+      if (!this.sessions.has(id)) return;
       const knownFiles = await snapshotCodexSessionFiles();
-      const livePty = this.sessions.get(id);
-      if (!livePty) return;
+      const liveSession = this.sessions.get(id);
+      if (!liveSession) return;
       const controller = new AbortController();
       this.codexTrackers.set(id, controller);
-      livePty.write(`${command}\r`);
+      liveSession.pty.write(`${command}\r`);
       try {
         const createdSession = await waitForNewCodexSession(
           knownFiles,
@@ -91,16 +106,17 @@ export class TerminalSessions {
 
   resize(id: string, size: TerminalSize): void {
     if (size.cols < 1 || size.rows < 1) return;
-    this.sessions.get(id)?.resize(size.cols, size.rows);
+    this.sessions.get(id)?.pty.resize(size.cols, size.rows);
   }
 
   close(id: string): void {
     this.codexTrackers.get(id)?.abort();
     this.codexTrackers.delete(id);
-    const pty = this.sessions.get(id);
-    if (!pty) return;
+    const session = this.sessions.get(id);
+    if (!session) return;
     this.sessions.delete(id);
-    pty.kill();
+    this.codexStarted.delete(id);
+    session.pty.kill();
   }
 
   closeAll(): void {

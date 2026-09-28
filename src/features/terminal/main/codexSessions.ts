@@ -1,8 +1,15 @@
-import { mkdir, open, readdir } from 'node:fs/promises';
+import { mkdir, open, readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const SESSION_ID = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl$/i;
+const SESSION_PREVIEW_BYTES = 96 * 1024;
+
+export interface CodexSessionSummary {
+  id: string;
+  title: string;
+  updatedAt: number;
+}
 
 export function codexSessionIdFromPath(filePath: string): string | null {
   return SESSION_ID.exec(filePath)?.[1] ?? null;
@@ -42,16 +49,90 @@ async function sessionUsesRepo(filePath: string, repoPath: string): Promise<bool
     if (typeof payload !== 'object' || payload === null) return false;
     const cwd = (payload as { cwd?: unknown }).cwd;
     if (typeof cwd !== 'string') return false;
-    const normalize = (path: string): string => {
-      const resolved = resolve(path).replace(/\\/g, '/');
-      return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
-    };
-    return normalize(cwd) === normalize(repoPath);
+    return normalizeRepoPath(cwd) === normalizeRepoPath(repoPath);
   } catch {
     return false;
   } finally {
     await file?.close();
   }
+}
+
+function normalizeRepoPath(path: string): string {
+  const resolved = resolve(path).replace(/\\/g, '/');
+  return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+}
+
+function stringProperty(value: unknown, key: string): string | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const property = (value as Record<string, unknown>)[key];
+  return typeof property === 'string' ? property : null;
+}
+
+function sessionTitle(content: Buffer): string | null {
+  for (const line of content.toString('utf8').split(/\r?\n/)) {
+    if (!line) continue;
+    let entry: unknown;
+    try {
+      entry = JSON.parse(line) as unknown;
+    } catch {
+      continue;
+    }
+    if (typeof entry !== 'object' || entry === null) continue;
+    const payload = (entry as { payload?: unknown }).payload;
+    const kind = stringProperty(payload, 'type');
+    if (kind === 'user_message') {
+      const message = stringProperty(payload, 'message');
+      if (message?.trim()) return message.trim();
+    }
+    if (kind === 'message' && stringProperty(payload, 'role') === 'user') {
+      const contentItems = (payload as { content?: unknown }).content;
+      if (!Array.isArray(contentItems)) continue;
+      const text = contentItems
+        .map((item: unknown) => stringProperty(item, 'text'))
+        .filter((item): item is string => item !== null)
+        .join(' ')
+        .trim();
+      if (text) return text;
+    }
+  }
+  return null;
+}
+
+function normalizeSessionTitle(title: string | null, filePath: string): string {
+  const compact = title?.replace(/\s+/g, ' ').trim();
+  if (compact) return compact.length > 96 ? `${compact.slice(0, 93)}…` : compact;
+  const id = codexSessionIdFromPath(filePath);
+  return id ? `Codex chat · ${id.slice(0, 8)}` : 'Codex chat';
+}
+
+/** Finds saved chats whose Codex working directory is exactly this folder. */
+export async function listCodexSessions(
+  repoPath: string,
+  directory = codexSessionDirectory(),
+): Promise<CodexSessionSummary[]> {
+  const files = await listSessionFiles(directory);
+  const sessions = await Promise.all(
+    files.map(async (filePath): Promise<CodexSessionSummary | null> => {
+      const id = codexSessionIdFromPath(filePath);
+      if (!id || !(await sessionUsesRepo(filePath, repoPath))) return null;
+      try {
+        const [metadata, file] = await Promise.all([stat(filePath), open(filePath, 'r')]);
+        try {
+          const buffer = Buffer.alloc(Math.min(metadata.size, SESSION_PREVIEW_BYTES));
+          const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
+          const title = sessionTitle(buffer.subarray(0, bytesRead));
+          return { id, title: normalizeSessionTitle(title, filePath), updatedAt: metadata.mtimeMs };
+        } finally {
+          await file.close();
+        }
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return sessions
+    .filter((session): session is CodexSessionSummary => session !== null)
+    .sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export async function findNewCodexSession(

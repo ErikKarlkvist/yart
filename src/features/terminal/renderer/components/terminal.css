@@ -21,10 +21,15 @@
   gap: 2px;
 }
 
-.terminal-panel__agent {
+.terminal-panel__agent,
+.terminal-panel__chat {
   margin-right: 6px;
   padding: 2px 6px;
   font-size: 12px;
+}
+
+.terminal-panel__chat {
+  max-width: min(280px, 34vw);
 }
 
 .terminal-panel__hint {

@@ -16,11 +16,22 @@ export const writeTerminalChannel = defineChannel<{ id: string; data: string }>(
 /** Startar Codex och binder ett nyskapat samtal till rätt Reverik-flik. */
 export const startCodexChannel = defineChannel<{
   id: string;
-  command: string;
   repoPath: string;
   tabId: number;
   sessionId: string | null;
+  prompt: string | null;
 }>('terminal:start-codex');
+
+export interface CodexChatSummary {
+  id: string;
+  title: string;
+  updatedAt: number;
+}
+
+/** Lists saved Codex chats created from the selected repository folder. */
+export const listCodexChatsChannel = defineChannel<{ repoPath: string }, CodexChatSummary[]>(
+  'terminal:list-codex-chats',
+);
 
 export const resizeTerminalChannel = defineChannel<{ id: string } & TerminalSize>(
   'terminal:resize',
