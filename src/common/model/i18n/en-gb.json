@@ -186,5 +186,19 @@
   "log.rejected": "Rejected a delivery from {source}",
   "log.errorsReturned": "The errors were returned to the agent so it can fix the content.",
   "log.dismiss": "Dismiss",
-  "log.via": "{client} ({tool})"
+  "log.via": "{client} ({tool})",
+  "connect.showGuide": "Show the getting-started guide",
+  "onboarding.title": "Reverik is designed to be controlled by AI",
+  "onboarding.intro": "You do not draw anything yourself. An AI agent such as Claude Code reads your code and delivers flows, documents and reviews to Reverik. Reverik checks every file and line they point at and shows the result as animated diagrams. Three steps to get going:",
+  "onboarding.step1Title": "1. Connect your agent",
+  "onboarding.step1Text": "Reverik is already listening on your machine. For Claude Code, run this once in any terminal. Other agents connect to the same address over MCP.",
+  "onboarding.step2Title": "2. Install the skill for Claude Code",
+  "onboarding.step2Text": "The skill tells Claude Code when to use Reverik and how to build good flows and reviews. Other agents get the same guide from the MCP server.",
+  "onboarding.step3Title": "3. Open a repository and ask",
+  "onboarding.step3Text": "Choose a folder with Folder in the footer, then ask your agent in its own terminal, for example:",
+  "onboarding.example1": "In Reverik, show what happens when a user places an order.",
+  "onboarding.example2": "In Reverik, write an overview of how the backend is organised.",
+  "onboarding.example3": "In Reverik, review the branch feature/checkout against main.",
+  "onboarding.outro": "New analyses appear in the list on the left as soon as the agent saves them. You can reopen this guide from the Connect panel.",
+  "onboarding.done": "Get started"
 }

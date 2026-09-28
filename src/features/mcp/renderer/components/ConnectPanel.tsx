@@ -1,7 +1,9 @@
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
-import { Icon } from '@/common/renderer/Icon';
 import { claudeMcpAddCommand, type McpStatus } from '../../model/mcp';
+import { useOnboarding } from '../OnboardingContext';
+import { CommandCopy } from './CommandCopy';
+import { SkillInstall } from './SkillInstall';
 import './connect.css';
 
 interface Props {
@@ -14,34 +16,7 @@ interface Props {
  * skillen att installera och de senaste verktygsanropen.
  */
 export function ConnectPanel({ status, onInstallSkill }: Props): JSX.Element {
-  const [copied, setCopied] = useState(false);
-  const [installing, setInstalling] = useState(false);
-  const command = status?.url ? claudeMcpAddCommand(status.url) : null;
-
-  useEffect(() => {
-    if (!copied) return;
-    const id = setTimeout(() => {
-      setCopied(false);
-    }, 1500);
-    return () => {
-      clearTimeout(id);
-    };
-  }, [copied]);
-
-  const copy = (): void => {
-    if (!command) return;
-    void navigator.clipboard.writeText(command).then(() => {
-      setCopied(true);
-    });
-  };
-  const install = (): void => {
-    setInstalling(true);
-    onInstallSkill()
-      .catch(console.error)
-      .finally(() => {
-        setInstalling(false);
-      });
-  };
+  const onboarding = useOnboarding();
 
   return (
     <div className="connect">
@@ -52,12 +27,7 @@ export function ConnectPanel({ status, onInstallSkill }: Props): JSX.Element {
             <p className="connect__text">{t('connect.serverText')}</p>
             <code className="connect__code">{status.url}</code>
             <p className="connect__text">{t('connect.claudeText')}</p>
-            <div className="connect__command">
-              <code className="connect__code">{command}</code>
-              <button type="button" className="text-button" onClick={copy}>
-                <Icon name="copy" size="sm" /> {copied ? t('side.copied') : t('side.copy')}
-              </button>
-            </div>
+            <CommandCopy command={claudeMcpAddCommand(status.url)} />
             <p className="connect__muted">{t('connect.sessions', { count: status.sessions })}</p>
           </>
         ) : status?.error ? (
@@ -70,22 +40,7 @@ export function ConnectPanel({ status, onInstallSkill }: Props): JSX.Element {
       <section className="connect__section">
         <h3 className="connect__heading">{t('connect.skillHeading')}</h3>
         <p className="connect__text">{t('connect.skillText')}</p>
-        {status && (
-          <div className="connect__command">
-            <span className={`connect__skill is-${status.skill.state}`}>
-              {t(`connect.skill.${status.skill.state}`)}
-            </span>
-            <button
-              type="button"
-              className="text-button"
-              disabled={installing || status.skill.state === 'current'}
-              onClick={install}
-            >
-              {status.skill.state === 'missing' ? t('connect.install') : t('connect.update')}
-            </button>
-          </div>
-        )}
-        {status && <code className="connect__code connect__code--muted">{status.skill.path}</code>}
+        {status && <SkillInstall status={status} onInstall={onInstallSkill} showPath />}
       </section>
 
       <section className="connect__section connect__section--grow">
@@ -112,6 +67,12 @@ export function ConnectPanel({ status, onInstallSkill }: Props): JSX.Element {
             ))}
           </ol>
         )}
+      </section>
+
+      <section className="connect__section">
+        <button type="button" className="text-button" onClick={onboarding.show}>
+          {t('connect.showGuide')}
+        </button>
       </section>
     </div>
   );
