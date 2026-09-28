@@ -7,10 +7,12 @@ levererar flöden, dokument och reviewer via MCP-servern som appen startar på
 från zod-schemana i `src/common/model/`, så beskrivningar där är dokumentation för
 modellen. Skillen för Claude Code, som också serveras som MCP-resurs, byggs i
 `src/features/analysis/model/skill.ts` och installeras från appens Anslut-panel.
-Frågor från grafen, reviewuppdrag och panelen Agent går till en headless
-Claude Code-session som appen kör per repo (`src/features/agent/`): `claude -p` med
-strömmande JSON på stdin och stdout, Reveriks MCP-server som enda server, skillen som
-systemprompt och bara läs- och leveransverktyg tillåtna. Svaren visas i panelen och
+Frågor från grafen, reviewuppdrag och panelen Agent går till en headless agentsession
+som appen kör per repo (`src/features/agent/`). Claude Code körs som en långlivad
+`claude -p` med strömmande JSON på stdin och stdout; Codex som `codex exec --json` per
+fråga som återupptar tråden. Båda får Reveriks MCP-server som enda server och skillen
+som instruktioner, och bara läs- och leveransverktyg är tillåtna. Guiden vid första
+starten väljer mellan Claude Code, Codex och extern AI, och valet styr vad appen kör. Svaren visas i panelen och
 det agenten sparar landar i listan. Går sessionen inte att starta visas felet med
 prompten att kopiera. Externa agenter kan fortfarande leverera via MCP.
 

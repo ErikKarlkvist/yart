@@ -97,17 +97,13 @@
   color: var(--danger);
 }
 
-.onboarding__external {
-  padding: 12px 0;
-  border-top: 1px solid var(--border);
+.agent-picker--wide {
+  display: flex;
+  margin-bottom: 16px;
 }
 
-.onboarding__summary {
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.onboarding__external .setup__step:first-of-type {
-  border-top: none;
+.agent-picker--wide .agent-picker__option {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
 }

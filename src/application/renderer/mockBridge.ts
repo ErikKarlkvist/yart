@@ -104,7 +104,10 @@ export function installMockBridge(): void {
       }, 1200);
     },
     'agent:stop': () => undefined,
-    'agent:check': () => ({ installed: true, version: '2.1.274', loggedIn: false }),
+    'agent:check': (payload) =>
+      (payload as { agent: string }).agent === 'claude'
+        ? { installed: true, version: '2.1.274', loggedIn: false }
+        : { installed: false, version: null, loggedIn: false },
     'repo:read-source': async (payload) => {
       const {
         file,

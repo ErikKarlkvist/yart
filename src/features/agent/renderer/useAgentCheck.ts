@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { checkAgentChannel } from '../ipc/channels';
-import { type AgentCheck } from '../model/protocol';
+import { type AgentCheck, type RunnableAgent } from '../model/protocol';
 
 export interface AgentCheckState {
   /** null tills första kontrollen svarat */
@@ -9,14 +9,18 @@ export interface AgentCheckState {
   refresh: () => void;
 }
 
-/** Kör kontrollen av Claude Code när komponenten monteras, och igen på begäran. */
-export function useAgentCheck(): AgentCheckState {
-  const [check, setCheck] = useState<AgentCheck | null>(null);
+/** Kontrollerar agenten när komponenten monteras och när agenten byts, och igen på begäran. */
+export function useAgentCheck(agent: RunnableAgent): AgentCheckState {
+  const [result, setResult] = useState<{ agent: RunnableAgent; check: AgentCheck } | null>(null);
   const refresh = useCallback(() => {
-    invokeChannel(checkAgentChannel, undefined).then(setCheck).catch(console.error);
-  }, []);
+    invokeChannel(checkAgentChannel, { agent })
+      .then((check) => {
+        setResult({ agent, check });
+      })
+      .catch(console.error);
+  }, [agent]);
   useEffect(() => {
     refresh();
   }, [refresh]);
-  return { check, refresh };
+  return { check: result?.agent === agent ? result.check : null, refresh };
 }

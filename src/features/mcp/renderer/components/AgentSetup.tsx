@@ -1,24 +1,30 @@
 import { type JSX, useEffect, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
-import { AGENT_KINDS, codexConfigSnippet, connectCommand } from '../../model/agents';
+import {
+  AGENT_KINDS,
+  type AgentKind,
+  codexConfigSnippet,
+  connectCommand,
+} from '../../model/agents';
 import { type McpState } from '../useMcpStatus';
-import { useSetup } from '../SetupContext';
 import { CommandCopy } from './CommandCopy';
 import { SkillInstall } from './SkillInstall';
 
 interface Props {
   mcp: McpState;
+  /** Vilken extern agent instruktionerna gäller */
+  agent: AgentKind;
+  onAgent: (agent: AgentKind) => void;
   /** Visa sökvägen skillen skrivs till */
   showPath: boolean;
 }
 
 /**
- * Agentväljaren och de två stegen som beror på den: koppla servern och ge
- * agenten guiden. Delas av förstagångsguiden och Anslut-panelen.
+ * Väljaren för extern agent och de två stegen som beror på den: koppla
+ * servern och ge agenten guiden. Delas av förstagångsguiden och Anslut-panelen.
  */
-export function AgentSetup({ mcp, showPath }: Props): JSX.Element {
-  const { agent, setAgent } = useSetup();
+export function AgentSetup({ mcp, agent, onAgent, showPath }: Props): JSX.Element {
   const { status } = mcp;
   const [guideCopied, setGuideCopied] = useState(false);
 
@@ -55,7 +61,7 @@ export function AgentSetup({ mcp, showPath }: Props): JSX.Element {
             aria-checked={agent === kind}
             className={`agent-picker__option${agent === kind ? ' is-active' : ''}`}
             onClick={() => {
-              setAgent(kind);
+              onAgent(kind);
             }}
           >
             {t(`agent.${kind}`)}

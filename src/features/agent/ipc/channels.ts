@@ -4,6 +4,7 @@ import {
   type AgentEntry,
   type AgentKind,
   type AgentState,
+  type RunnableAgent,
 } from '../model/protocol';
 
 /**
@@ -20,7 +21,7 @@ export const askAgentChannel = defineChannel<{
 export const stopAgentChannel = defineChannel<{ repoPath: string }>('agent:stop');
 
 /** Frågar Claude Code om den finns och är inloggad. Tar en sekund eller två. */
-export const checkAgentChannel = defineChannel<undefined, AgentCheck>('agent:check');
+export const checkAgentChannel = defineChannel<{ agent: RunnableAgent }, AgentCheck>('agent:check');
 
 export type AgentEvent =
   | { type: 'entry'; repoPath: string; entry: AgentEntry }

@@ -1,5 +1,6 @@
-import { type JSX } from 'react';
+import { type JSX, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
+import { type AgentKind } from '../../model/agents';
 import { type McpState } from '../useMcpStatus';
 import { AgentSetup } from './AgentSetup';
 import './connect.css';
@@ -10,13 +11,14 @@ import './connect.css';
  */
 export function ConnectPanel({ mcp }: { mcp: McpState }): JSX.Element {
   const { status } = mcp;
+  const [agent, setAgent] = useState<AgentKind>('claude');
 
   return (
     <div className="connect">
       <section className="connect__section">
         <h3 className="connect__heading">{t('connect.serverHeading')}</h3>
         <p className="connect__text">{t('connect.serverText')}</p>
-        <AgentSetup mcp={mcp} showPath />
+        <AgentSetup mcp={mcp} agent={agent} onAgent={setAgent} showPath />
         {status?.url && (
           <p className="connect__muted">{t('connect.sessions', { count: status.sessions })}</p>
         )}
