@@ -19,8 +19,13 @@ import { installSkill, skillPath, skillState } from './skill';
 
 export type McpRegistration = Omit<McpDeps, 'onActivity'>;
 
+export interface McpHandle {
+  /** Adressen servern lyssnar på, null tills den startat */
+  url: () => string | null;
+}
+
 /** Startar MCP-servern vid appstart och svarar renderern på hur det gick. */
-export function registerMcpHandlers(deps: McpRegistration): void {
+export function registerMcpHandlers(deps: McpRegistration): McpHandle {
   const activity: McpActivity[] = [];
   let handle: McpServerHandle | null = null;
   let error: string | null = null;
@@ -63,4 +68,6 @@ export function registerMcpHandlers(deps: McpRegistration): void {
   app.on('before-quit', () => {
     void handle?.close();
   });
+
+  return { url: () => handle?.url ?? null };
 }

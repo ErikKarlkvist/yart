@@ -13,7 +13,10 @@ fil och rad som finns, och ritar upp resultatet.
 claude mcp add --transport http reverik http://127.0.0.1:7390/mcp
 ```
 
-Första starten visar en guide där man väljer agent: Claude Code, Codex eller
+Panelen Agent i appen kör Claude Code i bakgrunden med Reveriks verktyg, så
+man kan fråga om koden och klicka på noder direkt i appen; svaren och det
+agenten sparar dyker upp i appen. Det kräver att `claude` finns på PATH och är
+inloggad. Första starten visar en guide där man väljer agent: Claude Code, Codex eller
 annan. Den ger kommandot att köra, installerar en skill i agentens skillmapp,
 eller kopierar guiden som text för agenter utan skillmapp. Samma sak finns i
 Anslut-panelen bakom MCP-adressen i sidfoten. Agenten anger repots rot i varje

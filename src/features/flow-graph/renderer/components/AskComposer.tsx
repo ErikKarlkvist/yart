@@ -54,7 +54,7 @@ export function AskComposer({ target, onSend, onCancel }: Props): JSX.Element {
         title={t('ask.send')}
         aria-label={t('ask.send')}
       >
-        <Icon name="copy" />
+        <Icon name="chat" />
       </button>
       <button
         type="button"

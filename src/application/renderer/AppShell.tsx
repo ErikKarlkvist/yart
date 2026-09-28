@@ -4,6 +4,7 @@ import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { Splitter } from '@/common/renderer/Splitter';
 import { invokeChannel } from '@/common/renderer/ipc';
+import { AgentPanel, useAgent } from '@/features/agent';
 import { AnalysisList, analysisTitle, useAnalyses } from '@/features/analysis';
 import { useTabTitle } from './AppTabsContext';
 import { BranchBar, RepoMenu, RepoPanel, useRepo } from '@/features/repo';
@@ -13,9 +14,7 @@ import { useStoredChoice, useStoredFlag, useStoredNumber } from '@/common/render
 import { ReviewSidebar } from './ReviewSidebar';
 import { Workspace } from './Workspace';
 
-const SIDE_MODES = ['review', 'connect'] as const;
-/** Hur länge kvittot på en kopierad prompt visas i sidfoten */
-const COPIED_MS = 2000;
+const SIDE_MODES = ['agent', 'review', 'connect'] as const;
 
 export function AppShell(): JSX.Element {
   const [info, setInfo] = useState<AppInfo | null>(null);
@@ -25,9 +24,8 @@ export function AppShell(): JSX.Element {
   const [logOpen, setLogOpen] = useStoredFlag('reverik.logOpen', true);
   // En ny appstart börjar med arbetsytan. Varje flik håller sedan sitt eget öppet/stängt-läge.
   const [sideOpen, setSideOpen] = useState(false);
-  const [sideMode, setSideMode] = useStoredChoice('reverik.sideMode', SIDE_MODES, 'review');
-  // Kvitto i sidfoten när en prompt kopierats till urklipp
-  const [copied, setCopied] = useState(false);
+  const [sideMode, setSideMode] = useStoredChoice('reverik.sideMode', SIDE_MODES, 'agent');
+  const agent = useAgent();
   const [sidebarWidth, setSidebarWidth] = useStoredNumber('reverik.sidebarWidth', 300);
   const [bottomHeight, setBottomHeight] = useStoredNumber('reverik.bottomHeight', 220);
   const [sideWidth, setSideWidth] = useStoredNumber('reverik.sideWidth', 460);
@@ -68,25 +66,14 @@ export function AppShell(): JSX.Element {
     void invokeChannel(appInfoChannel, undefined).then(setInfo);
   }, []);
 
-  useEffect(() => {
-    if (!copied) return;
-    const id = setTimeout(() => {
-      setCopied(false);
-    }, COPIED_MS);
-    return () => {
-      clearTimeout(id);
-    };
-  }, [copied]);
-  // Appen har ingen egen agent: frågor och reviewuppdrag kopieras som färdiga
-  // prompter som användaren klistrar in hos sin agent.
-  const onAsk = useCallback((prompt: string) => {
-    navigator.clipboard
-      .writeText(prompt)
-      .then(() => {
-        setCopied(true);
-      })
-      .catch(console.error);
-  }, []);
+  // Frågor från grafen och reviewuppdrag går till agenten appen kör i bakgrunden.
+  const onAsk = useCallback(
+    (prompt: string) => {
+      agent.ask(prompt);
+      openSide('agent');
+    },
+    [agent, openSide],
+  );
   const onRunReview = useCallback(
     (base: string, head: string) => {
       onAsk(t('branch.reviewPrompt', { base, head }));
@@ -187,6 +174,9 @@ export function AppShell(): JSX.Element {
             </button>
           </div>
           <div className="shell__side-body">
+            <div className={`shell__side-pane${sideMode === 'agent' ? ' is-active' : ''}`}>
+              <AgentPanel hasRepo={repo !== null} />
+            </div>
             <div className={`shell__side-pane${sideMode === 'review' ? ' is-active' : ''}`}>
               <ReviewSidebar onFocus={focusFinding} />
             </div>
@@ -205,7 +195,6 @@ export function AppShell(): JSX.Element {
               ? `v${info.version} · Electron ${info.electron} · ${info.platform}`
               : t('app.starting')}
           </span>
-          {copied && <span className="shell__copied">{t('app.copiedPrompt')}</span>}
           <button
             type="button"
             className="text-button"
@@ -239,12 +228,12 @@ export function AppShell(): JSX.Element {
             <button
               type="button"
               className="text-button"
-              title={t('panel.showSide')}
+              title={t('panel.showAgent')}
               onClick={() => {
-                openSide('review');
+                openSide('agent');
               }}
             >
-              <Icon name="warning" size="sm" /> {t('panel.showSide')}
+              <Icon name="chat" size="sm" /> {t('panel.showAgent')}
             </button>
           )}
           <ThemeSelect />

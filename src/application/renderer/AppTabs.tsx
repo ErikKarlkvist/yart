@@ -2,7 +2,9 @@ import { type JSX, useCallback, useMemo, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { readStoredJson, StorageScopeContext, writeStored } from '@/common/renderer/storage';
+import { AgentProvider } from '@/features/agent';
 import { AnalysisProvider } from '@/features/analysis';
+import { useSetup } from '@/features/mcp';
 import { RepoProvider, useRepo } from '@/features/repo';
 import { AppShell } from './AppShell';
 import { AppTabsContext } from './AppTabsContext';
@@ -164,5 +166,12 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
 /** Providers som beror på valt repo. */
 function Providers({ children }: { children: JSX.Element }): JSX.Element {
   const { repo } = useRepo();
-  return <AnalysisProvider repoPath={repo?.path ?? null}>{children}</AnalysisProvider>;
+  const { agent } = useSetup();
+  return (
+    <AnalysisProvider repoPath={repo?.path ?? null}>
+      <AgentProvider repoPath={repo?.path ?? null} agent={agent}>
+        {children}
+      </AgentProvider>
+    </AnalysisProvider>
+  );
 }

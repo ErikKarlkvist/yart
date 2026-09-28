@@ -15,7 +15,7 @@ describe('buildAskPrompt', () => {
       'add-todo',
     );
     expect(prompt).toBe(
-      'In Reverik: about the node "TodoService.create" (backend/src/services/TodoService.ts:21) in the flow "Add todo" (saved in Reverik as "add-todo", save it again under the same name if the answer changes the flow): what if this throws?',
+      'About the node "TodoService.create" (backend/src/services/TodoService.ts:21) in the flow "Add todo" (saved in Reverik as "add-todo", save it again under the same name if the answer changes the flow): what if this throws?',
     );
   });
 
@@ -29,7 +29,7 @@ describe('buildAskPrompt', () => {
       undefined,
     );
     expect(prompt).toContain(
-      'In Reverik: about the call "POST /api/todos" from "todosApi.createTodo" to "POST /api/todos"',
+      'About the call "POST /api/todos" from "todosApi.createTodo" to "POST /api/todos"',
     );
     expect(prompt).toContain('in the flow "Add todo": is this retried?');
     expect(prompt).not.toContain('saved in Reverik');

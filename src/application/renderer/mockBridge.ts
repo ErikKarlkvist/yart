@@ -39,8 +39,10 @@ export function installMockBridge(): void {
     };
   });
   let recent: (typeof demoRepo)[] = [];
-  // Inga händelser skickas i mock-läget, men lyssnare måste kunna registreras
   const listeners = new Map<string, Set<(payload: unknown) => void>>();
+  const emit = (event: string, payload: unknown): void => {
+    for (const listener of listeners.get(event) ?? []) listener(payload);
+  };
   const mockMcpStatus = {
     url: 'http://127.0.0.1:7390/mcp',
     sessions: 0,
@@ -83,6 +85,25 @@ export function installMockBridge(): void {
       return { ...mockMcpStatus, skills };
     },
     'mcp:skill-text': () => '# Reverik guide (mock)',
+    // Låtsasagenten svarar med ett verktyg och en mening efter en stund
+    'agent:ask': (payload) => {
+      const { repoPath, prompt } = payload as { repoPath: string; prompt: string };
+      const entry = (value: unknown): void => {
+        emit('agent:event', {
+          type: 'entry',
+          repoPath,
+          entry: { at: new Date().toISOString(), ...(value as object) },
+        });
+      };
+      entry({ kind: 'user', text: prompt });
+      emit('agent:event', { type: 'state', repoPath, state: 'busy' });
+      setTimeout(() => {
+        entry({ kind: 'tool', name: 'save_flow' });
+        entry({ kind: 'assistant', text: t('app.mockAgentReply') });
+        emit('agent:event', { type: 'state', repoPath, state: 'idle' });
+      }, 1200);
+    },
+    'agent:stop': () => undefined,
     'repo:read-source': async (payload) => {
       const {
         file,

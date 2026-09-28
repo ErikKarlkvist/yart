@@ -190,10 +190,6 @@ select:focus {
   flex: 1;
 }
 
-.shell__copied {
-  color: var(--fg-muted);
-}
-
 .shell__side-body {
   position: relative;
   flex: 1;
@@ -219,6 +215,7 @@ select:focus {
 }
 
 .shell__side-pane > .review-side,
+.shell__side-pane > .agent,
 .shell__side-pane > .connect,
 .shell__side-pane > .shell__empty {
   flex: 1;
