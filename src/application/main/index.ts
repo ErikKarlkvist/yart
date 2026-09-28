@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, Menu } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { registerApplicationHandlers } from './handlers';
 import { createMainWindow } from './window';
@@ -14,6 +14,7 @@ if (process.env.REVERIK_DEBUG_PORT) {
 
 void app.whenReady().then(() => {
   electronApp.setAppUserModelId('se.karlkvist.reverik');
+  if (process.platform === 'win32') Menu.setApplicationMenu(null);
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
