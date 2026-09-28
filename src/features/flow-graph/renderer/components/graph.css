@@ -386,8 +386,8 @@ button.crumb:hover:not(:disabled) {
 /* Noder */
 .graph-node {
   position: relative;
-  width: 190px;
-  height: 58px;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -577,9 +577,15 @@ button.crumb:hover:not(:disabled) {
 }
 
 .graph-node--system {
-  width: 220px;
-  height: 76px;
   border-width: 2px;
+}
+
+.graph-node__resize-handle {
+  width: 8px !important;
+  height: 8px !important;
+  border: 1px solid var(--bg-panel) !important;
+  border-radius: 2px !important;
+  background: var(--accent) !important;
 }
 
 .graph-node__icon {

@@ -26,6 +26,7 @@ import {
   nodeSize,
   type Point,
   type Rect,
+  type Size,
 } from '../../model/layout';
 import { type StepStatus, stepView } from '../../model/playback';
 import { type EdgeMemberData, FlowEdgeView, type GraphEdge } from './FlowEdgeView';
@@ -105,12 +106,24 @@ export function FlowGraph({
   }, []);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
+  const [nodeSizes, setNodeSizes] = useState<ReadonlyMap<string, Size>>(() => new Map());
   // Nodobjekt som inte ändrats återanvänds, annars mäter React Flow om dem och grafen
   // flimrar vid drag. Cachen är en muterbar Map som lever lika länge som komponenten.
   const [nodeCache] = useState(() => new Map<string, AnyNode>());
   const visualEdges = useMemo(() => groupEdges(model.edges), [model]);
   const layout = useMemo(() => layoutFlow({ ...model, edges: visualEdges }), [model, visualEdges]);
   const view = useMemo(() => stepView(model, stepIndex), [model, stepIndex]);
+  const sizeOf = useCallback(
+    (node: ModelNode): Size => nodeSizes.get(node.id) ?? nodeSize(node),
+    [nodeSizes],
+  );
+  const onResize = useCallback((id: string, size: Size): void => {
+    setNodeSizes((current) => {
+      const next = new Map(current);
+      next.set(id, size);
+      return next;
+    });
+  }, []);
 
   const positionOf = useCallback(
     (nodeId: string): Point => moved.get(nodeId) ?? layout.positions.get(nodeId) ?? { x: 0, y: 0 },
@@ -121,7 +134,7 @@ export function FlowGraph({
     // Ramen följer noderna, så den växer när man drar ut en nod ur den.
     const groups: GroupNode[] = model.groups.flatMap((group) => {
       const members = model.nodes.filter((n) => n.systemId === group.id && n.level !== 'system');
-      const rect = boundingRect(members.map((n) => ({ ...positionOf(n.id), ...nodeSize(n) })));
+      const rect = boundingRect(members.map((n) => ({ ...positionOf(n.id), ...sizeOf(n) })));
       if (!rect) return [];
       return [
         {
@@ -165,20 +178,23 @@ export function FlowGraph({
         position,
         draggable: true,
         selected: isSelected,
+        style: sizeOf(node),
         data: {
           kind: node.kind,
           level: node.level,
           label: node.label,
+          role: node.role,
           description: node.description,
           tables: node.tables,
           change: node.change,
           findings: node.findings,
+          onResize,
         },
       };
     });
 
     return reuseUnchanged(nodeCache, [...groups, ...flowNodes]);
-  }, [model, positionOf, selected, nodeCache]);
+  }, [model, positionOf, selected, nodeCache, sizeOf, onResize]);
 
   const askEdge = useCallback(
     (memberId: string) => {

@@ -24,6 +24,7 @@ export interface GraphNode {
   level: GraphLevel;
   kind: GraphKind;
   label: string;
+  role: string | undefined;
   description: string | undefined;
   source: SourceRef | undefined;
   /** Systemet noden tillhör eller är */
@@ -125,6 +126,7 @@ function collapse(
         level: 'system',
         kind: system.kind,
         label: system.label,
+        role: undefined,
         description: system.description,
         source: undefined,
         systemId: system.id,
@@ -147,6 +149,7 @@ function collapse(
               level: 'table',
               kind: member.kind,
               label: info.name,
+              role: undefined,
               description: info.description,
               source: info.source,
               systemId: system.id,
@@ -174,6 +177,7 @@ function collapse(
           level: 'node',
           kind: member.kind,
           label: member.label,
+          role: member.role,
           description: member.description,
           source: member.source,
           systemId: system.id,

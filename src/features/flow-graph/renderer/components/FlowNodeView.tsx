@@ -1,9 +1,10 @@
-import { Handle, type Node, type NodeProps, Position } from '@xyflow/react';
-import { type JSX, memo } from 'react';
+import { Handle, NodeResizer, type Node, type NodeProps, Position } from '@xyflow/react';
+import { type JSX, memo, useCallback } from 'react';
 import { t } from '@/common/model/i18n';
 import { type FlowChange, type ReviewFinding } from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
 import { type GraphKind, type GraphLevel, type TableInfo } from '../../model/graph';
+import { type Size } from '../../model/layout';
 import { useNodeState } from './GraphStateContext';
 import { AskButton } from './AskButton';
 import { FindingFlag } from './FindingFlag';
@@ -15,10 +16,12 @@ type GraphNodeData = {
   kind: GraphKind;
   level: GraphLevel;
   label: string;
+  role: string | undefined;
   description: string | undefined;
   tables: TableInfo[];
   change: FlowChange | undefined;
   findings: ReviewFinding[];
+  onResize: (id: string, size: Size) => void;
 };
 
 export type GraphNode = Node<GraphNodeData, 'flow'>;
@@ -30,11 +33,25 @@ export const FlowNodeView = memo(function FlowNodeView({
 }: NodeProps<GraphNode>): JSX.Element {
   const { status, hovered, asking, focused, hide, ask, zoom } = useNodeState(id, data.findings);
   const system = data.level === 'system';
+  const resizeNode = data.onResize;
+  const onResize = useCallback(
+    (_event: unknown, { width, height }: { width: number; height: number }): void => {
+      resizeNode(id, { width, height });
+    },
+    [id, resizeNode],
+  );
   return (
     <div
       className={`graph-node graph-node--${data.kind} graph-node--${data.level} is-${status}${selected ? ' is-selected' : ''}${asking ? ' is-asking' : ''}${focused ? ' is-focused' : ''}${data.change ? ` is-change-${data.change}` : ''}`}
       title={data.description}
     >
+      <NodeResizer
+        isVisible={selected}
+        minWidth={160}
+        minHeight={system ? 70 : 54}
+        onResize={onResize}
+        handleClassName="graph-node__resize-handle"
+      />
       <Handle type="target" position={Position.Left} id="in-left" className="graph-handle" />
       <Handle type="source" position={Position.Right} id="out-right" className="graph-handle" />
       <Handle type="source" position={Position.Left} id="out-left" className="graph-handle" />
@@ -44,7 +61,7 @@ export const FlowNodeView = memo(function FlowNodeView({
       </span>
       <span className="graph-node__text">
         <span className="graph-node__kind">
-          {t(`kind.${data.kind}`)}
+          {data.role ?? t(`kind.${data.kind}`)}
           {data.change && (
             <span className={`graph-node__change is-${data.change}`}>
               {t(`review.${data.change}`)}

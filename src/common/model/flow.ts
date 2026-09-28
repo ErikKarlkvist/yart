@@ -82,6 +82,8 @@ const flowNodeSchema = z.object({
   /** Systemet noden tillhör, refererar `systems[].id` */
   system: z.string().min(1),
   label: z.string().min(1),
+  /** A short, specific type label such as Hook, Action or Event. */
+  role: z.string().min(1).optional(),
   description: z.string().optional(),
   /** Krävs för allt som finns i repot. Valfritt för db, cache, external och queue. */
   source: sourceRefSchema.optional(),

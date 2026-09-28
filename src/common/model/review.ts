@@ -148,6 +148,7 @@ function nodeFingerprint(node: FlowNode): string {
     node.kind,
     node.system,
     node.label,
+    node.role,
     node.description,
     node.source,
     node.tables,
