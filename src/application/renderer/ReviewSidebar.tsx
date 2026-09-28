@@ -1,26 +1,31 @@
 import { type JSX, useCallback, useEffect, useState } from 'react';
 import { t } from '@/common/model/i18n';
-import { formatFindings, type ReviewFinding, sortFindings } from '@/common/model/review';
+import {
+  findingLocation,
+  formatFindings,
+  type ReviewFinding,
+  sortFindings,
+} from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
-import { type SavedAnalysis, type SavedFlowAnalysis, useAnalyses } from '@/features/analysis';
+import { reviewFor, type SavedFlowAnalysis, useAnalyses } from '@/features/analysis';
 import { FindingDetails } from '@/features/flow-graph';
 import { useTerminalApi } from '@/features/terminal';
 
-interface ReviewGroup {
+/** Fynden i en review grupperade per flöde. Utan flöde hamnar de sist. */
+interface FindingGroup {
   key: string;
-  base: string;
-  head: string;
-  analyses: SavedFlowAnalysis[];
+  title: string;
+  flow: SavedFlowAnalysis | null;
+  findings: ReviewFinding[];
 }
 
 /**
- * Full review i högerpanelen: alla flöden i den review som den valda analysen
- * hör till, alltså samma jämförelse base → head, med fynden per flöde.
- * Markerade fynd kan kopieras som text eller skickas till agenten, över alla
- * flöden på en gång.
+ * Full review i högerpanelen: den valda reviewn, eller reviewn som pekar på
+ * det valda flödet, med fynden per flöde. Markerade fynd kan kopieras som
+ * text eller skickas till agenten, över alla flöden på en gång.
  */
 interface Props {
-  /** Öppnar fyndet i analysens Review-flik och spolar dit i grafen */
+  /** Öppnar fyndet i flödets Review-flik och spolar dit i grafen */
   onFocus: (analysisId: string, findingId: string) => void;
 }
 
@@ -33,12 +38,10 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
   // Instruktionen till agenten, fältet visas när man tryckt på Send
   const [instruction, setInstruction] = useState<string | null>(null);
 
-  const groups = groupReviews(analyses, current);
-  const key = (analysis: SavedAnalysis, finding: ReviewFinding): string =>
-    `${analysis.id}:${finding.id}`;
-  const allKeys = groups.flatMap((g) =>
-    g.analyses.flatMap((a) => (a.review?.findings ?? []).map((f) => key(a, f))),
-  );
+  const review = reviewFor(analyses, current);
+  const groups = review ? groupFindings(review.review, analyses) : [];
+  const key = (finding: ReviewFinding): string => `${review?.id ?? ''}:${finding.id}`;
+  const allKeys = groups.flatMap((g) => g.findings.map(key));
   const chosenCount = allKeys.filter((k) => selected.has(k)).length;
 
   const toggle = useCallback((k: string) => {
@@ -60,28 +63,24 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
     };
   }, [copied]);
 
-  if (groups.length === 0)
+  if (!review)
     return (
       <p className="shell__empty shell__empty--padded">
-        {analyses.some((a) => a.kind === 'flow' && a.review)
-          ? t('side.pickReview')
-          : t('side.empty')}
+        {analyses.some((a) => a.kind === 'review') ? t('side.pickReview') : t('side.empty')}
       </p>
     );
 
-  /** Markerade fynd som text, med en rubrik per flöde och reviewfilen den hör till. */
+  /** Markerade fynd som text, med en rubrik per flöde och namnet det är sparat under. */
   const text = (): string =>
     groups
-      .flatMap((group) =>
-        group.analyses.flatMap((analysis) => {
-          const review = analysis.review;
-          if (!review) return [];
-          const chosen = review.findings.filter((f) => selected.has(key(analysis, f)));
-          if (chosen.length === 0) return [];
-          const heading = `## ${analysis.flow.title} (${analysis.name})`;
-          return [`${heading}\n${formatFindings(chosen, analysis.flow, review.base)}`];
-        }),
-      )
+      .flatMap((group) => {
+        const chosen = group.findings.filter((f) => selected.has(key(f)));
+        if (chosen.length === 0) return [];
+        const heading = group.flow ? `## ${group.title} (${group.flow.name})` : `## ${group.title}`;
+        const location = (finding: ReviewFinding): string | null =>
+          findingLocation(finding, group.flow?.flow, group.flow?.compare?.base);
+        return [`${heading}\n${formatFindings(chosen, location)}`];
+      })
       .join('\n\n');
 
   const copy = (): void => {
@@ -90,12 +89,11 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
     });
   };
   const send = (): void => {
-    const first = groups[0];
-    if (!first || instruction === null) return;
+    if (instruction === null) return;
     terminal.send(
       t('side.prompt', {
-        base: first.base,
-        head: first.head,
+        base: review.review.baseLabel,
+        head: review.review.headLabel,
         findings: text(),
         instruction: instruction.trim() || t('side.defaultInstruction'),
       }),
@@ -127,86 +125,93 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
         </button>
       </div>
       <div className="review-side__scroll">
-        {groups.map((group) => (
-          <section key={group.key} className="review-side__group">
-            <h3 className="review-side__compare">
-              {t('review.compare', { base: group.base, head: group.head })}
-            </h3>
-            {group.analyses.map((analysis) => {
-              const review = analysis.review;
-              if (!review) return null;
-              const isCurrent = analysis.id === current?.id;
-              return (
-                <div key={analysis.id} className="review-side__flow">
-                  <button
-                    type="button"
-                    className={`review-side__flow-title${isCurrent ? ' is-current' : ''}`}
-                    title={analysis.flow.question}
-                    onClick={() => {
-                      select(analysis.id);
-                    }}
-                  >
-                    {analysis.flow.title}
-                    <span className="count-badge">{review.findings.length}</span>
-                  </button>
-                  <ul className="review-side__list">
-                    {sortFindings(review.findings).map((finding) => {
-                      const k = key(analysis, finding);
-                      const checked = selected.has(k);
-                      const expanded = open === k;
-                      return (
-                        <li
-                          key={finding.id}
-                          className={`review-side__item is-${finding.severity}${checked ? ' is-checked' : ''}`}
-                        >
-                          <div className="review-side__row">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              aria-label={finding.title}
-                              onChange={() => {
-                                toggle(k);
-                              }}
-                            />
-                            <button
-                              type="button"
-                              className="review-side__open"
-                              title={t('side.openHint')}
-                              onClick={() => {
-                                onFocus(analysis.id, finding.id);
-                              }}
-                            >
-                              <span className={`review__severity is-${finding.severity}`}>
-                                <Icon name={finding.severity} size="sm" />
-                              </span>
-                              <span className="review-side__text">{finding.title}</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="icon-button icon-button--quiet"
-                              aria-expanded={expanded}
-                              aria-label={finding.title}
-                              onClick={() => {
-                                setOpen(expanded ? null : k);
-                              }}
-                            >
-                              <Icon name={expanded ? 'chevronDown' : 'chevronRight'} size="sm" />
-                            </button>
+        <section className="review-side__group">
+          <h3 className="review-side__compare">
+            <button
+              type="button"
+              className={`review-side__flow-title${review.id === current?.id ? ' is-current' : ''}`}
+              onClick={() => {
+                select(review.id);
+              }}
+            >
+              {review.review.title}
+            </button>
+            {t('review.compare', { base: review.review.baseLabel, head: review.review.headLabel })}
+          </h3>
+          {groups.map((group) => {
+            const isCurrent = group.flow !== null && group.flow.id === current?.id;
+            return (
+              <div key={group.key} className="review-side__flow">
+                <button
+                  type="button"
+                  className={`review-side__flow-title${isCurrent ? ' is-current' : ''}`}
+                  title={group.flow?.flow.question}
+                  disabled={group.flow === null}
+                  onClick={() => {
+                    if (group.flow) select(group.flow.id);
+                  }}
+                >
+                  {group.title}
+                  <span className="count-badge">{group.findings.length}</span>
+                </button>
+                <ul className="review-side__list">
+                  {group.findings.map((finding) => {
+                    const k = key(finding);
+                    const checked = selected.has(k);
+                    const expanded = open === k;
+                    return (
+                      <li
+                        key={finding.id}
+                        className={`review-side__item is-${finding.severity}${checked ? ' is-checked' : ''}`}
+                      >
+                        <div className="review-side__row">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            aria-label={finding.title}
+                            onChange={() => {
+                              toggle(k);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="review-side__open"
+                            title={t('side.openHint')}
+                            disabled={group.flow === null}
+                            onClick={() => {
+                              if (group.flow) onFocus(group.flow.id, finding.id);
+                            }}
+                          >
+                            <span className={`review__severity is-${finding.severity}`}>
+                              <Icon name={finding.severity} size="sm" />
+                            </span>
+                            <span className="review-side__text">{finding.title}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-button icon-button--quiet"
+                            aria-expanded={expanded}
+                            aria-label={finding.title}
+                            onClick={() => {
+                              setOpen(expanded ? null : k);
+                            }}
+                          >
+                            <Icon name={expanded ? 'chevronDown' : 'chevronRight'} size="sm" />
+                          </button>
+                        </div>
+                        {expanded && (
+                          <div className="review-side__body">
+                            <FindingDetails finding={finding} showSource={false} />
                           </div>
-                          {expanded && (
-                            <div className="review-side__body">
-                              <FindingDetails finding={finding} showSource={false} />
-                            </div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </section>
-        ))}
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+        </section>
       </div>
       {instruction !== null && (
         <div className="review-side__compose">
@@ -265,25 +270,22 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
   );
 }
 
-/** Den valda analysens review: alla analyser med samma jämförelse base → head. Tom utan vald review. */
-function groupReviews(
-  analyses: readonly SavedAnalysis[],
-  current: SavedAnalysis | null,
-): ReviewGroup[] {
-  const review = current?.kind === 'flow' ? current.review : undefined;
-  if (!review) return [];
-  const members = analyses.filter(
-    (a): a is SavedFlowAnalysis =>
-      a.kind === 'flow' &&
-      a.review?.baseLabel === review.baseLabel &&
-      a.review.headLabel === review.headLabel,
-  );
-  return [
-    {
-      key: `${review.baseLabel}\u0000${review.headLabel}`,
-      base: review.baseLabel,
-      head: review.headLabel,
-      analyses: members,
-    },
-  ];
+function groupFindings(
+  review: { flows: string[]; findings: ReviewFinding[] },
+  analyses: readonly ReturnType<typeof useAnalyses>['analyses'][number][],
+): FindingGroup[] {
+  const groups: FindingGroup[] = review.flows.map((name) => {
+    const flow =
+      analyses.find((a): a is SavedFlowAnalysis => a.kind === 'flow' && a.name === name) ?? null;
+    return {
+      key: name,
+      title: flow?.flow.title ?? name,
+      flow,
+      findings: sortFindings(review.findings.filter((f) => f.flow === name)),
+    };
+  });
+  const general = sortFindings(review.findings.filter((f) => f.flow === undefined));
+  if (general.length > 0)
+    groups.push({ key: '', title: t('review.generalHeading'), flow: null, findings: general });
+  return groups.filter((g) => g.findings.length > 0 || g.flow !== null);
 }

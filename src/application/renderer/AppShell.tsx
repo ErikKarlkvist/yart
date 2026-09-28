@@ -126,6 +126,7 @@ export function AppShell(): JSX.Element {
           focusedFindingId={focusedFindingId}
           focusSeq={focusSeq}
           onFocusFinding={onFocusInCurrent}
+          onFocusFindingIn={focusFinding}
         />
       </div>
 

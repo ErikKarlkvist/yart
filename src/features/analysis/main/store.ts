@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { type ReverikDocument } from '@/common/model/document';
 import { type Flow } from '@/common/model/flow';
-import { type Review } from '@/common/model/review';
+import { type FlowCompare, type Review } from '@/common/model/review';
 import {
   type AnalysisRef,
   type SavedAnalysis,
@@ -17,7 +17,9 @@ export type NewAnalysis = {
   file?: string;
   ref?: AnalysisRef | null;
 } & (
-  { kind: 'flow'; flow: Flow; review?: Review } | { kind: 'document'; document: ReverikDocument }
+  | { kind: 'flow'; flow: Flow; compare?: FlowCompare }
+  | { kind: 'document'; document: ReverikDocument }
+  | { kind: 'review'; review: Review }
 );
 
 /**
@@ -63,12 +65,14 @@ export class AnalysisStore {
       const analysis: SavedAnalysis =
         input.kind === 'document'
           ? { ...base, kind: 'document', document: input.document }
-          : {
-              ...base,
-              kind: 'flow',
-              flow: input.flow,
-              ...(input.review ? { review: input.review } : {}),
-            };
+          : input.kind === 'review'
+            ? { ...base, kind: 'review', review: input.review }
+            : {
+                ...base,
+                kind: 'flow',
+                flow: input.flow,
+                ...(input.compare ? { compare: input.compare } : {}),
+              };
       await this.write(repoPath, [...list.filter((a) => a.id !== analysis.id), analysis]);
       return analysis;
     });

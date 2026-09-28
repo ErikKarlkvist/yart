@@ -1,5 +1,5 @@
 import { type Flow } from '../flow';
-import { type Review } from '../review';
+import { type FlowCompare, type Review } from '../review';
 import { addTodoFlow } from './add-todo';
 
 /**
@@ -125,10 +125,24 @@ export const addTodoWithListFlow: Flow = {
   ],
 };
 
-export const addTodoReview: Review = {
+/** Namnet flödet efter ändringen sparas under, som reviewn pekar på. */
+export const ADD_TODO_WITH_LIST_NAME = 'add-todo-to-a-list';
+
+export const addTodoWithListCompare: FlowCompare = {
   baseLabel: 'main',
   headLabel: 'feature/todo-lists',
   base,
+};
+
+export const addTodoReview: Review = {
+  title: 'Todo lists',
+  summary:
+    'Todos can be added to a list. The change validates the list at the route and the service, but drops the cache invalidation and waits for the webhook inside the request.',
+  content:
+    'The form gets a list picker and sends listId with the title. The route validates it with the same zod schema as the title, and the service looks the list up before inserting the todo.\n\nTwo things regress on the write path: the Redis cache is no longer invalidated after the insert, and the webhook is awaited before the 201 goes out. The list check also runs outside the insert, so a list deleted in between turns into a 500.',
+  baseLabel: 'main',
+  headLabel: 'feature/todo-lists',
+  flows: [ADD_TODO_WITH_LIST_NAME],
   findings: [
     {
       id: 'cache-not-invalidated',
@@ -138,6 +152,7 @@ export const addTodoReview: Review = {
         'create() used to call cache.invalidate() after the insert. That call is gone, so GET /api/todos keeps serving the old list from Redis for up to 60 seconds after a todo is added.',
       suggestion:
         'Call cache.invalidate() after repository.insert(), as setCompleted() and remove() still do.',
+      flow: ADD_TODO_WITH_LIST_NAME,
       nodeId: 'todo-service',
       source: { file: 'backend/src/services/TodoService.ts', line: 22 },
     },
@@ -149,6 +164,7 @@ export const addTodoReview: Review = {
         'notifyTodoCreated() is now awaited before the route responds. A slow or failing webhook delays or breaks the 201, even though the todo is already saved.',
       suggestion:
         'Keep the call fire-and-forget, or move it to a queue and let the response go out first.',
+      flow: ADD_TODO_WITH_LIST_NAME,
       edgeId: 'notify',
       source: { file: 'backend/src/services/TodoService.ts', line: 24 },
     },
@@ -160,6 +176,7 @@ export const addTodoReview: Review = {
         'The list is looked up in one query and the todo inserted in another. If the list is deleted in between, the foreign key on todos.list_id rejects the insert and the route answers 500 instead of 404.',
       suggestion:
         'Rely on the foreign key and map its error to 404, or run the check and the insert in one transaction.',
+      flow: ADD_TODO_WITH_LIST_NAME,
       edgeId: 'check-list',
       source: { file: 'backend/src/services/TodoService.ts', line: 21 },
     },
@@ -169,6 +186,7 @@ export const addTodoReview: Review = {
       title: 'listId is validated at the route',
       description:
         'The optional listId is checked by the zod schema before it reaches the service, so a malformed id is rejected with 400 like the title.',
+      flow: ADD_TODO_WITH_LIST_NAME,
       edgeId: 'route-to-service',
       source: { file: 'backend/src/routes/todos.ts', line: 22 },
     },

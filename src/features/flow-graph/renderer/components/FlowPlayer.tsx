@@ -2,7 +2,12 @@ import '@xyflow/react/dist/style.css';
 import { type JSX, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type Flow, type FlowEdge, type SourceRef } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
-import { diffFlows, mergeForReview, type Review } from '@/common/model/review';
+import {
+  diffFlows,
+  type FlowCompare,
+  mergeForReview,
+  type ReviewFinding,
+} from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
 import {
   buildModel,
@@ -26,13 +31,14 @@ interface Props {
   onSelectSource?: (source: SourceRef) => void;
   /** Renderas mellan grafen och kontrollerna, t.ex. ett draghandtag som ägs av appen. */
   beforeControls?: ReactNode;
-  /** Filen i repot flödet kom från, så agenten kan uppdatera den */
   /** Namnet flödet är sparat under, så agenten kan spara om det */
   flowName?: string | undefined;
   /** Tar emot frågan om en nod eller ett anrop, färdig att skicka till agenten */
   onAsk?: ((prompt: string) => void) | undefined;
-  /** Finns när analysen är en review: `flow` är då flödet efter ändringen */
-  review?: Review | undefined;
+  /** Finns när flödet beskriver en ändring: `flow` är då flödet efter den */
+  compare?: FlowCompare | undefined;
+  /** Fynden i repots reviewer som pekar på det här flödet */
+  findings?: readonly ReviewFinding[] | undefined;
   focusedFindingId?: string | null | undefined;
   /** Räknas upp vid varje fokusering, uppspelningen spolar då till fyndets steg */
   focusSeq?: number | undefined;
@@ -50,7 +56,8 @@ export function FlowPlayer({
   beforeControls,
   flowName,
   onAsk,
-  review,
+  compare,
+  findings = [],
   focusedFindingId = null,
   focusSeq = 0,
   onFocusFinding,
@@ -60,15 +67,18 @@ export function FlowPlayer({
   const [hiddenNodes, setHiddenNodes] = useState<ReadonlySet<string>>(() => new Set());
   const [hiddenEdges, setHiddenEdges] = useState<ReadonlySet<string>>(() => new Set());
   const [moved, setMoved] = useState<ReadonlyMap<string, Point>>(() => new Map());
-  // I en review ritas även det som tagits bort ur base, som spöken.
-  const diff = useMemo(() => (review ? diffFlows(review.base, flow) : null), [review, flow]);
+  // I en jämförelse ritas även det som tagits bort ur base, som spöken.
+  const diff = useMemo(() => (compare ? diffFlows(compare.base, flow) : null), [compare, flow]);
   const graphFlow = useMemo(
-    () => (review && diff ? mergeForReview(flow, review.base, diff) : flow),
-    [flow, review, diff],
+    () => (compare && diff ? mergeForReview(flow, compare.base, diff) : flow),
+    [flow, compare, diff],
   );
   const annotations = useMemo(
-    () => (review && diff ? { diff, findings: review.findings } : undefined),
-    [review, diff],
+    () =>
+      diff || findings.length > 0
+        ? { diff: diff ?? { nodes: new Map(), edges: new Map() }, findings }
+        : undefined,
+    [diff, findings],
   );
   const model = useMemo(
     () => hideElements(buildModel(graphFlow, view, annotations), hiddenNodes, hiddenEdges),
@@ -130,9 +140,9 @@ export function FlowPlayer({
   // Spola till första steget som rör fyndets nod eller anrop, en gång per fokusering.
   const handledFocus = useRef(0);
   useEffect(() => {
-    if (handledFocus.current === focusSeq || !review || focusedFindingId === null) return;
+    if (handledFocus.current === focusSeq || focusedFindingId === null) return;
     handledFocus.current = focusSeq;
-    const finding = review.findings.find((f) => f.id === focusedFindingId);
+    const finding = findings.find((f) => f.id === focusedFindingId);
     if (!finding) return;
     const index = model.steps.findIndex((step) => {
       const edge = graphFlow.edges.find((e) => e.id === step.edgeId);
@@ -142,7 +152,7 @@ export function FlowPlayer({
       );
     });
     if (index >= 0) playback.goTo(index);
-  }, [focusSeq, focusedFindingId, review, model, graphFlow, playback]);
+  }, [focusSeq, focusedFindingId, findings, model, graphFlow, playback]);
   const onEdgeClick = useCallback(
     (edge: FlowEdge) => {
       onSelectSource?.(edge.source);
@@ -185,14 +195,18 @@ export function FlowPlayer({
           <h2 className="player__title" title={flow.summary}>
             {flow.title}
           </h2>
-          {review && (
+          {(compare !== undefined || findings.length > 0) && (
             <span className="player__review">
-              <span className="player__compare">
-                {t('review.compare', { base: review.baseLabel, head: review.headLabel })}
-              </span>
-              <span className="player__findings">
-                {t('review.findings', { count: review.findings.length })}
-              </span>
+              {compare && (
+                <span className="player__compare">
+                  {t('review.compare', { base: compare.baseLabel, head: compare.headLabel })}
+                </span>
+              )}
+              {findings.length > 0 && (
+                <span className="player__findings">
+                  {t('review.findings', { count: findings.length })}
+                </span>
+              )}
             </span>
           )}
         </div>
@@ -248,7 +262,7 @@ export function FlowPlayer({
         onZoomOut={onZoomOut}
         onGoToStep={playback.goTo}
         diff={diff}
-        findings={review?.findings ?? []}
+        findings={findings}
         focusedFindingId={focusedFindingId}
         onFocusFinding={focusFinding}
         overlay={

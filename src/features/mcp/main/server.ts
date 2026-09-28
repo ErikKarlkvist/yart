@@ -9,7 +9,7 @@ import { documentSchema } from '@/common/model/document';
 import { flowSchema } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
 import { analysisNameSchema } from '@/common/model/name';
-import { reviewDocumentSchema } from '@/common/model/review';
+import { flowCompareSchema, reviewSchema } from '@/common/model/review';
 import { MCP_HOST, MCP_PATH, type McpActivity, mcpUrl } from '../model/mcp';
 import { REPO_PARAM_DESCRIPTION, TOOL_DESCRIPTIONS, type ToolName } from '../model/tools';
 
@@ -21,10 +21,11 @@ interface McpRepo {
 
 export interface McpAnalysisSummary {
   name: string;
-  kind: 'flow' | 'document';
+  kind: 'flow' | 'document' | 'review';
   title: string;
   summary: string;
-  review?: { baseLabel: string; headLabel: string; findings: number };
+  compare?: { baseLabel: string; headLabel: string };
+  review?: { baseLabel: string; headLabel: string; flows: string[]; findings: number };
   ref?: { branch: string | null; commit: string };
 }
 
@@ -39,7 +40,11 @@ export interface McpDeps {
   /** Normaliserar sökvägen och gör repot känt för appen. null om det inte är en mapp. */
   resolveRepo: (path: string) => Promise<string | null>;
   listAnalyses: (repoPath: string) => Promise<McpAnalysisSummary[]>;
-  getAnalysis: (repoPath: string, kind: 'flow' | 'document', name: string) => Promise<unknown>;
+  getAnalysis: (
+    repoPath: string,
+    kind: 'flow' | 'document' | 'review',
+    name: string,
+  ) => Promise<unknown>;
   deliver: (
     repoPath: string,
     kind: 'flow' | 'review' | 'document',
@@ -303,7 +308,7 @@ function createSession(deps: McpDeps): McpServer {
       description: TOOL_DESCRIPTIONS.get_analysis,
       inputSchema: {
         repo: repoParam,
-        kind: z.enum(['flow', 'document']),
+        kind: z.enum(['flow', 'document', 'review']),
         name: analysisNameSchema,
       },
       annotations: { readOnlyHint: true },
@@ -323,10 +328,16 @@ function createSession(deps: McpDeps): McpServer {
     'save_flow',
     {
       description: TOOL_DESCRIPTIONS.save_flow,
-      inputSchema: { repo: repoParam, name: analysisNameSchema, flow: flowSchema },
+      inputSchema: {
+        repo: repoParam,
+        name: analysisNameSchema,
+        flow: flowSchema,
+        compare: flowCompareSchema.optional(),
+      },
       annotations: { idempotentHint: true },
     },
-    ({ repo, name, flow }) => deliver('save_flow', 'flow', repo, name, flow),
+    ({ repo, name, flow, compare }) =>
+      deliver('save_flow', 'flow', repo, name, compare ? { flow, compare } : { flow }),
   );
 
   server.registerTool(
@@ -343,7 +354,7 @@ function createSession(deps: McpDeps): McpServer {
     'save_review',
     {
       description: TOOL_DESCRIPTIONS.save_review,
-      inputSchema: { repo: repoParam, name: analysisNameSchema, review: reviewDocumentSchema },
+      inputSchema: { repo: repoParam, name: analysisNameSchema, review: reviewSchema },
       annotations: { idempotentHint: true },
     },
     ({ repo, name, review }) => deliver('save_review', 'review', repo, name, review),

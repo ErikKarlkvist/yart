@@ -91,7 +91,7 @@ describe('startMcpServer', () => {
     expect(result.isError).toBeFalsy();
     expect(textOf(result)).toContain('Saved flow "add-todo"');
     expect(delivered).toEqual([
-      { kind: 'flow', name: 'add-todo', content: addTodoFlow, client: 'test-client' },
+      { kind: 'flow', name: 'add-todo', content: { flow: addTodoFlow }, client: 'test-client' },
     ]);
     expect(activity).toEqual([
       expect.objectContaining({
@@ -101,6 +101,16 @@ describe('startMcpServer', () => {
         ok: true,
       }),
     ]);
+  });
+
+  it('skickar med jämförelsen när flödet beskriver en ändring', async () => {
+    const compare = { baseLabel: 'main', headLabel: 'feature/x', base: addTodoFlow };
+    const result = await client.callTool({
+      name: 'save_flow',
+      arguments: { repo: '/repo', name: 'add-todo', flow: addTodoFlow, compare },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(delivered[0]?.content).toEqual({ flow: addTodoFlow, compare });
   });
 
   it('svarar med felen när Reverik avvisar innehållet', async () => {

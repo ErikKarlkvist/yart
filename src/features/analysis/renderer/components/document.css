@@ -83,3 +83,91 @@
   font-size: 12px;
   line-height: 1.45;
 }
+
+/* Reviewvyn: jämförelse, utfall och fynd per flöde */
+.document-view__compare {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.document-view__verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.document-view__verdict.is-error {
+  color: var(--danger);
+}
+
+.document-view__verdict.is-warning {
+  color: var(--warning, var(--fg));
+}
+
+.document-view__missing {
+  margin: 0;
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.document-view__findings {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-view__finding {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--fg-muted);
+  border-radius: 4px;
+  background: var(--bg-panel);
+}
+
+.document-view__finding.is-error {
+  border-left-color: var(--danger);
+}
+
+.document-view__finding.is-warning {
+  border-left-color: var(--warning, var(--fg));
+}
+
+.document-view__finding-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.document-view__finding-open {
+  cursor: pointer;
+}
+
+button.document-view__finding-open:hover .document-view__finding-title {
+  text-decoration: underline;
+}
+
+.document-view__finding-title {
+  font-weight: 600;
+}
+
+.document-view__finding-where {
+  margin-left: auto;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.document-view__finding-text {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}

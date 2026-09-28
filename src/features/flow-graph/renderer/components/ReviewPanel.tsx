@@ -1,16 +1,24 @@
 import { type JSX } from 'react';
 import { type Flow } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
-import { diffFlows, type Review, type ReviewFinding, sortFindings } from '@/common/model/review';
+import {
+  diffFlows,
+  findingLocation,
+  type FlowCompare,
+  type ReviewFinding,
+  sortFindings,
+} from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
 import { FindingDetails } from './FindingDetails';
 import './graph.css';
 
 interface Props {
-  /** Flödet efter ändringen */
+  /** Flödet, efter ändringen när det finns en jämförelse */
   flow: Flow;
-  review: Review;
-  /** Commiten head-flödet beskriver, för kodutdragen */
+  compare: FlowCompare | undefined;
+  /** Fynden som pekar på det här flödet */
+  findings: readonly ReviewFinding[];
+  /** Commiten flödet beskriver, för kodutdragen */
   commit?: string | undefined;
   focusedFindingId: string | null;
   onFocus: (findingId: string | null) => void;
@@ -19,46 +27,38 @@ interface Props {
 /** Fliken Review i nedre panelen: vad som ändrats och fynden, allvarligast först. */
 export function ReviewPanel({
   flow,
-  review,
+  compare,
+  findings,
   commit,
   focusedFindingId,
   onFocus,
 }: Props): JSX.Element {
-  const diff = diffFlows(review.base, flow);
+  const diff = compare ? diffFlows(compare.base, flow) : null;
   const count = (change: string): number =>
-    [...diff.nodes.values(), ...diff.edges.values()].filter((c) => c === change).length;
-  const findings = sortFindings(review.findings);
-  const where = (finding: ReviewFinding): string | null => {
-    if (finding.nodeId) {
-      const node = [...flow.nodes, ...review.base.nodes].find((n) => n.id === finding.nodeId);
-      return node?.label ?? finding.nodeId;
-    }
-    if (finding.edgeId) {
-      const edge = [...flow.edges, ...review.base.edges].find((e) => e.id === finding.edgeId);
-      return edge?.label ?? finding.edgeId;
-    }
-    return null;
-  };
+    diff ? [...diff.nodes.values(), ...diff.edges.values()].filter((c) => c === change).length : 0;
+  const sorted = sortFindings(findings);
 
   return (
     <div className="review">
-      <p className="review__head">
-        <span className="review__compare">
-          {t('review.compare', { base: review.baseLabel, head: review.headLabel })}
-        </span>
-        <span className="review__changes">
-          {t('review.changes', {
-            added: count('added'),
-            removed: count('removed'),
-            changed: count('changed'),
-          })}
-        </span>
-      </p>
-      {findings.length === 0 && <p className="shell__empty">{t('review.empty')}</p>}
+      {compare && (
+        <p className="review__head">
+          <span className="review__compare">
+            {t('review.compare', { base: compare.baseLabel, head: compare.headLabel })}
+          </span>
+          <span className="review__changes">
+            {t('review.changes', {
+              added: count('added'),
+              removed: count('removed'),
+              changed: count('changed'),
+            })}
+          </span>
+        </p>
+      )}
+      {sorted.length === 0 && <p className="shell__empty">{t('review.empty')}</p>}
       <ol className="review__list">
-        {findings.map((finding) => {
+        {sorted.map((finding) => {
           const open = finding.id === focusedFindingId;
-          const location = where(finding);
+          const location = findingLocation(finding, flow, compare?.base);
           return (
             <li
               key={finding.id}

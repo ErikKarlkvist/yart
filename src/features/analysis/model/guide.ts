@@ -20,7 +20,7 @@ export function errorsFileFor(name: string): string {
  * i repot när det öppnas. Bumpa versionen när innehållet ändras så att
  * gamla kopior skrivs över.
  */
-export const GUIDE_VERSION = 11;
+export const GUIDE_VERSION = 12;
 
 const HOW_TO_BUILD = `## How to build a good flow
 
@@ -70,6 +70,12 @@ interface Document {
   summary: string;      // one or two sentences for the analyses list
   content: string;      // a few short paragraphs explaining how the code works
   flows: string[];      // names of saved flows, e.g. add-todo
+}
+
+interface FlowCompare {  // on a flow that describes a change
+  baseLabel: string;    // what the change is compared against, e.g. "main"
+  headLabel: string;    // the change itself, e.g. "feature/todo-lists"
+  base: Flow;           // the same flow as it works on base, before the change
 }
 
 interface System {
@@ -142,14 +148,26 @@ Ids must be unique within their list. Every \`system\`, \`from\`, \`to\`, \`edge
 const REVIEW_RULES = `## Reviews
 
 When the user asks you to review a change (a branch against another branch, a commit,
-a diff), deliver one review per affected data flow:
+a diff), deliver the flows the change touches and then one review document:
+
+1. Read the diff first (\`git diff <base>...<head>\` and the changed files), then follow
+   the data flows the change touches. Ignore flows the change does not affect.
+2. Save each affected flow as it works on head, with a \`compare\` that holds the same
+   flow as it works on base. Keep the same node and edge ids in base and head for
+   things that are the same, so Reverik can show what was added, removed and changed.
+   Give new things new ids.
+3. Save the review: a title, a summary with the verdict, a few paragraphs about what the
+   change does and how it affects the data flows, the names of the flows in \`flows\`,
+   and the findings.
 
 \`\`\`ts
-interface ReviewDocument {
+interface Review {
+  title: string;
+  summary: string;      // one or two sentences: what the change does and the verdict
+  content: string;      // a few short paragraphs about the change and its data flows
   baseLabel: string;    // what the change is compared against, e.g. "main"
   headLabel: string;    // the change itself, e.g. "feature/todo-lists"
-  base: Flow;           // the flow as it works on base, before the change
-  head: Flow;           // the same flow as it works on head, after the change
+  flows: string[];      // names of the saved flows the change touches
   findings: Finding[];  // what looks wrong or risky, may be empty
 }
 
@@ -159,29 +177,27 @@ interface Finding {
   title: string;        // short, e.g. "The cached list is no longer invalidated"
   description: string;  // what happens and why it matters
   suggestion?: string;  // what to do instead
-  nodeId?: string;      // Node.id in head, or in base if the node was removed
-  edgeId?: string;      // Edge.id in head, or in base if the call was removed
+  flow?: string;        // the saved flow the finding is about, one of the names in flows
+  nodeId?: string;      // Node.id in that flow, or in its base if the node was removed
+  edgeId?: string;      // Edge.id in that flow, or in its base if the call was removed
   source?: Source;      // file and line on head
 }
 \`\`\`
 
 Rules for reviews:
 
-- Read the diff first (\`git diff <base>...<head>\` and the changed files), then follow
-  the flows the change touches. Ignore flows the change does not affect.
-- Keep the same node and edge ids in \`base\` and \`head\` for things that are the same,
-  so Reverik can show what was added, removed and changed. Give new things new ids.
 - Use real git references as \`headLabel\` and \`baseLabel\`, e.g. \`feature/x\`,
-  \`origin/feature/x\` or a commit. Reverik checks \`head\` sources against \`headLabel\`
+  \`origin/feature/x\` or a commit. Reverik checks head flows against \`headLabel\`
   when it resolves in this repository (run \`git fetch\` first), so the branch does not
   need to be checked out. If it does not resolve, the working tree is used. \`base\` is
   not checked.
-- Point every finding at a node or a call, and at a file and line where possible. Look
-  for: cache invalidation that disappeared, calls that are now awaited or reordered,
-  work moved inside or outside a transaction, missing error handling or validation,
-  N+1 queries, secrets or data leaving the system, retries and timeouts.
+- Point every finding at a flow by name and at a node or a call in it, and at a file and
+  line where possible. Reverik rejects the review if a flow is not saved or a target does
+  not exist. Look for: cache invalidation that disappeared, calls that are now awaited or
+  reordered, work moved inside or outside a transaction, missing error handling or
+  validation, N+1 queries, secrets or data leaving the system, retries and timeouts.
 - If nothing looks wrong, say so with an \`info\` finding rather than inventing problems.
-`;
+- Represent warnings as findings, never as warning emojis in labels.`;
 
 const EXAMPLE = `## Example
 
@@ -237,20 +253,21 @@ user explicitly asks for something else in the same message:
   a different flow, for example a variant where something fails.
 - Do not create other files in \`${REVERIK_DIR}/\`. After saving, tell the user in one or two
   sentences what the flow shows.
-- A review of a change is delivered the same way, to \`${REVIEWS_DIR}/<name>.json\`. See
-  "Reviews" below.
+- A flow that describes a change is saved as \`{ "flow": Flow, "compare": FlowCompare }\`.
+  A review of a change is delivered the same way, to \`${REVIEWS_DIR}/<name>.json\`, after
+  its flows. See "Reviews" below.
 
 ${HOW_TO_BUILD}
 
 ${SCHEMA}
 
-${REVIEW_RULES.replace('deliver one review per affected data flow:', `deliver one review file per affected data flow to \`${REVIEWS_DIR}/<name>.json\`:`)}
+${REVIEW_RULES}
 
 ## Warnings in diagrams
 
-- Represent warnings as structured \`findings\` in \`.reverik/reviews/<name>.json\`, never as warning emojis in labels or as flow files.
-- For a warning without a code change, put the same current flow in \`base\` and \`head\`, use the same commit for both labels, and say in the summary that this is a current-state analysis. Preserve the original flow file.
-- Give each finding a unique id and reference existing nodes or edges. Use severity \`info\`, \`warning\` or \`error\`, and include \`source\` when available.
+- For a warning about the current code without a change, save the flow with the same
+  current flow in \`compare.base\` and the same commit for both labels, then a review that
+  says in its summary that this is a current-state analysis.
 - After saving, check the matching \`.errors.json\` file if one appears.
 
 ${EXAMPLE}`;
@@ -261,7 +278,7 @@ ${EXAMPLE}`;
  * i användarens skillmapp. Bumpa versionen när innehållet ändras så appen
  * kan visa att den installerade kopian är gammal.
  */
-export const SKILL_VERSION = 1;
+export const SKILL_VERSION = 2;
 
 export function buildSkill(): string {
   return `---
@@ -315,9 +332,9 @@ ${SCHEMA}
 
 ${REVIEW_RULES}
 
-- For a warning about the current code without a change, put the same current flow in
-  \`base\` and \`head\`, use the same commit for both labels, and say in the summary that
-  this is a current-state analysis.
+- For a warning about the current code without a change, save the flow with the same
+  current flow in \`compare.base\` and the same commit for both labels, then a review that
+  says in its summary that this is a current-state analysis.
 
 ${EXAMPLE}`;
 }

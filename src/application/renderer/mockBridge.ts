@@ -22,15 +22,22 @@ export function installMockBridge(): void {
     ],
     lastOpenedAt: new Date().toISOString(),
   };
-  const builtin = demoAnalyses.map(({ flow, review }, i) => ({
-    id: `builtin:${i}`,
-    repoPath: demoPath,
-    origin: 'builtin',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    kind: 'flow',
-    flow,
-    ...(review ? { review } : {}),
-  }));
+  const builtin = demoAnalyses.map((demo, i) => {
+    const base = {
+      id: `builtin:${i}`,
+      repoPath: demoPath,
+      origin: 'builtin',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      name: demo.name,
+    };
+    if (demo.kind === 'review') return { ...base, kind: 'review', review: demo.review };
+    return {
+      ...base,
+      kind: 'flow',
+      flow: demo.flow,
+      ...(demo.compare ? { compare: demo.compare } : {}),
+    };
+  });
   let recent: (typeof demoRepo)[] = [];
   const listeners = new Map<string, Set<(payload: unknown) => void>>();
   const emit = (event: string, payload: unknown): void => {

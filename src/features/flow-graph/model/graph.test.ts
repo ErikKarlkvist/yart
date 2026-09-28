@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addTodoFlow,
   addTodoReview,
+  addTodoWithListCompare,
   addTodoWithListFlow,
   listTodosFlow,
 } from '@/common/model/fixtures';
@@ -183,8 +184,8 @@ describe('hideElements', () => {
 });
 
 describe('buildModel med review', () => {
-  const diff = diffFlows(addTodoReview.base, addTodoWithListFlow);
-  const merged = mergeForReview(addTodoWithListFlow, addTodoReview.base, diff);
+  const diff = diffFlows(addTodoWithListCompare.base, addTodoWithListFlow);
+  const merged = mergeForReview(addTodoWithListFlow, addTodoWithListCompare.base, diff);
   const annotations = { diff, findings: addTodoReview.findings };
 
   it('märker noder med ändring och fynd i detaljvyn', () => {

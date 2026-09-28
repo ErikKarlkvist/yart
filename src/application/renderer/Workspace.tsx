@@ -5,7 +5,9 @@ import { Icon } from '@/common/renderer/Icon';
 import { Splitter } from '@/common/renderer/Splitter';
 import {
   DocumentView,
+  findingsForFlow,
   InboxLog,
+  ReviewView,
   type SavedAnalysis,
   type SavedFlowAnalysis,
 } from '@/features/analysis';
@@ -36,6 +38,8 @@ interface Props {
   /** Räknas upp vid varje fokusering, så samma fynd kan fokuseras igen */
   focusSeq: number;
   onFocusFinding: (findingId: string | null) => void;
+  /** Fokuserar ett fynd i ett annat flöde, från reviewvyn */
+  onFocusFindingIn: (analysisId: string, findingId: string) => void;
 }
 
 /** Arbetsytan: grafen och den nedre panelen för den valda analysen. */
@@ -52,6 +56,7 @@ export function Workspace({
   focusedFindingId,
   focusSeq,
   onFocusFinding,
+  onFocusFindingIn,
 }: Props): JSX.Element {
   const [source, setSource] = useState<SourceRef | null>(null);
   // Fliken följer fokuseringen: ett nytt fynd visar Review tills användaren väljer en annan flik.
@@ -77,13 +82,15 @@ export function Workspace({
 
   const flowAnalysis = analysis?.kind === 'flow' ? analysis : null;
   const documentAnalysis = analysis?.kind === 'document' ? analysis : null;
+  const reviewAnalysis = analysis?.kind === 'review' ? analysis : null;
   const relatedFlows = analyses.filter((item): item is SavedFlowAnalysis => item.kind === 'flow');
+  const findings = flowAnalysis ? findingsForFlow(analyses, flowAnalysis.name) : [];
   const shownSource = flowAnalysis ? source : null;
   // Flikar utan innehåll faller tillbaka: dokument visar sin text i arbetsytan.
   const enabled: Record<PanelTab, boolean> = {
     code: shownSource !== null,
     summary: flowAnalysis !== null,
-    review: flowAnalysis?.review !== undefined,
+    review: flowAnalysis !== null && (flowAnalysis.compare !== undefined || findings.length > 0),
     log: true,
   };
   const activeTab: PanelTab = enabled[tab]
@@ -117,7 +124,8 @@ export function Workspace({
             onSelectSource={onSelectSource}
             flowName={flowAnalysis.name}
             onAsk={onAsk}
-            review={flowAnalysis.review}
+            compare={flowAnalysis.compare}
+            findings={findings}
             focusedFindingId={focusedFindingId}
             focusSeq={focusSeq}
             onFocusFinding={onFocusFinding}
@@ -125,6 +133,13 @@ export function Workspace({
           />
         ) : documentAnalysis ? (
           <DocumentView analysis={documentAnalysis} flows={relatedFlows} onOpenFlow={onOpenFlow} />
+        ) : reviewAnalysis ? (
+          <ReviewView
+            analysis={reviewAnalysis}
+            flows={relatedFlows}
+            onOpenFlow={onOpenFlow}
+            onOpenFinding={onFocusFindingIn}
+          />
         ) : (
           <p className="shell__empty">{hasRepo ? t('app.chooseAnalysis') : t('app.chooseRepo')}</p>
         )}
@@ -167,10 +182,11 @@ export function Workspace({
             <SourceView source={shownSource} commit={analysis?.ref?.commit} />
           ) : activeTab === 'summary' && flowAnalysis ? (
             <FlowSummary flow={flowAnalysis.flow} />
-          ) : activeTab === 'review' && flowAnalysis?.review ? (
+          ) : activeTab === 'review' && flowAnalysis ? (
             <ReviewPanel
               flow={flowAnalysis.flow}
-              review={flowAnalysis.review}
+              compare={flowAnalysis.compare}
+              findings={findings}
               commit={flowAnalysis.ref?.commit}
               focusedFindingId={focusedFindingId}
               onFocus={onFocusFinding}

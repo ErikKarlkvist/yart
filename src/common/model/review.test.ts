@@ -1,38 +1,42 @@
 import { describe, expect, it } from 'vitest';
-import { addTodoReview, addTodoWithListFlow } from './fixtures/add-todo-review';
+import {
+  ADD_TODO_WITH_LIST_NAME,
+  addTodoReview,
+  addTodoWithListCompare,
+  addTodoWithListFlow,
+} from './fixtures/add-todo-review';
 import { validateFlow } from './flow';
 import {
+  checkFindingTargets,
   diffFlows,
+  findingLocation,
+  flowCompareSchema,
   formatFindings,
   mergeForReview,
   reviewSchema,
   sortFindings,
-  validateReviewDocument,
+  validateReview,
   worstSeverity,
 } from './review';
 
+const base = addTodoWithListCompare.base;
+const lookup = (name: string): { flow: typeof addTodoWithListFlow; base?: typeof base } | null =>
+  name === ADD_TODO_WITH_LIST_NAME ? { flow: addTodoWithListFlow, base } : null;
+
 describe('review-fixturen', () => {
-  it('validerar mot schemat och head-flödet mot flödesschemat', () => {
+  it('validerar reviewn, jämförelsen och head-flödet mot schemana', () => {
     expect(reviewSchema.safeParse(addTodoReview).success).toBe(true);
+    expect(flowCompareSchema.safeParse(addTodoWithListCompare).success).toBe(true);
     expect(validateFlow(addTodoWithListFlow).ok).toBe(true);
   });
 
   it('pekar bara på noder och kanter som finns i head eller base', () => {
-    const nodeIds = new Set(
-      [...addTodoWithListFlow.nodes, ...addTodoReview.base.nodes].map((n) => n.id),
-    );
-    const edgeIds = new Set(
-      [...addTodoWithListFlow.edges, ...addTodoReview.base.edges].map((e) => e.id),
-    );
-    for (const finding of addTodoReview.findings) {
-      if (finding.nodeId) expect(nodeIds.has(finding.nodeId), finding.id).toBe(true);
-      if (finding.edgeId) expect(edgeIds.has(finding.edgeId), finding.id).toBe(true);
-    }
+    expect(checkFindingTargets(addTodoReview, lookup)).toEqual([]);
   });
 });
 
 describe('diffFlows', () => {
-  const diff = diffFlows(addTodoReview.base, addTodoWithListFlow);
+  const diff = diffFlows(base, addTodoWithListFlow);
 
   it('hittar tillagt, borttaget och ändrat', () => {
     expect(diff.nodes.get('list-repository')).toBe('added');
@@ -52,8 +56,8 @@ describe('diffFlows', () => {
 
 describe('mergeForReview', () => {
   it('lägger till det borttagna utan att spela upp det', () => {
-    const diff = diffFlows(addTodoReview.base, addTodoWithListFlow);
-    const merged = mergeForReview(addTodoWithListFlow, addTodoReview.base, diff);
+    const diff = diffFlows(base, addTodoWithListFlow);
+    const merged = mergeForReview(addTodoWithListFlow, base, diff);
     expect(merged.edges.some((e) => e.id === 'invalidate')).toBe(true);
     expect(merged.steps).toBe(addTodoWithListFlow.steps);
     expect(validateFlow(merged).ok).toBe(true);
@@ -69,35 +73,71 @@ describe('findings', () => {
   });
 });
 
-describe('validateReviewDocument', () => {
-  it('delar upp dokumentet i flöde och review', () => {
-    const result = validateReviewDocument({
-      baseLabel: 'main',
-      headLabel: 'feature',
-      base: addTodoReview.base,
-      head: addTodoWithListFlow,
-      findings: addTodoReview.findings,
+describe('validateReview', () => {
+  it('kräver att fynd pekar på flöden i listan', () => {
+    const result = validateReview({
+      ...addTodoReview,
+      findings: [{ ...addTodoReview.findings[0], flow: 'other' }],
     });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.flow.title).toBe('Add todo to a list');
-    expect(result.review.findings).toHaveLength(4);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toContain('"other"');
+  });
+
+  it('kräver ett flöde när fyndet pekar på en nod', () => {
+    const { flow: _flow, ...finding } = addTodoReview.findings[0] ?? { id: 'x' };
+    const result = validateReview({ ...addTodoReview, findings: [finding] });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toContain('names no flow');
   });
 
   it('ger läsbara fel', () => {
-    const result = validateReviewDocument({ baseLabel: 'main', head: {} });
+    const result = validateReview({ baseLabel: 'main' });
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.errors.some((e) => e.startsWith('headLabel'))).toBe(true);
+    expect(result.errors.some((e: string) => e.startsWith('headLabel'))).toBe(true);
+  });
+});
+
+describe('checkFindingTargets', () => {
+  it('rapporterar flöden som inte är sparade och mål som saknas', () => {
+    const errors = checkFindingTargets(
+      {
+        ...addTodoReview,
+        flows: [ADD_TODO_WITH_LIST_NAME, 'missing'],
+        findings: [
+          { ...addTodoReview.findings[0], id: 'a', nodeId: 'ghost' },
+          { ...addTodoReview.findings[1], id: 'b', edgeId: 'ghost-edge' },
+        ],
+      } as typeof addTodoReview,
+      lookup,
+    );
+    expect(errors).toEqual([
+      expect.stringContaining('"missing" is not saved'),
+      expect.stringContaining('node "ghost"'),
+      expect.stringContaining('call "ghost-edge"'),
+    ]);
+  });
+
+  it('räknar borttagna noder i base som giltiga mål', () => {
+    const errors = checkFindingTargets(
+      {
+        ...addTodoReview,
+        findings: [
+          { ...addTodoReview.findings[0], id: 'a', nodeId: undefined, edgeId: 'invalidate' },
+        ],
+      } as typeof addTodoReview,
+      lookup,
+    );
+    expect(errors).toEqual([]);
   });
 });
 
 describe('formatFindings', () => {
   it('skriver en numrerad lista med plats, fil och förslag, allvarligast först', () => {
-    const text = formatFindings(
-      addTodoReview.findings.slice(0, 2).reverse(),
-      addTodoWithListFlow,
-      addTodoReview.base,
+    const text = formatFindings(addTodoReview.findings.slice(0, 2).reverse(), (finding) =>
+      findingLocation(finding, addTodoWithListFlow, base),
     );
     expect(text.split('\n')[0]).toBe(
       '1. [error] The cached list is no longer invalidated (TodoService.create, backend/src/services/TodoService.ts:22)',

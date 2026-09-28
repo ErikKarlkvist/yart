@@ -67,49 +67,58 @@ export function AnalysisList(): JSX.Element {
               {group.items.map((analysis) => {
                 const active = analysis.id === current?.id;
                 const title = analysisTitle(analysis);
+                const compare =
+                  analysis.kind === 'review'
+                    ? analysis.review
+                    : analysis.kind === 'flow'
+                      ? analysis.compare
+                      : undefined;
                 const description =
                   analysis.kind === 'document'
                     ? analysis.document.summary
-                    : analysis.review
-                      ? t('review.compare', {
-                          base: analysis.review.baseLabel,
-                          head: analysis.review.headLabel,
-                        })
+                    : compare
+                      ? t('review.compare', { base: compare.baseLabel, head: compare.headLabel })
                       : analysis.origin === 'builtin'
                         ? t('analyses.builtin')
                         : formatDate(analysis.createdAt);
+                const meta =
+                  analysis.kind === 'flow'
+                    ? t('analyses.steps', { count: analysis.flow.steps.length })
+                    : analysis.kind === 'document'
+                      ? t('analyses.linkedFlows', { count: analysis.document.flows.length })
+                      : t('analyses.findings', { count: analysis.review.findings.length });
                 return (
                   <li key={analysis.id} className={`analyses__item${active ? ' is-active' : ''}`}>
                     <button
                       type="button"
                       className="analyses__open"
                       title={
-                        analysis.kind === 'document'
-                          ? analysis.document.summary
-                          : analysis.flow.question
+                        analysis.kind === 'flow'
+                          ? analysis.flow.question
+                          : analysisSummary(analysis)
                       }
                       onClick={() => {
                         select(active ? null : analysis.id);
                       }}
                     >
                       <span className="analyses__title">
-                        <span className="analyses__tag">
-                          {t(analysis.kind === 'document' ? 'analyses.document' : 'analyses.flow')}
-                        </span>
-                        {analysis.kind === 'flow' && analysis.review && (
+                        {analysis.kind === 'review' ? (
                           <span
                             className={`analyses__tag is-${worstSeverity(analysis.review.findings) ?? 'none'}`}
                           >
                             <Icon name="warning" size="sm" /> {t('analyses.review')}
                           </span>
+                        ) : (
+                          <span className="analyses__tag">
+                            {t(
+                              analysis.kind === 'document' ? 'analyses.document' : 'analyses.flow',
+                            )}
+                          </span>
                         )}
                         <span className="analyses__title-text">{title}</span>
                       </span>
                       <span className="analyses__meta">
-                        {description}
-                        {analysis.kind === 'flow'
-                          ? ` · ${t('analyses.steps', { count: analysis.flow.steps.length })}`
-                          : ` · ${t('analyses.linkedFlows', { count: analysis.document.flows.length })}`}
+                        {description} · {meta}
                       </span>
                     </button>
                     {analysis.origin !== 'builtin' && (
@@ -166,6 +175,17 @@ function groupAnalyses(analyses: readonly SavedAnalysis[]): Group[] {
   }
   const order = (g: Group): number => (g.key === 'builtin' ? 0 : g.key === 'worktree' ? 2 : 1);
   return [...groups.values()].sort((a, b) => order(a) - order(b));
+}
+
+function analysisSummary(analysis: SavedAnalysis): string {
+  switch (analysis.kind) {
+    case 'flow':
+      return analysis.flow.summary;
+    case 'document':
+      return analysis.document.summary;
+    case 'review':
+      return analysis.review.summary;
+  }
 }
 
 function formatDate(iso: string): string {

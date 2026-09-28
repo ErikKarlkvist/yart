@@ -11,11 +11,11 @@ export const TOOL_DESCRIPTIONS = {
   get_analysis:
     'Returns a saved flow or document as JSON, exactly as Reverik stores it. Use it to update an existing flow instead of writing it from scratch.',
   save_flow:
-    'Saves a data flow through the codebase so the user sees it as an animated sequence diagram in Reverik. Follow the data from the entry point the question implies (a UI action, an HTTP request, a queue message) through handlers, services, storage and external systems and back to the caller. Every node and edge that exists in the repository needs a source file and line that really exist; Reverik checks them and rejects the flow otherwise. If the result is an error, fix the content and call the tool again with the same name.',
+    'Saves a data flow through the codebase so the user sees it as an animated sequence diagram in Reverik. Follow the data from the entry point the question implies (a UI action, an HTTP request, a queue message) through handlers, services, storage and external systems and back to the caller. Every node and edge that exists in the repository needs a source file and line that really exist; Reverik checks them and rejects the flow otherwise. When the flow describes a change, include compare with the same flow as it works before the change. If the result is an error, fix the content and call the tool again with the same name.',
   save_document:
     'Saves a short, high-level document about how the codebase or a major feature works, with links to saved flows for the details. Use it for architecture overviews and explanations that do not fit a single flow.',
   save_review:
-    'Saves a review of a change: the same data flow before (base) and after (head) the change, with findings about what looks wrong or risky. Read the diff first, then follow the flows the change touches and ignore the rest. Keep node and edge ids stable between base and head so Reverik can show what changed. Point every finding at a node or edge and at a file and line on head.',
+    'Saves a review of a change as a document with findings. First save every data flow the change touches with save_flow and a compare, then call this with the names of those flows and findings that point into them by flow name and node or edge id. Read the diff first and ignore flows the change does not affect. Reverik rejects the review if a flow is not saved or a finding points at a node or edge that does not exist.',
 } as const;
 
 export type ToolName = keyof typeof TOOL_DESCRIPTIONS;
