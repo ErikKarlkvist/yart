@@ -1,7 +1,19 @@
 import { app } from 'electron';
 import { emitEvent, handleChannel } from '@/common/main/ipc';
-import { installSkillChannel, mcpActivityEvent, mcpStatusChannel } from '../ipc/channels';
-import { candidatePorts, MCP_ACTIVITY_LIMIT, type McpActivity, type McpStatus } from '../model/mcp';
+import {
+  installSkillChannel,
+  mcpActivityEvent,
+  mcpStatusChannel,
+  skillTextChannel,
+} from '../ipc/channels';
+import { type SkillTarget } from '../model/agents';
+import {
+  candidatePorts,
+  MCP_ACTIVITY_LIMIT,
+  type McpActivity,
+  type McpStatus,
+  type SkillStatus,
+} from '../model/mcp';
 import { type McpDeps, type McpServerHandle, startMcpServer } from './server';
 import { installSkill, skillPath, skillState } from './skill';
 
@@ -12,21 +24,26 @@ export function registerMcpHandlers(deps: McpRegistration): void {
   const activity: McpActivity[] = [];
   let handle: McpServerHandle | null = null;
   let error: string | null = null;
-  const path = skillPath(app.getPath('home'));
+  const home = app.getPath('home');
 
+  const skillStatus = async (target: SkillTarget): Promise<SkillStatus> => {
+    const path = skillPath(home, target);
+    return { path, state: await skillState(path, deps.skill()) };
+  };
   const status = async (): Promise<McpStatus> => ({
     url: handle?.url ?? null,
     sessions: handle?.sessions() ?? 0,
     activity: [...activity],
     error,
-    skill: { path, state: await skillState(path, deps.skill()) },
+    skills: { claude: await skillStatus('claude'), codex: await skillStatus('codex') },
   });
 
   handleChannel(mcpStatusChannel, status);
-  handleChannel(installSkillChannel, async () => {
-    await installSkill(path, deps.skill());
+  handleChannel(installSkillChannel, async ({ target }) => {
+    await installSkill(skillPath(home, target), deps.skill());
     return status();
   });
+  handleChannel(skillTextChannel, () => deps.skill());
 
   const onActivity = (entry: McpActivity): void => {
     activity.unshift(entry);

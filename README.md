@@ -13,10 +13,12 @@ fil och rad som finns, och ritar upp resultatet.
 claude mcp add --transport http reverik http://127.0.0.1:7390/mcp
 ```
 
-Adressen står i appens sidfot, och Anslut-panelen installerar en skill som lär
-Claude Code när och hur Reverik används. Agenten anger repots rot i varje anrop,
-så den kan köras från vilken mapp som helst. Äldre versioner skapade en mapp
-`.reverik/` i repot; den används inte längre och kan tas bort.
+Första starten visar en guide där man väljer agent: Claude Code, Codex eller
+annan. Den ger kommandot att köra, installerar en skill i agentens skillmapp,
+eller kopierar guiden som text för agenter utan skillmapp. Samma sak finns i
+Anslut-panelen bakom MCP-adressen i sidfoten. Agenten anger repots rot i varje
+anrop, så den kan köras från vilken mapp som helst. Äldre versioner skapade en
+mapp `.reverik/` i repot; den används inte längre och kan tas bort.
 
 I `demo/todo-app` finns en liten app att analysera: React-frontend,
 Express-backend, Postgres och Redis, med inbyggda analyser och en demo-review.

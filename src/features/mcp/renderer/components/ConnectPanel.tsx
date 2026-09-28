@@ -1,46 +1,27 @@
 import { type JSX } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
-import { claudeMcpAddCommand, type McpStatus } from '../../model/mcp';
-import { useOnboarding } from '../OnboardingContext';
-import { CommandCopy } from './CommandCopy';
-import { SkillInstall } from './SkillInstall';
+import { useSetup } from '../SetupContext';
+import { type McpState } from '../useMcpStatus';
+import { AgentSetup } from './AgentSetup';
 import './connect.css';
 
-interface Props {
-  status: McpStatus | null;
-  onInstallSkill: () => Promise<void>;
-}
-
 /**
- * Anslut-panelen: adressen agenter kopplar till, kommandot för Claude Code,
- * skillen att installera och de senaste verktygsanropen.
+ * Anslut-panelen: vald agent med kopplingen och guiden för den, antalet
+ * anslutna sessioner och de senaste verktygsanropen.
  */
-export function ConnectPanel({ status, onInstallSkill }: Props): JSX.Element {
-  const onboarding = useOnboarding();
+export function ConnectPanel({ mcp }: { mcp: McpState }): JSX.Element {
+  const { showGuide } = useSetup();
+  const { status } = mcp;
 
   return (
     <div className="connect">
       <section className="connect__section">
         <h3 className="connect__heading">{t('connect.serverHeading')}</h3>
-        {status?.url ? (
-          <>
-            <p className="connect__text">{t('connect.serverText')}</p>
-            <code className="connect__code">{status.url}</code>
-            <p className="connect__text">{t('connect.claudeText')}</p>
-            <CommandCopy command={claudeMcpAddCommand(status.url)} />
-            <p className="connect__muted">{t('connect.sessions', { count: status.sessions })}</p>
-          </>
-        ) : status?.error ? (
-          <p className="connect__error">{t('app.mcpFailed', { error: status.error })}</p>
-        ) : (
-          <p className="connect__muted">{t('app.mcpStarting')}</p>
+        <p className="connect__text">{t('connect.serverText')}</p>
+        <AgentSetup mcp={mcp} showPath />
+        {status?.url && (
+          <p className="connect__muted">{t('connect.sessions', { count: status.sessions })}</p>
         )}
-      </section>
-
-      <section className="connect__section">
-        <h3 className="connect__heading">{t('connect.skillHeading')}</h3>
-        <p className="connect__text">{t('connect.skillText')}</p>
-        {status && <SkillInstall status={status} onInstall={onInstallSkill} showPath />}
       </section>
 
       <section className="connect__section connect__section--grow">
@@ -70,7 +51,7 @@ export function ConnectPanel({ status, onInstallSkill }: Props): JSX.Element {
       </section>
 
       <section className="connect__section">
-        <button type="button" className="text-button" onClick={onboarding.show}>
+        <button type="button" className="text-button" onClick={showGuide}>
           {t('connect.showGuide')}
         </button>
       </section>

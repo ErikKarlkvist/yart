@@ -1,3 +1,5 @@
+import { type SkillTarget } from './agents';
+
 /**
  * MCP-servern är vägen in för agenter som körs utanför appen: Claude Code,
  * Codex eller vad som helst som talar MCP över streamable HTTP. Den lyssnar
@@ -22,8 +24,13 @@ export interface McpActivity {
   summary: string;
 }
 
-/** Om skillen för Claude Code finns i användarens skillmapp och är aktuell. */
+/** Om skillen finns i agentens skillmapp och är aktuell. */
 export type SkillState = 'missing' | 'outdated' | 'current';
+
+export interface SkillStatus {
+  path: string;
+  state: SkillState;
+}
 
 export interface McpStatus {
   /** null tills servern lyssnar, eller om den inte kunde starta */
@@ -31,19 +38,11 @@ export interface McpStatus {
   sessions: number;
   activity: McpActivity[];
   error: string | null;
-  skill: { path: string; state: SkillState };
+  skills: Readonly<Record<SkillTarget, SkillStatus>>;
 }
-
-/** Var Claude Code letar efter personliga skills, relativt hemmappen. */
-export const SKILL_RELATIVE_PATH = '.claude/skills/reverik/SKILL.md';
 
 export function mcpUrl(port: number): string {
   return `http://${MCP_HOST}:${port}${MCP_PATH}`;
-}
-
-/** Kommandot som registrerar servern i Claude Code. */
-export function claudeMcpAddCommand(url: string): string {
-  return `claude mcp add --transport http reverik ${url}`;
 }
 
 /** Portarna att pröva i ordning. Miljövariabeln låser till en enda. */

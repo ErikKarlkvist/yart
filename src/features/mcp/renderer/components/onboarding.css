@@ -35,18 +35,12 @@
   font-size: 14px;
 }
 
-.onboarding__step {
+.onboarding__card .setup__step {
   padding: 14px 0;
-  border-top: 1px solid var(--border);
 }
 
-.onboarding__step-title {
-  margin: 0 0 4px;
+.onboarding__card .setup__step-title {
   font-size: 14px;
-}
-
-.onboarding__text {
-  margin: 0 0 8px;
 }
 
 .onboarding__examples {

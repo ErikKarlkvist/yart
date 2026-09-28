@@ -1,12 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { useIpcEvent } from '@/common/renderer/useIpcEvent';
-import { installSkillChannel, mcpActivityEvent, mcpStatusChannel } from '../ipc/channels';
+import {
+  installSkillChannel,
+  mcpActivityEvent,
+  mcpStatusChannel,
+  skillTextChannel,
+} from '../ipc/channels';
+import { type SkillTarget } from '../model/agents';
 import { type McpStatus } from '../model/mcp';
 
 export interface McpState {
   status: McpStatus | null;
-  installSkill: () => Promise<void>;
+  installSkill: (target: SkillTarget) => Promise<void>;
+  /** Skillen som text, att klistra in hos en agent utan skillmapp */
+  skillText: () => Promise<string>;
 }
 
 /** Serverns status, hämtad vid start och igen efter varje verktygsanrop. */
@@ -24,8 +32,9 @@ export function useMcpStatus(): McpState {
     };
   }, [refresh]);
   useIpcEvent(mcpActivityEvent, refresh);
-  const installSkill = useCallback(async () => {
-    setStatus(await invokeChannel(installSkillChannel, undefined));
+  const installSkill = useCallback(async (target: SkillTarget) => {
+    setStatus(await invokeChannel(installSkillChannel, { target }));
   }, []);
-  return { status, installSkill };
+  const skillText = useCallback(() => invokeChannel(skillTextChannel, undefined), []);
+  return { status, installSkill, skillText };
 }

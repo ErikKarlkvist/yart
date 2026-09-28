@@ -15,12 +15,13 @@ describe('skill', () => {
     await rm(home, { recursive: true, force: true });
   });
 
-  it('ligger där Claude Code letar efter personliga skills', () => {
-    expect(skillPath('/home/me')).toBe('/home/me/.claude/skills/reverik/SKILL.md');
+  it('ligger där respektive agent letar efter personliga skills', () => {
+    expect(skillPath('/home/me', 'claude')).toBe('/home/me/.claude/skills/reverik/SKILL.md');
+    expect(skillPath('/home/me', 'codex')).toBe('/home/me/.codex/skills/reverik/SKILL.md');
   });
 
   it('installerar och känner igen en aktuell eller gammal kopia', async () => {
-    const path = skillPath(home);
+    const path = skillPath(home, 'claude');
     expect(await skillState(path, 'v2')).toBe('missing');
     await installSkill(path, 'v1');
     expect(await skillState(path, 'v2')).toBe('outdated');

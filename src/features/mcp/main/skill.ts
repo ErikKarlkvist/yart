@@ -1,9 +1,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { SKILL_RELATIVE_PATH, type SkillState } from '../model/mcp';
+import { SKILL_PATHS, type SkillTarget } from '../model/agents';
+import { type SkillState } from '../model/mcp';
 
-export function skillPath(homeDir: string): string {
-  return join(homeDir, SKILL_RELATIVE_PATH);
+export function skillPath(homeDir: string, target: SkillTarget): string {
+  return join(homeDir, SKILL_PATHS[target]);
 }
 
 /** Jämför den installerade kopian med det appen skulle skriva. */

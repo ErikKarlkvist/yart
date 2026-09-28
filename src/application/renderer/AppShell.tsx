@@ -191,7 +191,7 @@ export function AppShell(): JSX.Element {
               <ReviewSidebar onFocus={focusFinding} />
             </div>
             <div className={`shell__side-pane${sideMode === 'connect' ? ' is-active' : ''}`}>
-              <ConnectPanel status={mcp.status} onInstallSkill={mcp.installSkill} />
+              <ConnectPanel mcp={mcp} />
             </div>
           </div>
         </div>

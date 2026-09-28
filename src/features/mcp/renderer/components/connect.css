@@ -124,3 +124,53 @@
   color: var(--fg-muted);
   overflow-wrap: anywhere;
 }
+
+/* Agentväljaren och stegen som följer den, i guiden och i panelen */
+.agent-picker {
+  display: inline-flex;
+  margin: 0 0 12px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.agent-picker__option {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agent-picker__option:hover {
+  color: var(--fg);
+}
+
+.agent-picker__option.is-active {
+  background: var(--bg-panel);
+  color: var(--fg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+
+.setup__step {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.setup__step-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+.setup__text {
+  margin: 0 0 8px;
+}
+
+.connect__code {
+  white-space: pre-wrap;
+}

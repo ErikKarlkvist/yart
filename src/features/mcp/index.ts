@@ -1,4 +1,4 @@
 export { ConnectPanel } from './renderer/components/ConnectPanel';
 export { Onboarding } from './renderer/components/Onboarding';
-export { OnboardingProvider } from './renderer/OnboardingProvider';
+export { SetupProvider } from './renderer/SetupProvider';
 export { useMcpStatus } from './renderer/useMcpStatus';

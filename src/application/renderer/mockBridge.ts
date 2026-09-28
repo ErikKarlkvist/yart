@@ -46,7 +46,10 @@ export function installMockBridge(): void {
     sessions: 0,
     activity: [],
     error: null,
-    skill: { path: '/mock/home/.claude/skills/reverik/SKILL.md', state: 'missing' },
+    skills: {
+      claude: { path: '/mock/home/.claude/skills/reverik/SKILL.md', state: 'missing' },
+      codex: { path: '/mock/home/.codex/skills/reverik/SKILL.md', state: 'missing' },
+    },
   };
 
   const handlers: Record<string, (payload: unknown) => unknown> = {
@@ -71,10 +74,15 @@ export function installMockBridge(): void {
       (payload as { repoPath: string }).repoPath === demoPath ? builtin : [],
     'analysis:delete': () => builtin,
     'mcp:status': () => mockMcpStatus,
-    'mcp:install-skill': () => ({
-      ...mockMcpStatus,
-      skill: { ...mockMcpStatus.skill, state: 'current' },
-    }),
+    'mcp:install-skill': (payload) => {
+      const { target } = payload as { target: 'claude' | 'codex' };
+      const skills = {
+        ...mockMcpStatus.skills,
+        [target]: { ...mockMcpStatus.skills[target], state: 'current' },
+      };
+      return { ...mockMcpStatus, skills };
+    },
+    'mcp:skill-text': () => '# Reverik guide (mock)',
     'repo:read-source': async (payload) => {
       const {
         file,

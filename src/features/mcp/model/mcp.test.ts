@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { candidatePorts, claudeMcpAddCommand, DEFAULT_MCP_PORT, mcpUrl } from './mcp';
+import { candidatePorts, DEFAULT_MCP_PORT, mcpUrl } from './mcp';
 
 describe('candidatePorts', () => {
   it('prövar standardporten och några uppåt', () => {
@@ -14,10 +14,8 @@ describe('candidatePorts', () => {
   });
 });
 
-describe('claudeMcpAddCommand', () => {
-  it('ger kommandot för Claude Code', () => {
-    expect(claudeMcpAddCommand(mcpUrl(7390))).toBe(
-      'claude mcp add --transport http reverik http://127.0.0.1:7390/mcp',
-    );
+describe('mcpUrl', () => {
+  it('pekar på loopback och MCP-sökvägen', () => {
+    expect(mcpUrl(7390)).toBe('http://127.0.0.1:7390/mcp');
   });
 });
