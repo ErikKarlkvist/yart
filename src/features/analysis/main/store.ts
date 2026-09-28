@@ -7,90 +7,90 @@ import { type Review } from '@/common/model/review';
 import {
   type AnalysisRef,
   type SavedAnalysis,
-  type SavedDocumentAnalysis,
-  type SavedFlowAnalysis,
   savedAnalysesSchema,
   sortAnalyses,
 } from '../model/analysis';
 
+/** Det som sparas: namnet, var det kom ifrån och innehållet per sort. */
+export type NewAnalysis = {
+  name: string;
+  file?: string;
+  ref?: AnalysisRef | null;
+} & (
+  { kind: 'flow'; flow: Flow; review?: Review } | { kind: 'document'; document: ReverikDocument }
+);
+
 /**
  * Sparar analyser som en JSON-fil per repo under en basmapp. Basmappen
- * skickas in så att lagringen går att testa utan Electron.
+ * skickas in så att lagringen går att testa utan Electron. Skrivningar till
+ * samma repo köas, så två agenter som levererar samtidigt inte skriver över
+ * varandra.
  */
 export class AnalysisStore {
+  private readonly queues = new Map<string, Promise<unknown>>();
+
   constructor(private readonly baseDir: string) {}
 
   async list(repoPath: string): Promise<SavedAnalysis[]> {
     return sortAnalyses(await this.read(repoPath));
   }
 
-  async save(repoPath: string, flow: Flow): Promise<SavedFlowAnalysis> {
-    const analysis: SavedFlowAnalysis = {
-      id: randomUUID(),
-      repoPath,
-      origin: 'ai',
-      createdAt: new Date().toISOString(),
-      kind: 'flow',
-      flow,
-    };
-    await this.write(repoPath, [...(await this.read(repoPath)), analysis]);
-    return analysis;
+  async get(
+    repoPath: string,
+    kind: SavedAnalysis['kind'],
+    name: string,
+  ): Promise<SavedAnalysis | null> {
+    return (await this.read(repoPath)).find((a) => a.kind === kind && a.name === name) ?? null;
   }
 
   /**
-   * Sparar ett flöde som importerats från en fil i repot. Finns redan en
-   * analys från samma fil ersätts den, så att en rättad fil inte ger dubbletter.
+   * Sparar en analys. Finns redan en med samma sort och namn ersätts den och
+   * behåller sitt id, så att en rättad leverans inte ger dubbletter.
    */
-  async upsertFromFile(
-    repoPath: string,
-    file: string,
-    flow: Flow,
-    review?: Review,
-    ref?: AnalysisRef | null,
-  ): Promise<SavedFlowAnalysis> {
-    const list = await this.read(repoPath);
-    const existing = list.find((a) => a.file === file);
-    const analysis: SavedFlowAnalysis = {
-      id: existing?.id ?? randomUUID(),
-      repoPath,
-      origin: 'ai',
-      createdAt: new Date().toISOString(),
-      kind: 'flow',
-      file,
-      flow,
-      ...(review ? { review } : {}),
-      ...(ref ? { ref } : {}),
-    };
-    await this.write(repoPath, [...list.filter((a) => a.id !== analysis.id), analysis]);
-    return analysis;
-  }
-
-  async upsertDocumentFromFile(
-    repoPath: string,
-    file: string,
-    document: ReverikDocument,
-    ref?: AnalysisRef | null,
-  ): Promise<SavedDocumentAnalysis> {
-    const list = await this.read(repoPath);
-    const existing = list.find((analysis) => analysis.file === file);
-    const analysis: SavedDocumentAnalysis = {
-      id: existing?.id ?? randomUUID(),
-      repoPath,
-      origin: 'ai',
-      createdAt: new Date().toISOString(),
-      kind: 'document',
-      file,
-      document,
-      ...(ref ? { ref } : {}),
-    };
-    await this.write(repoPath, [...list.filter((item) => item.id !== analysis.id), analysis]);
-    return analysis;
+  async upsert(repoPath: string, input: NewAnalysis): Promise<SavedAnalysis> {
+    return this.locked(repoPath, async () => {
+      const list = await this.read(repoPath);
+      const existing = list.find((a) => a.kind === input.kind && a.name === input.name);
+      const base = {
+        id: existing?.id ?? randomUUID(),
+        repoPath,
+        origin: 'ai' as const,
+        createdAt: new Date().toISOString(),
+        name: input.name,
+        ...(input.file ? { file: input.file } : {}),
+        ...(input.ref ? { ref: input.ref } : {}),
+      };
+      const analysis: SavedAnalysis =
+        input.kind === 'document'
+          ? { ...base, kind: 'document', document: input.document }
+          : {
+              ...base,
+              kind: 'flow',
+              flow: input.flow,
+              ...(input.review ? { review: input.review } : {}),
+            };
+      await this.write(repoPath, [...list.filter((a) => a.id !== analysis.id), analysis]);
+      return analysis;
+    });
   }
 
   async delete(repoPath: string, id: string): Promise<SavedAnalysis[]> {
-    const remaining = (await this.read(repoPath)).filter((a) => a.id !== id);
-    await this.write(repoPath, remaining);
-    return sortAnalyses(remaining);
+    return this.locked(repoPath, async () => {
+      const remaining = (await this.read(repoPath)).filter((a) => a.id !== id);
+      await this.write(repoPath, remaining);
+      return sortAnalyses(remaining);
+    });
+  }
+
+  /** Kör `task` efter tidigare köade uppgifter för samma repo. */
+  private locked<T>(repoPath: string, task: () => Promise<T>): Promise<T> {
+    const previous = this.queues.get(repoPath) ?? Promise.resolve();
+    const run = previous.then(task, task);
+    this.queues.set(
+      repoPath,
+      run.catch(() => undefined),
+    );
+    return run;
   }
 
   private filePath(repoPath: string): string {

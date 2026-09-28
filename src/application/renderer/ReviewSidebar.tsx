@@ -78,7 +78,7 @@ export function ReviewSidebar({ onFocus }: Props): JSX.Element {
           if (!review) return [];
           const chosen = review.findings.filter((f) => selected.has(key(analysis, f)));
           if (chosen.length === 0) return [];
-          const heading = `## ${analysis.flow.title}${analysis.file ? ` (${analysis.file})` : ''}`;
+          const heading = `## ${analysis.flow.title} (${analysis.name})`;
           return [`${heading}\n${formatFindings(chosen, analysis.flow, review.base)}`];
         }),
       )

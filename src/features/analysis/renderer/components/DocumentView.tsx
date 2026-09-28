@@ -11,8 +11,8 @@ interface Props {
 
 /** Textuell repoöversikt med genvägar till flöden som beskriver detaljerna. */
 export function DocumentView({ analysis, flows, onOpenFlow }: Props): JSX.Element {
-  const related = analysis.document.flowFiles.flatMap((file) => {
-    const flow = flows.find((item) => item.file === file);
+  const related = analysis.document.flows.flatMap((name) => {
+    const flow = flows.find((item) => item.name === name);
     return flow ? [flow] : [];
   });
 

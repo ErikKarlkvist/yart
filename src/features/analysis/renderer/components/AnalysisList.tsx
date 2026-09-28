@@ -25,7 +25,7 @@ export function AnalysisList(): JSX.Element {
       {rejection?.type === 'rejected' && (
         <div className="analyses__error analyses__rejection">
           <div className="analyses__rejection-head">
-            <span>{t('inbox.rejected', { file: rejection.file })}</span>
+            <span>{t('inbox.rejected', { source: rejection.source })}</span>
             <button
               type="button"
               className="icon-button icon-button--quiet"
@@ -109,7 +109,7 @@ export function AnalysisList(): JSX.Element {
                         {description}
                         {analysis.kind === 'flow'
                           ? ` · ${t('analyses.steps', { count: analysis.flow.steps.length })}`
-                          : ` · ${t('analyses.linkedFlows', { count: analysis.document.flowFiles.length })}`}
+                          : ` · ${t('analyses.linkedFlows', { count: analysis.document.flows.length })}`}
                       </span>
                     </button>
                     {analysis.origin !== 'builtin' && (

@@ -14,21 +14,21 @@ export function askSource(target: AskTarget): SourceRef | undefined {
 }
 
 /**
- * Frågan som skickas till agenten i terminalen, med det som behövs för att
- * den ska förstå vad som pekas ut: nod eller anrop, fil och rad, flödet och
- * filen flödet ligger i så den kan uppdatera den.
+ * Frågan som skickas till agenten, med det som behövs för att den ska förstå
+ * vad som pekas ut: nod eller anrop, fil och rad, flödet och namnet det är
+ * sparat under så den kan spara om det.
  */
 export function buildAskPrompt(
   flow: Flow,
   target: AskTarget,
   question: string,
-  flowFile: string | undefined,
+  flowName: string | undefined,
 ): string {
   const source = askSource(target);
   const shared = {
     source: source ? t('ask.source', { file: source.file, line: source.line }) : '',
     flow: flow.title,
-    file: flowFile ? t('ask.file', { file: flowFile }) : '',
+    file: flowName ? t('ask.name', { name: flowName }) : '',
     question: question.trim(),
   };
   if (target.kind === 'node') return t('ask.nodePrompt', { ...shared, label: target.node.label });

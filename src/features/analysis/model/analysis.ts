@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { documentSchema } from '@/common/model/document';
 import { flowSchema } from '@/common/model/flow';
+import { analysisNameSchema, nameFromFile } from '@/common/model/name';
 import { reviewSchema } from '@/common/model/review';
 
 const analysisOriginSchema = z.enum([
@@ -22,7 +23,9 @@ const savedAnalysisBaseSchema = z.object({
   repoPath: z.string().min(1),
   origin: analysisOriginSchema,
   createdAt: z.string(),
-  /** Filen i repot analysen importerades från, relativt roten. Sparas om igen när filen ändras. */
+  /** Namnet analysen sparades under. Samma namn och sort igen ersätter den. */
+  name: analysisNameSchema,
+  /** Filen i repot analysen importerades från, relativt roten, när den kom via inkorgen. */
   file: z.string().min(1).optional(),
   /** Branch och commit flödet beskriver. Saknas för inbyggda och repon utan git. */
   ref: analysisRefSchema.optional(),
@@ -45,13 +48,35 @@ const analysisContentSchema = z.discriminatedUnion('kind', [
   savedDocumentAnalysisSchema,
 ]);
 
-/** Äldre sparade flöden saknar kind; läs in dem som flow vid migration. */
+/**
+ * Äldre sparade analyser saknar kind och name. Kind blir flow, name tas ur
+ * filnamnet eller id:t, så gamla filer under userData går att läsa.
+ */
 export const savedAnalysisSchema = z.preprocess((value: unknown) => {
-  if (typeof value === 'object' && value !== null && !('kind' in value) && 'flow' in value) {
-    return { ...value, kind: 'flow' };
-  }
-  return value;
+  if (typeof value !== 'object' || value === null) return value;
+  const record = value as Record<string, unknown>;
+  const kind = 'kind' in record || !('flow' in record) ? {} : { kind: 'flow' };
+  const name =
+    'name' in record
+      ? {}
+      : {
+          name: typeof record.file === 'string' ? nameFromFile(record.file) : legacyName(record.id),
+        };
+  return { ...record, ...kind, ...name };
 }, analysisContentSchema);
+
+function legacyName(id: unknown): string {
+  return `legacy-${String(id).replace(/[^a-zA-Z0-9._-]/g, '-')}`;
+}
+
+/** Ett namn ur en titel: "Add todo" blir "add-todo". */
+export function slugify(title: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || 'analysis';
+}
 
 export type SavedAnalysis = z.infer<typeof savedAnalysisSchema>;
 export type SavedFlowAnalysis = z.infer<typeof savedFlowAnalysisSchema>;

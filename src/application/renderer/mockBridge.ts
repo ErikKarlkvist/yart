@@ -60,6 +60,12 @@ export function installMockBridge(): void {
       (payload as { repoPath: string }).repoPath === demoPath ? builtin : [],
     'analysis:delete': () => builtin,
     'analysis:watch': () => undefined,
+    'mcp:status': () => ({
+      url: 'http://127.0.0.1:7390/mcp',
+      sessions: 0,
+      activity: [],
+      error: null,
+    }),
     'terminal:open': (payload) => ({ id: shell.open(payload as { repoPath: string }) }),
     'terminal:write': (payload) => {
       shell.write(payload as { id: string; data: string });

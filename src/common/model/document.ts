@@ -1,13 +1,24 @@
 import { z } from 'zod';
-
-const flowFileSchema = z.string().regex(/^\.reverik\/flows\/[a-zA-Z0-9][a-zA-Z0-9._-]*\.json$/);
+import { analysisNameSchema } from './name';
 
 /** En kort, läsbar översikt av ett repo med länkar till mer detaljerade flöden. */
 export const documentSchema = z.object({
-  title: z.string().min(1),
-  summary: z.string().min(1).max(500),
-  content: z.string().min(1),
-  flowFiles: z.array(flowFileSchema).default([]),
+  title: z.string().min(1).describe('Short title, e.g. "How orders are processed"'),
+  summary: z
+    .string()
+    .min(1)
+    .max(500)
+    .describe('One or two sentences shown in the list of analyses'),
+  content: z
+    .string()
+    .min(1)
+    .describe(
+      'A few short paragraphs, separated by blank lines, explaining how the code works at a high level',
+    ),
+  flows: z
+    .array(analysisNameSchema)
+    .default([])
+    .describe('Names of saved flows the document links to, so the reader can explore the details'),
 });
 
 export type ReverikDocument = z.infer<typeof documentSchema>;

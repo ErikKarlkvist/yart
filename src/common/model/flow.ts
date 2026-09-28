@@ -4,57 +4,72 @@ import { t } from './i18n';
 /**
  * Kontraktet mellan analysen (AI:n) och visualiseringen. AI:n producerar ett
  * Flow, UI:t ritar och spelar upp det. Allt som ritas ska gå att spåra
- * tillbaka till en fil och rad i repot.
+ * tillbaka till en fil och rad i repot. Beskrivningarna är på engelska och
+ * följer med i JSON-schemat som MCP-verktygen visar för modellen.
  */
 
-export const nodeKindSchema = z.enum([
-  /** Något användaren interagerar med: knapp, formulär, sida */
-  'ui',
-  /** Kod som reagerar på en händelse i klienten: handler, hook, action */
-  'handler',
-  /** HTTP-endpoint eller route i backend */
-  'http',
-  /** Intern tjänst, modul eller klass i backend */
-  'service',
-  /** Databas eller annan lagring */
-  'db',
-  /** Cache: Redis, minnescache, CDN */
-  'cache',
-  /** Externt system utanför repot: betaltjänst, tredjeparts-API */
-  'external',
-  /** Kö, topic eller eventbuss */
-  'queue',
-]);
+export const nodeKindSchema = z
+  .enum([
+    /** Något användaren interagerar med: knapp, formulär, sida */
+    'ui',
+    /** Kod som reagerar på en händelse i klienten: handler, hook, action */
+    'handler',
+    /** HTTP-endpoint eller route i backend */
+    'http',
+    /** Intern tjänst, modul eller klass i backend */
+    'service',
+    /** Databas eller annan lagring */
+    'db',
+    /** Cache: Redis, minnescache, CDN */
+    'cache',
+    /** Externt system utanför repot: betaltjänst, tredjeparts-API */
+    'external',
+    /** Kö, topic eller eventbuss */
+    'queue',
+  ])
+  .describe(
+    'ui: something the user interacts with (button, form, page). handler: client code reacting to an event (handler, hook, action). http: HTTP endpoint or route in a backend. service: internal service, module or class in a backend. db: database or other storage. cache: Redis, in-memory cache, CDN. external: system outside the repository (payment provider, third-party API). queue: queue, topic or event bus.',
+  );
 
 /** Vilken sorts system en grupp noder tillhör. Visas i systemvyn. */
-export const systemKindSchema = z.enum([
-  /** Klientapplikation: webb, mobil, desktop */
-  'app',
-  /** Backend eller API-tjänst */
-  'api',
-  'db',
-  'cache',
-  'external',
-  'queue',
-]);
+export const systemKindSchema = z
+  .enum([
+    /** Klientapplikation: webb, mobil, desktop */
+    'app',
+    /** Backend eller API-tjänst */
+    'api',
+    'db',
+    'cache',
+    'external',
+    'queue',
+  ])
+  .describe(
+    'app: client application (web, mobile, desktop). api: backend or API service. db, cache, external, queue: infrastructure or systems outside the repository.',
+  );
 
-const flowSystemSchema = z.object({
-  id: z.string().min(1),
-  kind: systemKindSchema,
-  label: z.string().min(1),
-  description: z.string().optional(),
-});
+const flowSystemSchema = z
+  .object({
+    id: z.string().min(1).describe('Unique within systems'),
+    kind: systemKindSchema,
+    label: z.string().min(1).describe('Short, e.g. "Web app", "API", "Postgres"'),
+    description: z.string().optional(),
+  })
+  .describe(
+    'One deployable application or infrastructure component: the frontend, the API, Postgres, Redis. Reverik shows the systems first and lets the user zoom into each one.',
+  );
 
-export const sourceRefSchema = z.object({
-  /** Sökväg relativt repots rot */
-  file: z.string().min(1),
-  line: z.number().int().positive(),
-  endLine: z.number().int().positive().optional(),
-});
+export const sourceRefSchema = z
+  .object({
+    file: z.string().min(1).describe('Path relative to the repository root'),
+    line: z.number().int().positive().describe('1-based line number that exists in the file'),
+    endLine: z.number().int().positive().optional(),
+  })
+  .describe(
+    'A file and line that really exist in the repository. Reverik checks both and rejects the analysis otherwise.',
+  );
 
 const columnReferenceSchema = z.object({
-  /** Tabell i samma nod */
-  table: z.string().min(1),
+  table: z.string().min(1).describe('A table on the same node'),
   column: z.string().min(1),
 });
 
@@ -63,55 +78,79 @@ const tableColumnSchema = z.object({
   type: z.string().min(1),
   description: z.string().optional(),
   primaryKey: z.boolean().optional(),
-  /** Främmande nyckel: kolumnen pekar på en annan tabell i samma nod */
-  references: columnReferenceSchema.optional(),
+  references: columnReferenceSchema
+    .optional()
+    .describe('Foreign key: the column points at a table on the same node'),
 });
 
 /** En tabell, collection eller nyckelrymd i en lagringsnod. */
-const dataTableSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  columns: z.array(tableColumnSchema).optional(),
-  /** Var schemat definieras, t.ex. en migration eller schema.sql */
-  source: sourceRefSchema.optional(),
-});
+const dataTableSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    columns: z.array(tableColumnSchema).optional(),
+    source: sourceRefSchema
+      .optional()
+      .describe('Where the schema is defined, e.g. a migration or schema.sql'),
+  })
+  .describe('A table, collection or key space stored on a db or cache node');
 
-const flowNodeSchema = z.object({
-  id: z.string().min(1),
-  kind: nodeKindSchema,
-  /** Systemet noden tillhör, refererar `systems[].id` */
-  system: z.string().min(1),
-  label: z.string().min(1),
-  /** A short, specific type label such as Hook, Action or Event. */
-  role: z.string().min(1).optional(),
-  description: z.string().optional(),
-  /** Krävs för allt som finns i repot. Valfritt för db, cache, external och queue. */
-  source: sourceRefSchema.optional(),
-  /** Tabeller eller nycklar som noden lagrar. Främst för db och cache. */
-  tables: z.array(dataTableSchema).optional(),
-});
+const flowNodeSchema = z
+  .object({
+    id: z.string().min(1).describe('Unique within nodes'),
+    kind: nodeKindSchema,
+    system: z.string().min(1).describe('The system the node belongs to, a systems[].id'),
+    label: z
+      .string()
+      .min(1)
+      .describe("Short, using the code's own name: component, function, route, table"),
+    role: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('A more specific type label when useful, such as "Hook", "Action" or "Event"'),
+    description: z.string().optional(),
+    source: sourceRefSchema
+      .optional()
+      .describe(
+        'Where the node is declared. Required unless kind is db, cache, external or queue.',
+      ),
+    tables: z
+      .array(dataTableSchema)
+      .optional()
+      .describe('What the node stores, mainly for db and cache nodes'),
+  })
+  .describe('A component the data passes through');
 
-const flowEdgeSchema = z.object({
-  id: z.string().min(1),
-  from: z.string().min(1),
-  to: z.string().min(1),
-  /** Kort, t.ex. "POST /api/cart/items" eller "INSERT cart_items" */
-  label: z.string().min(1),
-  /** Vad som skickas. Fritext eller exempel-JSON. */
-  payload: z.string().optional(),
-  /** Vad som kommer tillbaka, om något. */
-  response: z.string().optional(),
-  /** Raden där anropet görs. */
-  source: sourceRefSchema,
-  /** Tabeller som anropet rör, refererar `tables[].name` på målnoden. */
-  tables: z.array(z.string().min(1)).optional(),
-});
+const flowEdgeSchema = z
+  .object({
+    id: z.string().min(1).describe('Unique within edges'),
+    from: z.string().min(1).describe('A nodes[].id'),
+    to: z.string().min(1).describe('A nodes[].id'),
+    label: z.string().min(1).describe('Short, e.g. "POST /api/todos" or "INSERT todos"'),
+    payload: z.string().optional().describe('What is sent: free text or example JSON'),
+    response: z.string().optional().describe('What comes back, if anything'),
+    source: sourceRefSchema.describe('The line where the call is made'),
+    tables: z
+      .array(z.string().min(1))
+      .optional()
+      .describe('Tables the call reads or writes, tables[].name on the target node'),
+  })
+  .describe(
+    'A call from one node to another. A response is an edge of its own back to the caller, e.g. "200 OK with the todo".',
+  );
 
-const flowStepSchema = z.object({
-  edgeId: z.string().min(1),
-  /** En mening om vad som händer i det här steget. */
-  description: z.string().min(1),
-});
+const flowStepSchema = z
+  .object({
+    edgeId: z.string().min(1).describe('An edges[].id'),
+    description: z
+      .string()
+      .min(1)
+      .describe(
+        'One clear sentence in active voice about what data moves and why, e.g. "The seating page asks the API for open seats on the selected date". Do not merely restate the HTTP verb.',
+      ),
+  })
+  .describe('One step of the playback, in the order the flow actually runs');
 
 const NODE_KINDS_WITHOUT_SOURCE: ReadonlySet<z.infer<typeof nodeKindSchema>> = new Set([
   'db',
@@ -122,16 +161,12 @@ const NODE_KINDS_WITHOUT_SOURCE: ReadonlySet<z.infer<typeof nodeKindSchema>> = n
 
 export const flowSchema = z
   .object({
-    /** Frågan som ställdes */
-    question: z.string().min(1),
-    title: z.string().min(1),
-    /** En mening om vad flödet gör */
-    summary: z.string().min(1),
-    /** Applikationerna och systemen som deltar. Systemvyn visar flödet mellan dem. */
+    question: z.string().min(1).describe("The user's question the flow answers"),
+    title: z.string().min(1).describe('Short, e.g. "Add todo"'),
+    summary: z.string().min(1).describe('One or two sentences about what the flow does'),
     systems: z.array(flowSystemSchema).min(1),
     nodes: z.array(flowNodeSchema).min(1),
     edges: z.array(flowEdgeSchema).min(1),
-    /** Ordningen flödet spelas upp i */
     steps: z.array(flowStepSchema).min(1),
   })
   .superRefine((flow, ctx) => {

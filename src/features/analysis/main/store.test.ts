@@ -18,8 +18,16 @@ describe('AnalysisStore', () => {
   });
 
   it('sparar, listar nyast först och tar bort', async () => {
-    const first = await store.save('/repo', addTodoFlow);
-    const second = await store.save('/repo', listTodosFlow);
+    const first = await store.upsert('/repo', {
+      name: 'add-todo',
+      kind: 'flow',
+      flow: addTodoFlow,
+    });
+    const second = await store.upsert('/repo', {
+      name: 'list-todos',
+      kind: 'flow',
+      flow: listTodosFlow,
+    });
     const listed = await store.list('/repo');
     expect(listed.map((a) => a.id)).toEqual([second.id, first.id]);
     expect(listed[0]?.origin).toBe('ai');
@@ -29,34 +37,48 @@ describe('AnalysisStore', () => {
   });
 
   it('håller isär repon', async () => {
-    await store.save('/a', addTodoFlow);
+    await store.upsert('/a', { name: 'add-todo', kind: 'flow', flow: addTodoFlow });
     expect(await store.list('/b')).toEqual([]);
   });
 
-  it('sparar och uppdaterar dokument med stabilt id', async () => {
+  it('ersätter en analys med samma sort och namn och behåller id', async () => {
     const document: ReverikDocument = {
       title: 'Overview',
       summary: 'A short overview.',
       content: 'The app calls the API.',
-      flowFiles: ['.reverik/flows/call-api.json'],
+      flows: ['call-api'],
     };
-    const first = await store.upsertDocumentFromFile(
-      '/repo',
-      '.reverik/documents/overview.json',
-      document,
-    );
-    const updated = await store.upsertDocumentFromFile(
-      '/repo',
-      '.reverik/documents/overview.json',
-      {
-        ...document,
-        summary: 'A clearer overview.',
-      },
-    );
+    const first = await store.upsert('/repo', { name: 'overview', kind: 'document', document });
+    const updated = await store.upsert('/repo', {
+      name: 'overview',
+      kind: 'document',
+      document: { ...document, summary: 'A clearer overview.' },
+    });
     const listed = await store.list('/repo');
 
     expect(updated.id).toBe(first.id);
     expect(listed).toHaveLength(1);
     expect(listed[0]).toMatchObject({ kind: 'document', document: { title: 'Overview' } });
+    expect(await store.get('/repo', 'document', 'overview')).toMatchObject({ id: first.id });
+    expect(await store.get('/repo', 'flow', 'overview')).toBeNull();
+  });
+
+  it('låter ett flöde och ett dokument dela namn', async () => {
+    await store.upsert('/repo', { name: 'todos', kind: 'flow', flow: addTodoFlow });
+    await store.upsert('/repo', {
+      name: 'todos',
+      kind: 'document',
+      document: { title: 'Todos', summary: 'x', content: 'y', flows: [] },
+    });
+    expect(await store.list('/repo')).toHaveLength(2);
+  });
+
+  it('tappar inget när flera sparar samtidigt', async () => {
+    await Promise.all(
+      Array.from({ length: 5 }, (_, i) =>
+        store.upsert('/repo', { name: `flow-${i}`, kind: 'flow', flow: addTodoFlow }),
+      ),
+    );
+    expect(await store.list('/repo')).toHaveLength(5);
   });
 });

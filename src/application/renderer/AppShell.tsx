@@ -7,6 +7,7 @@ import { invokeChannel } from '@/common/renderer/ipc';
 import { AnalysisList, analysisTitle, GUIDE_FILE, useAnalyses } from '@/features/analysis';
 import { useTabTitle } from './AppTabsContext';
 import { BranchBar, RepoMenu, RepoPanel, useRepo } from '@/features/repo';
+import { useMcpStatus } from '@/features/mcp';
 import { TerminalPanel, useTerminalApi } from '@/features/terminal';
 import { ThemeSelect } from './ThemeSelect';
 import { useStoredChoice, useStoredFlag, useStoredNumber } from '@/common/renderer/useStored';
@@ -19,6 +20,7 @@ export function AppShell(): JSX.Element {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const { repo } = useRepo();
   const { analyses, current, select } = useAnalyses();
+  const mcp = useMcpStatus();
   const [logOpen, setLogOpen] = useStoredFlag('reverik.logOpen', true);
   // En ny appstart börjar med arbetsytan. Varje flik håller sedan sitt eget öppet/stängt-läge.
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -179,6 +181,13 @@ export function AppShell(): JSX.Element {
             {info
               ? `v${info.version} · Electron ${info.electron} · ${info.platform}`
               : t('app.starting')}
+          </span>
+          <span title={mcp?.url ? t('app.mcpHint') : undefined}>
+            {mcp?.url
+              ? t('app.mcp', { url: mcp.url })
+              : mcp?.error
+                ? t('app.mcpFailed', { error: mcp.error })
+                : t('app.mcpStarting')}
           </span>
         </span>
         <span className="shell__footer-tools">

@@ -62,18 +62,19 @@ describe('importFlowFile', () => {
     await writeFile(join(repo, FLOWS_DIR, name), text);
   }
 
-  it('imports a valid flow and links it to the file', async () => {
+  it('imports a valid flow under the file name', async () => {
     await put('click.json', flow);
     const result = await importFlowFile(store, repo, 'click.json');
     expect(result.type).toBe('imported');
     const list = await store.list(repo);
     expect(list).toHaveLength(1);
     expect(list[0]?.file).toBe(`${FLOWS_DIR}/click.json`);
+    expect(list[0]?.name).toBe('click');
     expect(list[0]?.kind).toBe('flow');
     if (list[0]?.kind === 'flow') expect(list[0].flow.title).toBe('Click');
   });
 
-  it('imports a document and links it to its related flows', async () => {
+  it('imports a document and turns legacy flow paths into names', async () => {
     const document = {
       title: 'Seat availability',
       summary: 'The web app asks the API for open seats.',
@@ -89,7 +90,8 @@ describe('importFlowFile', () => {
       throw new Error('expected document');
     expect(result.analysis.document.title).toBe('Seat availability');
     expect(result.analysis.file).toBe(`${DOCUMENTS_DIR}/overview.json`);
-    expect(result.analysis.document.flowFiles).toEqual([`${FLOWS_DIR}/click.json`]);
+    expect(result.analysis.name).toBe('overview');
+    expect(result.analysis.document.flows).toEqual(['click']);
   });
 
   it('replaces the analysis when the same file is saved again', async () => {

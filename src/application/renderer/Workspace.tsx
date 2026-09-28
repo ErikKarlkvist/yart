@@ -115,7 +115,7 @@ export function Workspace({
             flow={flowAnalysis.flow}
             onActiveEdgeChange={onActiveEdgeChange}
             onSelectSource={onSelectSource}
-            flowFile={flowAnalysis.file}
+            flowName={flowAnalysis.name}
             onAsk={onAsk}
             review={flowAnalysis.review}
             focusedFindingId={focusedFindingId}

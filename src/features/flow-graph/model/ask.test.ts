@@ -4,7 +4,7 @@ import { buildAskPrompt } from './ask';
 import { buildModel } from './graph';
 
 describe('buildAskPrompt', () => {
-  it('describes a node with its source and the flow file', () => {
+  it('describes a node with its source and the name the flow is saved under', () => {
     const model = buildModel(addTodoFlow, { kind: 'detail' });
     const node = model.nodes.find((n) => n.id === 'todo-service');
     if (!node) throw new Error('node missing');
@@ -12,10 +12,10 @@ describe('buildAskPrompt', () => {
       addTodoFlow,
       { kind: 'node', node },
       ' what if this throws? ',
-      '.reverik/flows/add-todo.json',
+      'add-todo',
     );
     expect(prompt).toBe(
-      'About the node "TodoService.create" (backend/src/services/TodoService.ts:21) in the flow "Add todo" (saved as .reverik/flows/add-todo.json, update it if the answer changes the flow): what if this throws?',
+      'About the node "TodoService.create" (backend/src/services/TodoService.ts:21) in the flow "Add todo" (saved in Reverik as "add-todo", save it again under the same name if the answer changes the flow): what if this throws?',
     );
   });
 
@@ -32,7 +32,7 @@ describe('buildAskPrompt', () => {
       'About the call "POST /api/todos" from "todosApi.createTodo" to "POST /api/todos"',
     );
     expect(prompt).toContain('in the flow "Add todo": is this retried?');
-    expect(prompt).not.toContain('saved as');
+    expect(prompt).not.toContain('saved in Reverik');
   });
 
   it('omits the source for nodes without one', () => {

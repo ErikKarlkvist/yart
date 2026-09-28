@@ -1,15 +1,13 @@
 {
   "app.starting": "Starting…",
   "app.chooseRepo": "Choose a repository with Folder in the footer.",
-  "app.chooseAnalysis": "Choose an analysis on the left, or ask for one in the terminal on the right.",
+  "app.chooseAnalysis": "Choose an analysis on the left, or ask an agent connected over MCP for one.",
   "app.mockBridge": "Reverik is running with the mock bridge, no Electron.",
   "app.mockElectron": "browser",
   "app.mockShell": "Mock shell: this is the browser, nothing you type here runs.",
-
   "tabs.empty": "New tab",
   "tabs.new": "New tab",
   "tabs.close": "Close tab",
-
   "side.terminal": "AI",
   "side.review": "Full review",
   "side.empty": "No reviews in this repository yet. Run review to get one.",
@@ -25,7 +23,6 @@
   "side.defaultInstruction": "For each finding: check whether it is real, explain briefly, and propose or make the fix. If a flow changes, update its review file.",
   "side.openHint": "Open in the Review tab and go to the step in the flow",
   "side.prompt": "In the review of {head} against {base}, these findings, grouped by flow with the review file each belongs to:\n\n{findings}\n\n{instruction}",
-
   "panel.code": "Code",
   "panel.summary": "Summary",
   "panel.review": "Review",
@@ -37,12 +34,10 @@
   "panel.minimiseTerminal": "Hide terminal",
   "panel.showTerminal": "Open chat",
   "panel.resizeTerminal": "Resize terminal",
-
   "theme.label": "Theme",
   "theme.system": "System",
   "theme.light": "Light",
   "theme.dark": "Dark",
-
   "repo.heading": "Repository",
   "repo.none": "No repository selected. Use Folder in the footer.",
   "repo.folder": "Folder",
@@ -56,9 +51,7 @@
   "repo.forget": "Remove from list",
   "repo.reload": "Fetch from remote and reload",
   "repo.dialogTitle": "Choose repository",
-
   "source.reading": "Reading…",
-
   "branch.from": "From",
   "branch.compare": "compare with",
   "branch.none": "no other branch",
@@ -69,7 +62,6 @@
   "branch.runReview": "Run review",
   "branch.runReviewHint": "Asks the agent in the terminal to review this branch against the base branch and deliver the result to Reverik.",
   "branch.reviewPrompt": "Review the changes on {head} against {base}. Start with git diff {base}...{head} and read the changed files, then follow the data flows the change touches. Deliver one review file per affected flow to .reverik/reviews/<name>.json as described in .reverik/instructions.md, section Reviews: the flow as it works on {base}, the flow as it works on {head} with the same ids for unchanged nodes and calls, and findings for anything that looks wrong or risky. Do not commit or change anything in the repository. Then summarise the findings in a few sentences.",
-
   "analyses.heading": "Analyses",
   "analyses.empty": "No analyses yet. Ask a question to create one.",
   "analyses.builtin": "Built-in",
@@ -83,7 +75,6 @@
   "document.summary": "Overview",
   "document.relatedFlows": "Related flows",
   "document.openFlow": "Open flow",
-
   "graph.allSystems": "All systems",
   "graph.allDetails": "All details",
   "graph.allDetailsHint": "Show every node in every system",
@@ -96,14 +87,12 @@
   "graph.response": "Response",
   "graph.remove": "Remove from view",
   "graph.restoreHidden": "Show hidden ({count})",
-
   "playback.restart": "From the start",
   "playback.previous": "Previous step",
   "playback.next": "Next step",
   "playback.play": "Play",
   "playback.pause": "Pause",
   "playback.step": "Step",
-
   "kind.ui": "UI",
   "kind.handler": "Handler",
   "kind.http": "HTTP",
@@ -114,13 +103,11 @@
   "kind.queue": "Queue",
   "kind.app": "App",
   "kind.api": "API",
-
   "error.demoMissing": "The demo app was not found at {path}",
   "error.outsideRepo": "The file {file} is outside the repository",
   "error.missingAtCommit": "The file {file} does not exist at {commit}",
   "error.mockChannel": "The mock bridge has no channel named {channel}",
   "error.mockRead": "Could not read {file}",
-
   "validation.duplicateSystem": "System id \"{id}\" appears more than once",
   "validation.unknownSystem": "Node \"{id}\" belongs to unknown system \"{system}\"",
   "validation.duplicateNode": "Node id \"{id}\" appears more than once",
@@ -132,7 +119,6 @@
   "validation.unknownEdge": "Step {step} points to unknown edge \"{edge}\"",
   "validation.unknownReference": "Column {table}.{column} references unknown table \"{target}\"",
   "validation.duplicateFinding": "Finding id \"{id}\" appears more than once",
-
   "ask.button": "Ask the agent about this",
   "ask.placeholder": "Ask about {label}…",
   "ask.send": "Ask",
@@ -140,10 +126,7 @@
   "ask.nodePrompt": "About the node \"{label}\"{source} in the flow \"{flow}\"{file}: {question}",
   "ask.edgePrompt": "About the call \"{label}\" from \"{from}\" to \"{to}\"{source} in the flow \"{flow}\"{file}: {question}",
   "ask.source": " ({file}:{line})",
-  "ask.file": " (saved as {file}, update it if the answer changes the flow)",
-
   "summary.steps": "Steps",
-
   "review.compare": "{base} → {head}",
   "review.changes": "{added} added · {removed} removed · {changed} changed",
   "review.findings": "{count} findings",
@@ -157,10 +140,8 @@
   "review.flag": "{count} findings. Click to open in the Review tab.",
   "review.showInGraph": "Show in graph",
   "review.empty": "No findings.",
-
   "table.primaryKey": "Primary key",
   "table.references": "References {target}",
-
   "terminal.restart": "Restart shell",
   "terminal.startAgent": "Start Codex chat",
   "terminal.resumeChat": "Resume chat",
@@ -175,16 +156,36 @@
   "terminal.shellHint": "Start your agent here and ask it to read {guide} first. It explains how to deliver a flow to Reverik.",
   "terminal.exited": "The shell exited with code {code}.",
   "terminal.noRepo": "Choose a repository to open a terminal in it.",
-
   "inbox.heading": "Inbox",
-  "inbox.idle": "Flows the AI writes to .reverik/flows/ in the repository are imported here as they are saved.",
-  "inbox.imported": "Imported \"{title}\" from {file}",
-  "inbox.rejected": "Rejected {file}",
+  "inbox.idle": "Analyses agents deliver over MCP, or save to .reverik/ in the repository, are logged here as they arrive.",
+  "inbox.imported": "Imported \"{title}\" from {source}",
+  "inbox.rejected": "Rejected {source}",
   "inbox.errorsWritten": "The errors were written next to the file so the AI can read them.",
   "inbox.invalidJson": "Not valid JSON: {message}",
   "inbox.dismiss": "Dismiss",
-
   "verify.missingFile": "{where}: {file} does not exist in the repository",
   "verify.missingFileAt": "{where}: {file} does not exist at {commit}",
-  "verify.lineOutOfRange": "{where}: {file} has {count} lines, line {line} does not exist"
+  "verify.lineOutOfRange": "{where}: {file} has {count} lines, line {line} does not exist",
+  "app.mcp": "MCP {url}",
+  "app.mcpStarting": "MCP starting…",
+  "app.mcpFailed": "MCP failed: {error}",
+  "inbox.unreadable": "{file} could not be read",
+  "inbox.viaMcp": "{client} over MCP ({tool})",
+  "ask.name": " (saved in Reverik as \"{name}\", save it again under the same name if the answer changes the flow)",
+  "mcp.internalError": "Reverik could not handle the request",
+  "mcp.notFound": "Not found. The MCP endpoint is {path}",
+  "mcp.unknownSession": "Unknown MCP session. Connect again",
+  "mcp.sessionRequired": "Send an initialize request first, then use the returned session id",
+  "mcp.noPort": "No port to listen on",
+  "mcp.unknownClient": "unknown client",
+  "mcp.notARepo": "{path} is not a directory. Pass the absolute path to the repository root.",
+  "mcp.rejected": "Reverik rejected the {kind}:\n{errors}\nFix the content and call the tool again with the same name.",
+  "mcp.rejectedSummary": "Rejected {kind} \"{name}\" with {count} errors",
+  "mcp.saved": "Saved {kind} \"{name}\" (\"{title}\"). The user can see it in Reverik now.",
+  "mcp.unchanged": "The {kind} \"{name}\" (\"{title}\") is already saved with this content.",
+  "mcp.listedRepos": "Listed {count} repositories",
+  "mcp.listedAnalyses": "Listed {count} analyses",
+  "mcp.noSuchAnalysis": "There is no {kind} named \"{name}\" in Reverik for this repository. Use list_analyses to see what exists.",
+  "mcp.read": "Read {kind} \"{name}\"",
+  "app.mcpHint": "Agents such as Claude Code connect here to deliver flows, documents and reviews"
 }

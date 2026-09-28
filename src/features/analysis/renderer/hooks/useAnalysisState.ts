@@ -4,18 +4,24 @@ import { readStoredJson, useScopedKey, writeStored } from '@/common/renderer/sto
 import { useIpcEvent } from '@/common/renderer/useIpcEvent';
 import {
   deleteAnalysisChannel,
+  type ImportVia,
   type InboxEvent,
   inboxEvent,
   listAnalysesChannel,
   watchInboxChannel,
 } from '../../ipc/channels';
+import { t } from '@/common/model/i18n';
 import { analysisTitle, type SavedAnalysis } from '../../model/analysis';
 
 /** En rad i inkorgens logg: en import eller ett avvisat försök. */
-type InboxEntry = { at: string } & (
-  | { type: 'imported'; file: string; title: string; id: string }
-  | { type: 'rejected'; file: string; errors: string[] }
+type InboxEntry = { at: string; source: string } & (
+  { type: 'imported'; title: string; id: string } | { type: 'rejected'; errors: string[] }
 );
+
+/** Var analysen kom ifrån, som det visas i loggen. */
+function describeVia(via: ImportVia): string {
+  return via.kind === 'file' ? via.file : t('inbox.viaMcp', { client: via.client, tool: via.tool });
+}
 
 export interface AnalysisState {
   analyses: SavedAnalysis[];
@@ -104,16 +110,17 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
     (event: InboxEvent) => {
       if (event.repoPath !== repoPath) return;
       const at = new Date().toISOString();
+      const source = describeVia(event.via);
       const entry: InboxEntry =
         event.type === 'imported'
           ? {
               at,
+              source,
               type: 'imported',
-              file: event.file,
               title: analysisTitle(event.analysis),
               id: event.analysis.id,
             }
-          : { at, type: 'rejected', file: event.file, errors: event.errors };
+          : { at, source, type: 'rejected', errors: event.errors };
       setInboxLog((log) => ({
         repoPath,
         value: [entry, ...(log?.repoPath === repoPath ? log.value : [])],

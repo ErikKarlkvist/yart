@@ -3,7 +3,7 @@ import { LOCALE, t } from '@/common/model/i18n';
 import { useAnalyses } from '../AnalysisContext';
 import './analysis.css';
 
-/** Loggen över flöden som importerats eller avvisats från `.reverik/flows/`. */
+/** Loggen över analyser som levererats eller avvisats, över MCP eller från `.reverik/`. */
 export function InboxLog(): JSX.Element {
   const { inbox } = useAnalyses();
   if (inbox.length === 0) return <p className="shell__empty">{t('inbox.idle')}</p>;
@@ -17,10 +17,10 @@ export function InboxLog(): JSX.Element {
           </span>
           <div className="inbox__body">
             {entry.type === 'imported' ? (
-              t('inbox.imported', { title: entry.title, file: entry.file })
+              t('inbox.imported', { title: entry.title, source: entry.source })
             ) : (
               <>
-                {t('inbox.rejected', { file: entry.file })}
+                {t('inbox.rejected', { source: entry.source })}
                 <ul className="inbox__errors">
                   {entry.errors.map((error) => (
                     <li key={error}>{error}</li>

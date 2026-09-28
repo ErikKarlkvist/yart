@@ -27,7 +27,8 @@ interface Props {
   /** Renderas mellan grafen och kontrollerna, t.ex. ett draghandtag som ägs av appen. */
   beforeControls?: ReactNode;
   /** Filen i repot flödet kom från, så agenten kan uppdatera den */
-  flowFile?: string | undefined;
+  /** Namnet flödet är sparat under, så agenten kan spara om det */
+  flowName?: string | undefined;
   /** Tar emot frågan om en nod eller ett anrop, färdig att skicka till agenten */
   onAsk?: ((prompt: string) => void) | undefined;
   /** Finns när analysen är en review: `flow` är då flödet efter ändringen */
@@ -47,7 +48,7 @@ export function FlowPlayer({
   onActiveEdgeChange,
   onSelectSource,
   beforeControls,
-  flowFile,
+  flowName,
   onAsk,
   review,
   focusedFindingId = null,
@@ -81,10 +82,10 @@ export function FlowPlayer({
   }, []);
   const sendAsk = useCallback(
     (question: string) => {
-      if (asking) onAsk?.(buildAskPrompt(flow, asking, question, flowFile));
+      if (asking) onAsk?.(buildAskPrompt(flow, asking, question, flowName));
       setAsking(null);
     },
-    [asking, flow, flowFile, onAsk],
+    [asking, flow, flowName, onAsk],
   );
 
   useEffect(() => {

@@ -10,21 +10,26 @@ import { t } from './i18n';
 
 const findingSeveritySchema = z.enum(['info', 'warning', 'error']);
 
-const reviewFindingSchema = z.object({
-  id: z.string().min(1),
-  severity: findingSeveritySchema,
-  /** Kort, t.ex. "Cache is no longer invalidated" */
-  title: z.string().min(1),
-  /** Vad som händer och varför det spelar roll */
-  description: z.string().min(1),
-  /** Vad som borde göras i stället */
-  suggestion: z.string().optional(),
-  /** Noden i head, eller i base om den tagits bort, som fyndet gäller */
-  nodeId: z.string().min(1).optional(),
-  /** Kanten i head, eller i base om den tagits bort, som fyndet gäller */
-  edgeId: z.string().min(1).optional(),
-  source: sourceRefSchema.optional(),
-});
+const reviewFindingSchema = z
+  .object({
+    id: z.string().min(1).describe('Unique within findings'),
+    severity: findingSeveritySchema,
+    title: z.string().min(1).describe('Short, e.g. "The cached list is no longer invalidated"'),
+    description: z.string().min(1).describe('What happens and why it matters'),
+    suggestion: z.string().optional().describe('What to do instead'),
+    nodeId: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('The node in head the finding is about, or in base if the node was removed'),
+    edgeId: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('The call in head the finding is about, or in base if the call was removed'),
+    source: sourceRefSchema.optional().describe('File and line on head'),
+  })
+  .describe('Something that looks wrong or risky in the change');
 
 export const reviewSchema = z
   .object({
@@ -55,12 +60,24 @@ export const reviewSchema = z
  * Filen agenten skriver till `.reverik/reviews/`: båda flödena och fynden.
  * Importeras som en analys med `flow` = head och `review` = resten.
  */
-const reviewDocumentSchema = z.object({
-  baseLabel: z.string().min(1),
-  headLabel: z.string().min(1),
-  base: flowSchema,
-  head: flowSchema,
-  findings: z.array(reviewFindingSchema),
+export const reviewDocumentSchema = z.object({
+  baseLabel: z
+    .string()
+    .min(1)
+    .describe('What the change is compared against: a real git reference such as "main"'),
+  headLabel: z
+    .string()
+    .min(1)
+    .describe('The change itself: a real git reference such as "feature/todo-lists" or a commit'),
+  base: flowSchema.describe('The flow as it works on base, before the change'),
+  head: flowSchema.describe(
+    'The same flow as it works on head, after the change. Keep the same node and edge ids as in base for things that are the same, so Reverik can show what was added, removed and changed.',
+  ),
+  findings: z
+    .array(reviewFindingSchema)
+    .describe(
+      'What looks wrong or risky. May be empty, or a single info finding if nothing is wrong.',
+    ),
 });
 
 export type ReviewValidation =

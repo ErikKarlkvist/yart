@@ -16,6 +16,8 @@ import { type RepoInfo } from '../model/repo';
 import { fetchRepo, listBranches } from './branches';
 import { inspectRepo } from './inspect';
 import { forgetRepo, readRecent, rememberRepo } from './recent';
+
+export { readRecent } from './recent';
 import { readSource } from './source';
 
 export function registerRepoHandlers(): void {
@@ -50,7 +52,7 @@ export function registerRepoHandlers(): void {
   });
 }
 
-async function openAndRemember(path: string): Promise<RepoInfo> {
+export async function openAndRemember(path: string): Promise<RepoInfo> {
   const repo = await inspectRepo(path);
   await rememberRepo(repo);
   return repo;
