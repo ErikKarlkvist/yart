@@ -4,6 +4,11 @@ import { Icon } from '@/common/renderer/Icon';
 import { useAgent } from '../AgentContext';
 import './agent.css';
 
+/** Claude Code säger så när inloggningen i CLI:n gått ut. */
+function isLoginError(text: string): boolean {
+  return /authenticat|log ?in|oauth/i.test(text);
+}
+
 /**
  * Samtalet med agenten som appen kör i bakgrunden: frågor från grafen och
  * egna frågor, agentens svar och verktyg, och fel med prompten att kopiera
@@ -79,6 +84,9 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
                     {new Date(entry.at).toLocaleTimeString(LOCALE, { timeStyle: 'short' })}
                   </span>
                   <p className="agent__text">{entry.text}</p>
+                  {entry.kind === 'error' && isLoginError(entry.text) && (
+                    <p className="agent__hint">{t('agent.loginHint')}</p>
+                  )}
                   {entry.kind === 'error' && lastPrompt && (
                     <button type="button" className="text-button" onClick={copyPrompt}>
                       <Icon name="copy" size="sm" />{' '}

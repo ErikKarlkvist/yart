@@ -228,5 +228,6 @@
   "agent.placeholder": "Ask the agent about this repository…",
   "agent.sendHint": "Cmd+Enter sends",
   "agent.send": "Send",
-  "agent.copyPrompt": "Copy prompt"
+  "agent.copyPrompt": "Copy prompt",
+  "agent.loginHint": "Claude Code is not logged in. Run \"claude\" in a terminal, log in with /login, then ask again."
 }

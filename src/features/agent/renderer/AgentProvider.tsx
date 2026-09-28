@@ -30,10 +30,16 @@ export function AgentProvider({ repoPath, agent, children }: Props): JSX.Element
     (event: AgentEvent) => {
       if (event.repoPath !== repoPath) return;
       if (event.type === 'entry') {
-        setEntries((current) => ({
-          repoPath,
-          value: [...(current?.repoPath === repoPath ? current.value : []), event.entry],
-        }));
+        setEntries((current) => {
+          const list = current?.repoPath === repoPath ? current.value : [];
+          // Claude Code skriver ett fel både som svarstext och som resultat; visa det en gång
+          const previous = list.at(-1);
+          const duplicate =
+            event.entry.kind === 'error' &&
+            previous?.kind === 'assistant' &&
+            previous.text === event.entry.text;
+          return { repoPath, value: [...(duplicate ? list.slice(0, -1) : list), event.entry] };
+        });
       } else {
         setState({ repoPath, value: event.state });
       }
