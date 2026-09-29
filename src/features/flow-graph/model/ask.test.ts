@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { APP_NAME } from '@/common/model/brand';
 import { addTodoFlow } from '@/common/model/fixtures';
 import { buildAskPrompt } from './ask';
 import { buildModel } from './graph';
@@ -15,7 +16,7 @@ describe('buildAskPrompt', () => {
       'add-todo',
     );
     expect(prompt).toBe(
-      'About the node "TodoService.create" (backend/src/services/TodoService.ts:21) in the flow "Add todo" (saved in Reverik as "add-todo", save it again under the same name if the answer changes the flow): what if this throws?',
+      `About the node "TodoService.create" (backend/src/services/TodoService.ts:21) in the flow "Add todo" (saved in ${APP_NAME} as "add-todo", save it again under the same name if the answer changes the flow): what if this throws?`,
     );
   });
 
@@ -32,7 +33,7 @@ describe('buildAskPrompt', () => {
       'About the call "POST /api/todos" from "todosApi.createTodo" to "POST /api/todos"',
     );
     expect(prompt).toContain('in the flow "Add todo": is this retried?');
-    expect(prompt).not.toContain('saved in Reverik');
+    expect(prompt).not.toContain(`saved in ${APP_NAME}`);
   });
 
   it('omits the source for nodes without one', () => {

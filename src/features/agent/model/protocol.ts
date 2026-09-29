@@ -29,6 +29,8 @@ export interface AgentCheck {
   installed: boolean;
   version: string | null;
   loggedIn: boolean;
+  /** A CLI can exist but fail to run; show that failure instead of saying it is missing. */
+  error?: string;
 }
 
 /** Verktyg Claude Code får använda utan att fråga: läsa kod, läsa git och leverera till Reverik. */

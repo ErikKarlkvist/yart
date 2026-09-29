@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { brandText } from './brand';
 import { t } from './i18n';
 
 /**
@@ -55,7 +56,9 @@ const flowSystemSchema = z
     description: z.string().optional(),
   })
   .describe(
-    'One deployable application or infrastructure component: the frontend, the API, Postgres, Redis. Reverik shows the systems first and lets the user zoom into each one.',
+    brandText(
+      'One deployable application or infrastructure component: the frontend, the API, Postgres, Redis. {appName} shows the systems first and lets the user zoom into each one.',
+    ),
   );
 
 export const sourceRefSchema = z
@@ -65,7 +68,9 @@ export const sourceRefSchema = z
     endLine: z.number().int().positive().optional(),
   })
   .describe(
-    'A file and line that really exist in the repository. Reverik checks both and rejects the analysis otherwise.',
+    brandText(
+      'A file and line that really exist in the repository. {appName} checks both and rejects the analysis otherwise.',
+    ),
   );
 
 const columnReferenceSchema = z.object({
@@ -147,7 +152,7 @@ const flowStepSchema = z
       .string()
       .min(1)
       .describe(
-        'One clear sentence in active voice about what data moves and why, e.g. "The seating page asks the API for open seats on the selected date". Do not merely restate the HTTP verb.',
+        'One plain-language sentence in the language the user chose, or the language of their request if none was chosen, about what happens to the user or data. Avoid method names, variable names, request IDs and unexplained acronyms; put those details on nodes and edges. Describe actual behavior, not suggestions or hypothetical failures.',
       ),
   })
   .describe('One step of the playback, in the order the flow actually runs');

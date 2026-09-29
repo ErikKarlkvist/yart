@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { brandText } from './brand';
 import { type Flow, type FlowEdge, type FlowNode, flowSchema, sourceRefSchema } from './flow';
 import { t } from './i18n';
 import { analysisNameSchema } from './name';
@@ -21,15 +22,21 @@ export const flowCompareSchema = z
       .string()
       .min(1)
       .describe(
-        'The change itself: a real git reference such as "feature/todo-lists" or a commit. Reverik checks the flow against it when it resolves in the repository.',
+        brandText(
+          'The change itself: a real git reference such as "feature/todo-lists" or a commit. {appName} checks the flow against it when it resolves in the repository.',
+        ),
       ),
     base: flowSchema.describe(
-      'The same flow as it works on base, before the change. Keep the same node and edge ids as in the flow for things that are the same, so Reverik can show what was added, removed and changed.',
+      brandText(
+        'The same flow as it works on base, before the change. Keep the same node and edge ids as in the flow for things that are the same, so {appName} can show what was added, removed and changed.',
+      ),
     ),
     /** Commiten baseLabel pekade på vid importen, om den fanns i repot */
     baseCommit: z.string().optional(),
   })
-  .describe('Include when the flow describes a change, so Reverik can show what changed');
+  .describe(
+    brandText('Include when the flow describes a change, so {appName} can show what changed'),
+  );
 
 const findingSeveritySchema = z.enum(['info', 'warning', 'error']);
 

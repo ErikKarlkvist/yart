@@ -1,4 +1,5 @@
 import { type IpcBridge } from '@/common/ipc/bridge';
+import { APP_NAME } from '@/common/model/brand';
 import { DEMO_REPO_RELATIVE_PATH, demoAnalyses } from '@/common/model/fixtures';
 import { t } from '@/common/model/i18n';
 
@@ -84,7 +85,7 @@ export function installMockBridge(): void {
       };
       return { ...mockMcpStatus, skills };
     },
-    'mcp:skill-text': () => '# Reverik guide (mock)',
+    'mcp:skill-text': () => `# ${APP_NAME} guide (mock)`,
     // Låtsasagenten svarar med ett verktyg och en mening efter en stund
     'agent:ask': (payload) => {
       const { repoPath, prompt } = payload as { repoPath: string; prompt: string };

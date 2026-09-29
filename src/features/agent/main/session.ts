@@ -8,6 +8,7 @@ import {
   type LaunchInput,
 } from '../model/protocol';
 import { agentEnv } from './env';
+import { agentExecutable } from './executable';
 
 export interface SessionEvents {
   onEntry: (entry: AgentEntry) => void;
@@ -68,9 +69,10 @@ export class AgentSession {
     }
     let child: ChildProcess;
     try {
-      child = spawn(launch.command, launch.args, {
+      const env = agentEnv();
+      child = spawn(agentExecutable(launch.command, env), launch.args, {
         cwd: this.repoPath,
-        env: agentEnv(),
+        env,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
     } catch (error) {

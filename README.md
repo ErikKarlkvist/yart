@@ -1,4 +1,4 @@
-# Reverik
+# Kire
 
 PoC: en Electron-app som visar dataflöden i en kodbas som animerade
 sekvensdiagram, med dokument och reviewer som pekar in i dem.
@@ -6,7 +6,7 @@ sekvensdiagram, med dokument och reviewer som pekar in i dem.
 Appen har ingen egen modell och ingen API-nyckel. Man öppnar ett lokalt repo
 och ställer frågor i panelen Agent, eller klickar på en nod i ett flöde. Appen
 kör Claude Code eller Codex i bakgrunden med användarens egen inloggning, och
-agenten levererar flöden, dokument och reviewer genom Reveriks MCP-verktyg.
+agenten levererar flöden, dokument och reviewer genom Kires MCP-verktyg.
 Appen validerar dem, kontrollerar att varje nod och anrop pekar på en fil och
 rad som finns, och ritar upp resultatet.
 
@@ -19,10 +19,14 @@ claude mcp add --transport http reverik http://127.0.0.1:7390/mcp
 
 Första starten visar en guide med de tre vägarna: Claude Code, Codex eller
 extern AI. Den kontrollerar att vald CLI finns och är inloggad, och kan
-installera en skill som lär agenten när och hur Reverik används. Guiden nås
+installera en skill som lär agenten när och hur Kire används. Guiden nås
 igen med Guide i sidfoten. Agenten anger repots rot i varje anrop, så den
 kan köras från vilken mapp som helst. Äldre versioner skapade en mapp
 `.reverik/` i repot; den används inte längre och kan tas bort.
+
+Appens synliga namn styrs av `APP_NAME` i `src/common/model/brand.ts`.
+Det interna namnet `reverik` används fortfarande för sparad data, MCP och
+installerade skills så befintliga anslutningar fortsätter fungera vid namnbyte.
 
 I `demo/todo-app` finns en liten app att analysera: React-frontend,
 Express-backend, Postgres och Redis, med inbyggda analyser och en demo-review.

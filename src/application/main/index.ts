@@ -1,7 +1,15 @@
+import { mkdirSync } from 'node:fs';
 import { app, BrowserWindow, Menu } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { registerApplicationHandlers } from './handlers';
 import { createMainWindow } from './window';
+import { APP_NAME } from '@/common/model/brand';
+
+// Preserve the existing settings and reviews directory when the display name changes.
+const userDataPath = app.getPath('userData');
+app.setName(APP_NAME);
+mkdirSync(userDataPath, { recursive: true });
+app.setPath('userData', userDataPath);
 
 // Sätt REVERIK_USER_DATA för att köra en instans med egen datamapp, t.ex. vid felsökning
 // parallellt med en annan instans.

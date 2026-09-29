@@ -35,6 +35,12 @@
   font-size: 14px;
 }
 
+.onboarding__section-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .onboarding__card .setup__step {
   padding: 14px 0;
 }

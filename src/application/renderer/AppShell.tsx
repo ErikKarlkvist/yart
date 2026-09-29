@@ -1,6 +1,7 @@
 import { type JSX, useCallback, useEffect, useState } from 'react';
 import { type AppInfo, appInfoChannel } from '@/application/ipc/channels';
 import { t } from '@/common/model/i18n';
+import { APP_NAME } from '@/common/model/brand';
 import { Icon } from '@/common/renderer/Icon';
 import { Splitter } from '@/common/renderer/Splitter';
 import { invokeChannel } from '@/common/renderer/ipc';
@@ -100,7 +101,7 @@ export function AppShell(): JSX.Element {
     >
       <aside className="shell__sidebar">
         <div className="shell__drag" />
-        <h1 className="shell__title">REVERIK</h1>
+        <h1 className="shell__title">{APP_NAME.toUpperCase()}</h1>
         <RepoPanel />
         <BranchBar onRunReview={onRunReview} />
         {repo && <AnalysisList />}

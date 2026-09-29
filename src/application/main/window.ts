@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { BrowserWindow, shell } from 'electron';
 import { is } from '@electron-toolkit/utils';
+import { APP_NAME } from '@/common/model/brand';
 
 export function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -9,6 +10,7 @@ export function createMainWindow(): BrowserWindow {
     minWidth: 900,
     minHeight: 600,
     show: false,
+    title: APP_NAME,
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),

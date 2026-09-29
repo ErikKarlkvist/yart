@@ -5,6 +5,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { type Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { type CallToolResult, isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import { APP_NAME } from '@/common/model/brand';
 import { documentSchema } from '@/common/model/document';
 import { flowSchema } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
@@ -272,8 +273,8 @@ function createSession(deps: McpDeps): McpServer {
     'guide',
     'reverik://guide',
     {
-      title: 'Reverik guide',
-      description: 'How to build good flows, documents and reviews for Reverik.',
+      title: `${APP_NAME} guide`,
+      description: `How to build good flows, documents and reviews for ${APP_NAME}.`,
       mimeType: 'text/markdown',
     },
     (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: deps.skill() }] }),

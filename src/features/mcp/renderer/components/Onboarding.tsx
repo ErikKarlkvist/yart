@@ -56,6 +56,8 @@ export function Onboarding(): JSX.Element | null {
         </h2>
         <p className="onboarding__intro">{t('onboarding.intro')}</p>
 
+        <h3 className="onboarding__section-title">{t('onboarding.gettingStarted')}</h3>
+
         <div className="agent-picker agent-picker--wide" role="tablist">
           {AGENT_KINDS.map((kind) => (
             <button
@@ -105,6 +107,11 @@ function BuiltInPath({ agent }: { agent: RunnableAgent }): JSX.Element {
               <>
                 <Icon name="error" size="sm" /> {t('onboarding.notInstalled', { name })}
               </>
+            ) : check.error ? (
+              <>
+                <Icon name="error" size="sm" />{' '}
+                {t('onboarding.checkFailed', { name, error: check.error })}
+              </>
             ) : !check.loggedIn ? (
               <>
                 <Icon name="warning" size="sm" />{' '}
@@ -127,7 +134,7 @@ function BuiltInPath({ agent }: { agent: RunnableAgent }): JSX.Element {
             <CommandCopy command={INSTALL_COMMANDS[agent]} />
           </>
         )}
-        {check?.installed && !check.loggedIn && (
+        {check?.installed && !check.loggedIn && !check.error && (
           <>
             <p className="setup__text">{t('onboarding.loginHint')}</p>
             <CommandCopy command={LOGIN_COMMANDS[agent]} />

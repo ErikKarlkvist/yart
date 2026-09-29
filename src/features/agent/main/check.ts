@@ -2,32 +2,43 @@ import { execFile } from 'node:child_process';
 import { type RunnableAgent } from '@/common/model/agent';
 import { type AgentCheck } from '../model/protocol';
 import { agentEnv } from './env';
+import { agentExecutable } from './executable';
 
 const TIMEOUT_MS = 15000;
 
 interface Ran {
   ok: boolean;
   stdout: string;
+  error: string | null;
 }
 
-function run(command: string, args: string[]): Promise<Ran | null> {
+function run(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<Ran | null> {
   return new Promise((resolve) => {
-    execFile(command, args, { env: agentEnv(), timeout: TIMEOUT_MS }, (error, stdout) => {
+    execFile(command, args, { env, timeout: TIMEOUT_MS }, (error, stdout, stderr) => {
       const code = (error as NodeJS.ErrnoException | null)?.code;
       if (code === 'ENOENT') resolve(null);
-      else resolve({ ok: !error, stdout });
+      else resolve({ ok: !error, stdout, error: error ? stderr.trim() || error.message : null });
     });
   });
 }
 
 /** Finns agenten på PATH, och är den inloggad? Frågar CLI:n själv. */
 export async function checkAgent(agent: RunnableAgent): Promise<AgentCheck> {
-  const version = await run(agent, ['--version']);
-  if (!version?.ok) return { installed: false, version: null, loggedIn: false };
+  const env = agentEnv();
+  const command = agentExecutable(agent, env);
+  const version = await run(command, ['--version'], env);
+  if (version === null) return { installed: false, version: null, loggedIn: false };
+  if (!version.ok)
+    return {
+      installed: true,
+      version: null,
+      loggedIn: false,
+      error: version.error ?? 'Unknown error',
+    };
   const loggedIn =
     agent === 'claude'
-      ? parseClaudeLoggedIn((await run('claude', ['auth', 'status']))?.stdout ?? null)
-      : ((await run('codex', ['login', 'status']))?.ok ?? false);
+      ? parseClaudeLoggedIn((await run(command, ['auth', 'status'], env))?.stdout ?? null)
+      : ((await run(command, ['login', 'status'], env))?.ok ?? false);
   return { installed: true, version: parseVersion(version.stdout), loggedIn };
 }
 
