@@ -1,10 +1,13 @@
 .document-view {
-  width: min(820px, 100%);
+  width: 100%;
   height: 100%;
-  margin: 0 auto;
   padding: 32px clamp(20px, 5vw, 64px) 48px;
   overflow-y: auto;
   color: var(--fg);
+}
+
+.document-view > * {
+  margin-inline: auto;
 }
 
 .document-view__header {
