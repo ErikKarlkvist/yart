@@ -27,6 +27,7 @@ import {
   type Point,
   type Rect,
   type Size,
+  type Direction,
 } from '../../model/layout';
 import { type StepStatus, stepView } from '../../model/playback';
 import { type EdgeMemberData, FlowEdgeView, type GraphEdge } from './FlowEdgeView';
@@ -211,21 +212,20 @@ export function FlowGraph({
     });
     const relations: RelationEdge[] = model.relations.map((relation) => {
       const placement = layout.placements.get(relation.id);
-      const backward = placement?.direction === 'backward';
+      const handles = edgeHandles(placement?.direction ?? 'forward');
       return {
         id: relation.id,
         type: 'relation',
         source: relation.from,
         target: relation.to,
-        sourceHandle: backward ? 'out-left' : 'out-right',
-        targetHandle: backward ? 'in-right' : 'in-left',
+        ...handles,
         selectable: false,
         data: { label: relation.label, offset: placement?.offset ?? 0 },
       };
     });
     const flowEdges: GraphEdge[] = visualEdges.map((edge) => {
       const placement = layout.placements.get(edge.id);
-      const backward = placement?.direction === 'backward';
+      const handles = edgeHandles(placement?.direction ?? 'forward');
       const open = hoveredEdge === edge.id;
       const askingId =
         asking?.kind === 'edge' && edge.members.some((m) => m.id === asking.edge.id)
@@ -249,8 +249,7 @@ export function FlowGraph({
         // Öppen kant lyfts ovanför noder och andra kanter
         zIndex: open ? 1000 : 0,
         selected: selected.has(edge.id),
-        sourceHandle: backward ? 'out-left' : 'out-right',
-        targetHandle: backward ? 'in-right' : 'in-left',
+        ...handles,
         data: {
           members,
           status: combinedStatus(members),
@@ -447,6 +446,19 @@ export function FlowGraph({
       </GraphStateContext.Provider>
     </div>
   );
+}
+
+function edgeHandles(direction: Direction): { sourceHandle: string; targetHandle: string } {
+  switch (direction) {
+    case 'backward':
+      return { sourceHandle: 'out-left', targetHandle: 'in-right' };
+    case 'up':
+      return { sourceHandle: 'out-top', targetHandle: 'in-bottom' };
+    case 'down':
+      return { sourceHandle: 'out-bottom', targetHandle: 'in-top' };
+    case 'forward':
+      return { sourceHandle: 'out-right', targetHandle: 'in-left' };
+  }
 }
 
 function combinedChange(

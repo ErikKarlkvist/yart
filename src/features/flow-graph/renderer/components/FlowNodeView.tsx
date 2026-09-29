@@ -56,6 +56,10 @@ export const FlowNodeView = memo(function FlowNodeView({
       <Handle type="source" position={Position.Right} id="out-right" className="graph-handle" />
       <Handle type="source" position={Position.Left} id="out-left" className="graph-handle" />
       <Handle type="target" position={Position.Right} id="in-right" className="graph-handle" />
+      <Handle type="source" position={Position.Top} id="out-top" className="graph-handle" />
+      <Handle type="target" position={Position.Top} id="in-top" className="graph-handle" />
+      <Handle type="source" position={Position.Bottom} id="out-bottom" className="graph-handle" />
+      <Handle type="target" position={Position.Bottom} id="in-bottom" className="graph-handle" />
       <span className="graph-node__icon">
         <Icon name={data.kind} size={system ? 'lg' : 'md'} />
       </span>

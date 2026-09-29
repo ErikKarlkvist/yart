@@ -271,6 +271,9 @@ export function FlowPlayer({
               key={askKey(asking)}
               target={asking}
               onSend={sendAsk}
+              onCopy={(question) =>
+                navigator.clipboard.writeText(buildAskPrompt(flow, asking, question, flowName))
+              }
               onCancel={cancelAsk}
             />
           ) : null

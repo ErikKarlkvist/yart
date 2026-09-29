@@ -72,11 +72,12 @@ export const FlowEdgeView = memo(function FlowEdgeView({
   selected,
 }: EdgeProps<GraphEdge>): JSX.Element | null {
   if (!data) return null;
+  const vertical = data.direction === 'up' || data.direction === 'down';
   const [path, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY: sourceY + data.offset,
-    targetX,
-    targetY: targetY + data.offset,
+    sourceX: sourceX + (vertical ? data.offset : 0),
+    sourceY: sourceY + (vertical ? 0 : data.offset),
+    targetX: targetX + (vertical ? data.offset : 0),
+    targetY: targetY + (vertical ? 0 : data.offset),
     sourcePosition,
     targetPosition,
   });
@@ -86,7 +87,7 @@ export const FlowEdgeView = memo(function FlowEdgeView({
   const active = data.members.find((m) => m.status === 'active');
   const shown = open ? data.members : active ? [active] : [];
   // Framåtkanter får etiketten ovanför linjen, svar under, så linjen syns.
-  const side = data.direction === 'forward' ? -1 : 1;
+  const side = data.direction === 'forward' || data.direction === 'up' ? -1 : 1;
   const labelOffsetY = labelY + side * LABEL_DISTANCE;
 
   return (

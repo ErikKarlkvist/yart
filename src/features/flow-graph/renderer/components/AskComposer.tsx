@@ -1,4 +1,4 @@
-import { type JSX, type KeyboardEvent, useState } from 'react';
+import { type JSX, type KeyboardEvent, useEffect, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { askLabel, askSource, type AskTarget } from '../../model/ask';
@@ -6,12 +6,14 @@ import { askLabel, askSource, type AskTarget } from '../../model/ask';
 interface Props {
   target: AskTarget;
   onSend: (question: string) => void;
+  onCopy: (question: string) => Promise<void>;
   onCancel: () => void;
 }
 
-/** Frågerutan som ligger över grafen när något pekats ut. Enter kopierar frågan, Escape stänger. */
-export function AskComposer({ target, onSend, onCancel }: Props): JSX.Element {
+/** Frågerutan som ligger över grafen när något pekats ut. Enter skickar, Escape stänger. */
+export function AskComposer({ target, onSend, onCopy, onCancel }: Props): JSX.Element {
   const [question, setQuestion] = useState('');
+  const [copied, setCopied] = useState(false);
   const label = askLabel(target);
   const source = askSource(target);
   const ready = question.trim().length > 0;
@@ -19,6 +21,23 @@ export function AskComposer({ target, onSend, onCancel }: Props): JSX.Element {
   const send = (): void => {
     if (ready) onSend(question);
   };
+  const copy = (): void => {
+    if (!ready) return;
+    onCopy(question)
+      .then(() => {
+        setCopied(true);
+      })
+      .catch(console.error);
+  };
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => {
+      setCopied(false);
+    }, 1500);
+    return () => {
+      clearTimeout(id);
+    };
+  }, [copied]);
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === 'Enter') send();
     else if (event.key === 'Escape') onCancel();
@@ -43,6 +62,7 @@ export function AskComposer({ target, onSend, onCancel }: Props): JSX.Element {
         placeholder={t('ask.placeholder', { label })}
         onChange={(event) => {
           setQuestion(event.target.value);
+          setCopied(false);
         }}
         onKeyDown={onKeyDown}
       />
@@ -55,6 +75,16 @@ export function AskComposer({ target, onSend, onCancel }: Props): JSX.Element {
         aria-label={t('ask.send')}
       >
         <Icon name="chat" />
+      </button>
+      <button
+        type="button"
+        className="icon-button icon-button--quiet"
+        disabled={!ready}
+        onClick={copy}
+        title={copied ? t('side.copied') : t('ask.copy')}
+        aria-label={copied ? t('side.copied') : t('ask.copy')}
+      >
+        <Icon name="copy" />
       </button>
       <button
         type="button"

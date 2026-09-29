@@ -30,7 +30,7 @@ export interface Point {
   y: number;
 }
 
-export type Direction = 'forward' | 'backward';
+export type Direction = 'forward' | 'backward' | 'up' | 'down';
 
 interface EdgePlacement {
   /** Går kanten åt höger (forward) eller tillbaka åt vänster (backward) */
@@ -62,6 +62,7 @@ export const GROUP_PADDING = 18;
 export const GROUP_LABEL_HEIGHT = 30;
 
 const PARALLEL_GAP = 34;
+const SIDE_BRANCH_GAP = 80;
 
 /** Placerar noderna vänster till höger med dagre och räknar ut kanternas riktning och förskjutning. */
 export function layoutFlow(input: LayoutInput): Layout {
@@ -90,10 +91,15 @@ export function layoutFlow(input: LayoutInput): Layout {
   // gången paret ses, så svar tillbaka inte drar isär layouten. Självkanter ignoreras.
   const allEdges = [...input.edges, ...(input.relations ?? [])];
   const seenPairs = new Set<string>();
+  const outgoing = new Map<string, Set<string>>();
+  const neighbours = new Map<string, Set<string>>();
   for (const edge of allEdges) {
     const key = pairKey(edge.from, edge.to);
     if (seenPairs.has(key) || edge.from === edge.to) continue;
     seenPairs.add(key);
+    addNeighbour(outgoing, edge.from, edge.to);
+    addNeighbour(neighbours, edge.from, edge.to);
+    addNeighbour(neighbours, edge.to, edge.from);
     graph.setEdge(edge.from, edge.to);
   }
   dagre.layout(graph);
@@ -106,6 +112,14 @@ export function layoutFlow(input: LayoutInput): Layout {
     positions.set(node.id, { x: placed.x - size.width / 2, y: placed.y - size.height / 2 });
   }
 
+  // En direkt väg och en omväg via ett mellanliggande system bildar en triangel.
+  // Håll den direkta vägen rak och lägg mellansystemet centrerat ovanför/under.
+  alignBypassPaths(input, positions, outgoing, neighbours);
+
+  // En kort sidogren behöver inte förlänga huvudflödet åt höger. Lägg en
+  // slutpunkt ovanför eller nedanför dess förälder när en annan gren fortsätter.
+  const verticalPairs = placeSideBranches(input, positions, outgoing, neighbours);
+
   const groupRects = new Map<string, Rect>();
   for (const id of groupIds) {
     const cluster = graph.node(clusterId(id)) as Point & Size;
@@ -117,7 +131,7 @@ export function layoutFlow(input: LayoutInput): Layout {
     });
   }
 
-  const placements = placeEdges({ ...input, edges: allEdges }, positions);
+  const placements = placeEdges({ ...input, edges: allEdges }, positions, verticalPairs);
   return { positions, placements, groupRects };
 }
 
@@ -125,7 +139,170 @@ function clusterId(groupId: string): string {
   return `cluster:${groupId}`;
 }
 
-function placeEdges(input: LayoutInput, positions: Map<string, Point>): Map<string, EdgePlacement> {
+function addNeighbour(map: Map<string, Set<string>>, from: string, to: string): void {
+  const targets = map.get(from) ?? new Set<string>();
+  targets.add(to);
+  map.set(from, targets);
+}
+
+function isSideLeaf(
+  id: string,
+  outgoing: Map<string, Set<string>>,
+  neighbours: Map<string, Set<string>>,
+): boolean {
+  const adjacent = neighbours.get(id);
+  if (adjacent?.size !== 1) return false;
+  const parentId = adjacent.values().next().value;
+  return Boolean(
+    parentId &&
+    outgoing.get(parentId)?.has(id) &&
+    [...(outgoing.get(parentId) ?? [])].some(
+      (otherId) => otherId !== id && (neighbours.get(otherId)?.size ?? 0) > 1,
+    ),
+  );
+}
+
+function alignBypassPaths(
+  input: LayoutInput,
+  positions: Map<string, Point>,
+  outgoing: Map<string, Set<string>>,
+  neighbours: Map<string, Set<string>>,
+): void {
+  if (input.nodes.some((node) => node.level !== 'system')) return;
+  const byId = new Map(input.nodes.map((node) => [node.id, node]));
+  const used = new Set<string>();
+  for (const [fromId, targets] of outgoing) {
+    for (const toId of targets) {
+      const middleId = [...targets].find((id) => id !== toId && outgoing.get(id)?.has(toId));
+      if (!middleId || [fromId, middleId, toId].some((id) => used.has(id))) continue;
+      const from = positions.get(fromId);
+      const middle = positions.get(middleId);
+      const to = positions.get(toId);
+      const fromNode = byId.get(fromId);
+      const middleNode = byId.get(middleId);
+      const toNode = byId.get(toId);
+      if (!from || !middle || !to || !fromNode || !middleNode || !toNode) continue;
+      if (!(from.x < middle.x && middle.x < to.x)) continue;
+
+      const size = nodeSize(middleNode);
+      const x = (from.x + to.x) / 2;
+      const obstacles = input.nodes.flatMap((node) => {
+        if ([fromId, middleId, toId].includes(node.id) || isSideLeaf(node.id, outgoing, neighbours))
+          return [];
+        const position = positions.get(node.id);
+        return position ? [{ ...position, ...nodeSize(node) }] : [];
+      });
+      for (const y of [from.y, to.y]) {
+        const fromRect = { x: from.x, y, ...nodeSize(fromNode) };
+        const toRect = { x: to.x, y, ...nodeSize(toNode) };
+        if (obstacles.some((rect) => overlaps(rect, fromRect) || overlaps(rect, toRect))) continue;
+        const above = nearestFreePosition(
+          x,
+          y - size.height - SIDE_BRANCH_GAP,
+          -1,
+          size,
+          obstacles,
+        );
+        const below = nearestFreePosition(
+          x,
+          y + nodeSize(fromNode).height + SIDE_BRANCH_GAP,
+          1,
+          size,
+          obstacles,
+        );
+        const aboveDistance = y - (above.y + size.height);
+        const belowDistance = below.y - (y + nodeSize(fromNode).height);
+        const middlePosition = aboveDistance <= belowDistance ? above : below;
+        positions.set(fromId, { x: from.x, y });
+        positions.set(toId, { x: to.x, y });
+        positions.set(middleId, middlePosition);
+        used.add(fromId);
+        used.add(middleId);
+        used.add(toId);
+        break;
+      }
+    }
+  }
+}
+
+function placeSideBranches(
+  input: LayoutInput,
+  positions: Map<string, Point>,
+  outgoing: Map<string, Set<string>>,
+  neighbours: Map<string, Set<string>>,
+): Set<string> {
+  const verticalPairs = new Set<string>();
+  // Detaljvyns grupper behöver Dagres egen placering; sidogrenar gäller systemvyn.
+  if (input.nodes.some((node) => node.level !== 'system')) return verticalPairs;
+  const byId = new Map(input.nodes.map((node) => [node.id, node]));
+  const placed: Rect[] = [];
+  const moved = new Set<string>();
+
+  for (const leaf of input.nodes) {
+    if (!isSideLeaf(leaf.id, outgoing, neighbours)) continue;
+    const parentId = neighbours.get(leaf.id)?.values().next().value;
+    if (!parentId) continue;
+
+    const parent = byId.get(parentId);
+    const parentPosition = positions.get(parentId);
+    if (!parent || !parentPosition) continue;
+    const size = nodeSize(leaf);
+    const parentSize = nodeSize(parent);
+    const x = parentPosition.x + (parentSize.width - size.width) / 2;
+    const occupied = input.nodes.flatMap((node) => {
+      if (node.id === leaf.id || moved.has(node.id)) return [];
+      const position = positions.get(node.id);
+      return position ? [{ ...position, ...nodeSize(node) }] : [];
+    });
+    const obstacles = [...occupied, ...placed];
+    const above = nearestFreePosition(
+      x,
+      parentPosition.y - size.height - SIDE_BRANCH_GAP,
+      -1,
+      size,
+      obstacles,
+    );
+    const below = nearestFreePosition(
+      x,
+      parentPosition.y + parentSize.height + SIDE_BRANCH_GAP,
+      1,
+      size,
+      obstacles,
+    );
+    const aboveDistance = parentPosition.y - (above.y + size.height);
+    const belowDistance = below.y - (parentPosition.y + parentSize.height);
+    const position = aboveDistance <= belowDistance ? above : below;
+    positions.set(leaf.id, position);
+    moved.add(leaf.id);
+    placed.push({ ...position, ...size });
+    verticalPairs.add(pairKey(parentId, leaf.id));
+  }
+  return verticalPairs;
+}
+
+function nearestFreePosition(
+  x: number,
+  startY: number,
+  side: -1 | 1,
+  size: Size,
+  obstacles: readonly Rect[],
+): Point {
+  let y = startY;
+  while (obstacles.some((rect) => overlaps({ x, y, ...size }, rect))) {
+    y += side * (size.height + SIDE_BRANCH_GAP);
+  }
+  return { x, y };
+}
+
+function overlaps(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function placeEdges(
+  input: LayoutInput,
+  positions: Map<string, Point>,
+  verticalPairs: ReadonlySet<string>,
+): Map<string, EdgePlacement> {
   const groups = new Map<string, string[]>();
   for (const edge of input.edges) {
     const key = pairKey(edge.from, edge.to);
@@ -141,7 +318,16 @@ function placeEdges(input: LayoutInput, positions: Map<string, Point>): Map<stri
     const offset = (index - (group.length - 1) / 2) * PARALLEL_GAP;
     const fromX = positions.get(edge.from)?.x ?? 0;
     const toX = positions.get(edge.to)?.x ?? 0;
-    placements.set(edge.id, { direction: toX >= fromX ? 'forward' : 'backward', offset });
+    const fromY = positions.get(edge.from)?.y ?? 0;
+    const toY = positions.get(edge.to)?.y ?? 0;
+    const direction = verticalPairs.has(pairKey(edge.from, edge.to))
+      ? toY < fromY
+        ? 'up'
+        : 'down'
+      : toX >= fromX
+        ? 'forward'
+        : 'backward';
+    placements.set(edge.id, { direction, offset });
   }
   return placements;
 }
