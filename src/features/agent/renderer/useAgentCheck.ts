@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { checkAgentChannel } from '../ipc/channels';
-import { type AgentCheck, type RunnableAgent } from '../model/protocol';
+import { type RunnableAgent } from '@/common/model/agent';
+import { type AgentCheck } from '../model/protocol';
 
 export interface AgentCheckState {
   /** null tills första kontrollen svarat */

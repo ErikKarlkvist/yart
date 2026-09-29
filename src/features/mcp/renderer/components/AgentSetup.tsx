@@ -1,12 +1,8 @@
 import { type JSX, useEffect, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
-import {
-  AGENT_KINDS,
-  type AgentKind,
-  codexConfigSnippet,
-  connectCommand,
-} from '../../model/agents';
+import { AGENT_KINDS, type AgentKind } from '@/common/model/agent';
+import { codexConfigSnippet, connectCommand } from '../../model/agents';
 import { type McpState } from '../useMcpStatus';
 import { CommandCopy } from './CommandCopy';
 import { SkillInstall } from './SkillInstall';

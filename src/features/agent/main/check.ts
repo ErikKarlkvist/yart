@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
-import { type AgentCheck, type RunnableAgent } from '../model/protocol';
+import { type RunnableAgent } from '@/common/model/agent';
+import { type AgentCheck } from '../model/protocol';
 import { agentEnv } from './env';
 
 const TIMEOUT_MS = 15000;

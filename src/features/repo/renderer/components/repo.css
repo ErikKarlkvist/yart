@@ -3,17 +3,6 @@
   flex-direction: column;
   gap: 12px;
 }
-
-.repo__heading,
-.repo__subheading {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fg-muted);
-}
-
 .repo__muted {
   margin: 0;
   color: var(--fg-muted);
@@ -27,12 +16,6 @@
   color: var(--danger);
   cursor: pointer;
 }
-
-.repo__actions {
-  display: flex;
-  gap: 8px;
-}
-
 .repo-card {
   padding: 4px 4px 4px 6px;
   border: 1px solid var(--border);

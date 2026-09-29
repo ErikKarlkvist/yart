@@ -4,11 +4,7 @@
  * tolkningen av raderna processerna skriver.
  */
 
-/** Vilken sorts agent användaren valt. `manual` betyder extern AI, inget körs i appen. */
-export type AgentKind = 'claude' | 'codex' | 'manual';
-
-/** Agenterna appen kan köra i bakgrunden. */
-export type RunnableAgent = 'claude' | 'codex';
+import { type RunnableAgent } from '@/common/model/agent';
 
 export type AgentState =
   /** Ingen process, eller processen väntar på nästa fråga */

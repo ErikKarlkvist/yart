@@ -1,12 +1,7 @@
-/**
- * Agenterna guiden och Anslut-panelen kan visa instruktioner för. `manual`
- * täcker allt annat: adressen, och guiden som text att klistra in.
- */
-export const AGENT_KINDS = ['claude', 'codex', 'manual'] as const;
-export type AgentKind = (typeof AGENT_KINDS)[number];
+import { type AgentKind, type RunnableAgent } from '@/common/model/agent';
 
 /** Agenter som läser skills i formatet SKILL.md ur en egen mapp. */
-export type SkillTarget = 'claude' | 'codex';
+export type SkillTarget = RunnableAgent;
 
 /** Var respektive agent letar efter personliga skills, relativt hemmappen. */
 export const SKILL_PATHS: Readonly<Record<SkillTarget, string>> = {

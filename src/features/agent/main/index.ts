@@ -2,7 +2,8 @@ import { app } from 'electron';
 import { emitEvent, handleChannel } from '@/common/main/ipc';
 import { t } from '@/common/model/i18n';
 import { agentEvent, askAgentChannel, checkAgentChannel, stopAgentChannel } from '../ipc/channels';
-import { type RunnableAgent, RUNNERS } from '../model/protocol';
+import { type RunnableAgent } from '@/common/model/agent';
+import { RUNNERS } from '../model/protocol';
 import { checkAgent } from './check';
 import { AgentSession } from './session';
 

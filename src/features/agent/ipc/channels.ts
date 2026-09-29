@@ -1,11 +1,6 @@
 import { defineChannel, defineEvent } from '@/common/ipc/channel';
-import {
-  type AgentCheck,
-  type AgentEntry,
-  type AgentKind,
-  type AgentState,
-  type RunnableAgent,
-} from '../model/protocol';
+import { type AgentKind, type RunnableAgent } from '@/common/model/agent';
+import { type AgentCheck, type AgentEntry, type AgentState } from '../model/protocol';
 
 /**
  * Skickar en fråga till repots agentsession och startar den om den inte

@@ -1,8 +1,8 @@
 import { type JSX, useEffect, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
-import { type RunnableAgent, useAgentCheck } from '@/features/agent';
-import { AGENT_KINDS, type AgentKind } from '../../model/agents';
+import { AGENT_KINDS, type AgentKind, type RunnableAgent } from '@/common/model/agent';
+import { useAgentCheck } from '@/features/agent';
 import { useSetup } from '../SetupContext';
 import { useMcpStatus } from '../useMcpStatus';
 import { AgentSetup } from './AgentSetup';

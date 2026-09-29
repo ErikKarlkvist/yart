@@ -33,12 +33,6 @@
   margin: 0;
   color: var(--fg-muted);
 }
-
-.connect__error {
-  margin: 0;
-  color: var(--danger);
-}
-
 .connect__code {
   display: block;
   margin: 0 0 10px;

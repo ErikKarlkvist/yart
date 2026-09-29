@@ -2,7 +2,8 @@ import { type JSX, type ReactNode, useCallback, useMemo, useState } from 'react'
 import { invokeChannel } from '@/common/renderer/ipc';
 import { useIpcEvent } from '@/common/renderer/useIpcEvent';
 import { type AgentEvent, agentEvent, askAgentChannel, stopAgentChannel } from '../ipc/channels';
-import { type AgentEntry, type AgentKind, type AgentState } from '../model/protocol';
+import { type AgentKind } from '@/common/model/agent';
+import { type AgentEntry, type AgentState } from '../model/protocol';
 import { AgentContext } from './AgentContext';
 
 interface Props {

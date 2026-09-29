@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { type AgentKind } from '../model/agents';
+import { type AgentKind } from '@/common/model/agent';
 
 /** Delat mellan guiden och Anslut-panelen: vald agent och om guiden är öppen. */
 export interface SetupApi {

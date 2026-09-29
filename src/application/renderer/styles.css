@@ -356,43 +356,6 @@ select:focus {
   padding: 0 10px 10px 34px;
   font-size: 13px;
 }
-
-.review-side__compose {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px 0;
-  border-top: 1px solid var(--border);
-}
-
-.review-side__instruction {
-  width: 100%;
-  resize: vertical;
-  font: inherit;
-  font-size: 13px;
-  color: inherit;
-  padding: 6px 8px;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  background: var(--bg);
-}
-
-.review-side__instruction:focus {
-  outline: none;
-}
-
-.review-side__compose-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.review-side__hint {
-  flex: 1;
-  font-size: 11px;
-  color: var(--fg-muted);
-}
-
 .review-side__actions {
   display: flex;
   gap: 8px;
@@ -407,12 +370,6 @@ select:focus {
   justify-content: center;
   gap: 6px;
 }
-
-.review-side__send {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 /* Arbetsytan: flikrad och en arbetsyta per flik, alla monterade */
 .shell__work {
   grid-area: work;
@@ -522,16 +479,6 @@ select:focus {
 .shell__tab:disabled {
   opacity: 0.4;
 }
-
-.shell__panel-heading {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fg-muted);
-}
-
 .shell__empty {
   margin: 0;
   color: var(--fg-muted);

@@ -1,6 +1,6 @@
 import { type JSX, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
-import { type AgentKind } from '../../model/agents';
+import { type AgentKind } from '@/common/model/agent';
 import { type McpState } from '../useMcpStatus';
 import { AgentSetup } from './AgentSetup';
 import './connect.css';

@@ -1,7 +1,7 @@
 import { type JSX, type ReactNode, useMemo, useState } from 'react';
 import { readStored, writeStored } from '@/common/renderer/storage';
 import { useStoredChoice } from '@/common/renderer/useStored';
-import { AGENT_KINDS } from '../model/agents';
+import { AGENT_KINDS } from '@/common/model/agent';
 import { SetupContext } from './SetupContext';
 
 /** Globala för appen, inte per flik: guiden ska bara behöva stängas en gång. */

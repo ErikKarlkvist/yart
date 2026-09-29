@@ -3,25 +3,26 @@
 PoC: en Electron-app som visar dataflöden i en kodbas som animerade
 sekvensdiagram, med dokument och reviewer som pekar in i dem.
 
-Appen har ingen egen AI. Man öppnar ett lokalt repo i appen och kör valfri
-AI-agent fristående, till exempel Claude Code i en terminal. Agenten kopplas
-till Reveriks MCP-server och levererar flöden, dokument och reviewer med dess
-verktyg; appen validerar dem, kontrollerar att varje nod och anrop pekar på en
-fil och rad som finns, och ritar upp resultatet.
+Appen har ingen egen modell och ingen API-nyckel. Man öppnar ett lokalt repo
+och ställer frågor i panelen Agent, eller klickar på en nod i ett flöde. Appen
+kör Claude Code eller Codex i bakgrunden med användarens egen inloggning, och
+agenten levererar flöden, dokument och reviewer genom Reveriks MCP-verktyg.
+Appen validerar dem, kontrollerar att varje nod och anrop pekar på en fil och
+rad som finns, och ritar upp resultatet.
+
+Vill man hellre köra en agent i sin egen terminal kopplas den till samma
+MCP-server, för Claude Code med:
 
 ```bash
 claude mcp add --transport http reverik http://127.0.0.1:7390/mcp
 ```
 
-Panelen Agent i appen kör Claude Code i bakgrunden med Reveriks verktyg, så
-man kan fråga om koden och klicka på noder direkt i appen; svaren och det
-agenten sparar dyker upp i appen. Det kräver att `claude` finns på PATH och är
-inloggad. Första starten visar en guide där man väljer agent: Claude Code, Codex eller
-annan. Den ger kommandot att köra, installerar en skill i agentens skillmapp,
-eller kopierar guiden som text för agenter utan skillmapp. Samma sak finns i
-Anslut-panelen bakom MCP-adressen i sidfoten. Agenten anger repots rot i varje
-anrop, så den kan köras från vilken mapp som helst. Äldre versioner skapade en
-mapp `.reverik/` i repot; den används inte längre och kan tas bort.
+Första starten visar en guide med de tre vägarna: Claude Code, Codex eller
+extern AI. Den kontrollerar att vald CLI finns och är inloggad, och kan
+installera en skill som lär agenten när och hur Reverik används. Guiden nås
+igen med Guide i sidfoten. Agenten anger repots rot i varje anrop, så den
+kan köras från vilken mapp som helst. Äldre versioner skapade en mapp
+`.reverik/` i repot; den används inte längre och kan tas bort.
 
 I `demo/todo-app` finns en liten app att analysera: React-frontend,
 Express-backend, Postgres och Redis, med inbyggda analyser och en demo-review.
