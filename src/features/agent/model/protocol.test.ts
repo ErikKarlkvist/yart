@@ -32,12 +32,20 @@ describe('codexRunner', () => {
     expect(first.args.slice(0, 2)).toEqual(['exec', '--json']);
     expect(first.args).toContain('read-only');
     expect(first.args).toContain('mcp_servers.reverik.url="http://127.0.0.1:7390/mcp"');
-    expect(first.args.at(-1)).toContain('SKILL');
-    expect(first.args.at(-1)).toContain('hej');
+    for (const tool of ['save_flow', 'save_document', 'save_review']) {
+      expect(first.args).toContain(`mcp_servers.reverik.tools.${tool}.approval_mode="approve"`);
+    }
+    expect(first.args.at(-1)).toBe('-');
+    expect(first.stdin).toContain('SKILL');
+    expect(first.stdin).toContain('hej');
 
     const next = codexRunner.launch({ ...input, prompt: 'mer', threadId: 'abc' });
     expect(next.args.slice(0, 3)).toEqual(['exec', 'resume', '--json']);
-    expect(next.args.slice(-2)).toEqual(['abc', 'mer']);
+    expect(next.args).not.toContain('--sandbox');
+    expect(next.args).toContain('sandbox_mode="read-only"');
+    expect(next.args).toContain('mcp_servers.reverik.tools.save_flow.approval_mode="approve"');
+    expect(next.args.slice(-2)).toEqual(['abc', '-']);
+    expect(next.stdin).toBe('mer');
   });
 });
 

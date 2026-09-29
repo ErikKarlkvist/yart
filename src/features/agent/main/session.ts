@@ -93,13 +93,17 @@ export class AgentSession {
       });
     }
     child.stderr?.on('data', (chunk: Buffer) => {
-      this.stderr = (this.stderr + chunk.toString()).slice(-2000);
+      this.stderr = (this.stderr + chunk.toString()).slice(-64000);
     });
     child.on('exit', (code) => {
       if (this.child !== child) return;
       this.child = null;
       if (code !== 0 && code !== null) {
-        const detail = this.stderr.trim().split('\n').at(-1) ?? '';
+        const lines = this.stderr
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+        const detail = lines.find((line) => /^error:/i.test(line)) ?? lines.at(-1) ?? '';
         this.emit({ at: now(), kind: 'error', text: t('agent.exited', { code, detail }) });
       }
       // En process per fråga avslutas när svaret är klart; det är inte ett stopp

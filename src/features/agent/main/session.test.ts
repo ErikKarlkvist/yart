@@ -31,10 +31,15 @@ rl.on('line', (line) => {
 });
 `;
 const FAKE_CODEX = `
+const fs = require('node:fs');
 const args = process.argv.slice(2);
 const out = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const resume = args[1] === 'resume';
-const prompt = args[args.length - 1];
+if (resume && args.includes('--sandbox')) {
+  process.stderr.write("error: unexpected argument '--sandbox' found\\n\\nFor more information, try '--help'.\\n");
+  process.exit(2);
+}
+const prompt = args.at(-1) === '-' ? fs.readFileSync(0, 'utf8') : args.at(-1);
 const thread = resume ? args[args.length - 2] : 'thread-1';
 out({ type: 'thread.started', thread_id: thread });
 out({ type: 'item.started', item: { type: 'mcp_tool_call', server: 'reverik', tool: 'save_flow' } });
@@ -176,5 +181,23 @@ describe('AgentSession med Codex', () => {
     expect(c.entries.at(-1)).toMatchObject({ kind: 'assistant', text: 'Resumed thread-1: more' });
     await c.until(() => c.states.at(-1) === 'idle');
     expect(c.states).toEqual(['busy', 'idle', 'busy', 'idle']);
+  });
+
+  it('visar själva CLI-felet i stället för hjälphänvisningen', async () => {
+    const c = collect();
+    const invalid: AgentRunner = {
+      ...codexRunner,
+      launch: () => ({
+        command: process.execPath,
+        args: [codexScript, 'exec', 'resume', '--sandbox', 'read-only', 'thread-1', 'test'],
+      }),
+    };
+    const session = new AgentSession(tmpdir(), invalid, context, c.events);
+    session.ask('test');
+    await c.until(() => c.states.at(-1) === 'stopped');
+    const error = c.entries.at(-1);
+    expect(error?.kind).toBe('error');
+    if (error?.kind !== 'error') return;
+    expect(error.text).toContain("unexpected argument '--sandbox'");
   });
 });

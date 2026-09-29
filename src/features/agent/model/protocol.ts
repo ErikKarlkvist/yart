@@ -132,18 +132,21 @@ export const codexRunner: AgentRunner = {
     const shared = [
       '--json',
       '--skip-git-repo-check',
-      '--sandbox',
-      'read-only',
       '-c',
       `mcp_servers.reverik.url=${JSON.stringify(mcpUrl)}`,
+      ...(['save_flow', 'save_document', 'save_review'] as const).flatMap((tool) => [
+        '-c',
+        `mcp_servers.reverik.tools.${tool}.approval_mode="approve"`,
+      ]),
     ];
     const text = threadId === null ? `${skill}\n\n---\n\n${prompt}` : prompt;
     return {
       command: 'codex',
       args:
         threadId === null
-          ? ['exec', ...shared, text]
-          : ['exec', 'resume', ...shared, threadId, text],
+          ? ['exec', ...shared, '--sandbox', 'read-only', '-']
+          : ['exec', 'resume', ...shared, '-c', 'sandbox_mode="read-only"', threadId, '-'],
+      stdin: text,
     };
   },
   message: (prompt) => `${prompt}\n`,
