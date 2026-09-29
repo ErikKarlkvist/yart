@@ -13,7 +13,7 @@ export const documentSchema = z.object({
     .string()
     .min(1)
     .describe(
-      'A few short paragraphs, separated by blank lines, explaining how the code works at a high level',
+      'A few short paragraphs, separated by blank lines, explaining the code at a high level. For a document linked to a compared flow, explain the important before/after differences and practical effect.',
     ),
   flows: z
     .array(analysisNameSchema)

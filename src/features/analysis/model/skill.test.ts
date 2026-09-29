@@ -29,6 +29,10 @@ describe('buildSkill', () => {
     expect(skill).toContain('Choose the deliverable that matches the question');
     expect(skill).toContain('Do not create Mermaid');
     expect(skill).toContain('clear, human sentences in active voice');
+    expect(skill).toContain('for someone who has not read the code');
+    expect(skill).toContain('Do not turn playback steps into suggestions');
+    expect(skill).toContain('save a companion');
+    expect(skill).toContain('before/after differences');
     expect(skill).toContain('interface Review {');
     expect(skill).toContain('interface FlowCompare {');
   });

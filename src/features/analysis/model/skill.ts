@@ -1,7 +1,8 @@
 import { listTodosFlow } from '@/common/model/fixtures';
+import { APP_NAME } from '@/common/model/brand';
 
 /**
- * Skillen Claude Code läser när Reverik nås via MCP. Installeras från appen i
+ * Skillen Claude Code läser när appen nås via MCP. Installeras från appen i
  * användarens skillmapp. De delade avsnitten är dokumentation för alla agenter,
  * MCP-servern serverar samma text som resurs.
  */
@@ -12,11 +13,11 @@ const HOW_TO_BUILD = `## How to build a good flow
    a queue message, a scheduled job. Read the code and follow the data through handlers,
    routes, services, storage, caches, queues and external systems, and back to the caller.
 2. Everything that exists in this repository needs a \`source\`: a path relative to the
-   repository root and a 1-based line number that really exists. Reverik checks both.
+   repository root and a 1-based line number that really exists. {appName} checks both.
    Point at the line where the function is declared (nodes) or where the call is made (edges).
    Nodes of kind \`db\`, \`cache\`, \`external\` and \`queue\` may omit \`source\`.
 3. Group nodes into \`systems\`, one per deployable application or infrastructure component:
-   the frontend, the API, Postgres, Redis, a webhook consumer. Reverik shows the systems first
+   the frontend, the API, Postgres, Redis, a webhook consumer. {appName} shows the systems first
    and lets the user zoom into each one. Every system must have at least one node.
 4. Describe tables on \`db\` and \`cache\` nodes with columns, primary keys and foreign keys
    (\`references\` may only point at tables on the same node). On every edge that touches
@@ -25,11 +26,18 @@ const HOW_TO_BUILD = `## How to build a good flow
 5. Order \`steps\` the way the flow actually runs. Responses are edges of their own going
    back to the caller, e.g. "200 OK with the todo". Every step references an edge id.
 6. Keep labels short and use the code's own names (component, function, route, table).
-   Write step descriptions as clear, human sentences in active voice. Say what data
-   moves and why; do not merely restate the HTTP verb or say that a request "reaches"
-   a component. For example, prefer "The seating page asks the API for open seats on
-   the selected date" over "The first GET reaches the API." Put technical detail in
-   \`description\`, \`payload\` and \`response\`.
+   Write step descriptions as clear, human sentences in active voice, in the
+   language the user chose (or the language of their request if none was chosen),
+   for someone who has not read the code. Explain what happens to the
+   user or data and why it matters. Avoid method and variable names, request IDs,
+   unexplained acronyms and implementation order unless essential to the outcome.
+   Do not turn playback steps into suggestions or hypothetical failure analysis:
+   describe the behavior that actually occurs, and put findings in the review.
+   For example, in English, prefer "The webshop prepares the payment before
+   contacting Swish" over "Generate a Swish request ID and reuse SetReference
+   before the PSP call." Translate the plain-language style, not the exact wording.
+   Keep exact code names in labels and source references; put technical detail in
+   \`description\`, \`payload\` and \`response\` on nodes and edges.
 7. If the user asks about a failure or an alternative path, model that path: the edge that
    fails, what catches it, what is rolled back or retried, and what the caller sees.
 8. Use \`role\` to name a handler more specifically when useful, such as \`Hook\`, \`Action\` or
@@ -115,7 +123,7 @@ interface Edge {
 
 interface Step {
   edgeId: string;     // Edge.id
-  description: string; // one sentence about what happens in this step
+  description: string; // plain-language sentence about what happens, without code identifiers
 }
 
 interface Source {
@@ -138,7 +146,7 @@ a diff), deliver the flows the change touches and then one review document:
    the data flows the change touches. Ignore flows the change does not affect.
 2. Save each affected flow as it works on head, with a \`compare\` that holds the same
    flow as it works on base. Keep the same node and edge ids in base and head for
-   things that are the same, so Reverik can show what was added, removed and changed.
+   things that are the same, so {appName} can show what was added, removed and changed.
    Give new things new ids.
 3. Save the review: a title, a summary with the verdict, a few paragraphs about what the
    change does and how it affects the data flows, the names of the flows in \`flows\`,
@@ -171,12 +179,12 @@ interface Finding {
 Rules for reviews:
 
 - Use real git references as \`headLabel\` and \`baseLabel\`, e.g. \`feature/x\`,
-  \`origin/feature/x\` or a commit. Reverik checks head flows against \`headLabel\`
+  \`origin/feature/x\` or a commit. {appName} checks head flows against \`headLabel\`
   when it resolves in this repository (run \`git fetch\` first), so the branch does not
   need to be checked out. If it does not resolve, the working tree is used. \`base\` is
   not checked.
 - Point every finding at a flow by name and at a node or a call in it, and at a file and
-  line where possible. Reverik rejects the review if a flow is not saved or a target does
+  line where possible. {appName} rejects the review if a flow is not saved or a target does
   not exist. Look for: cache invalidation that disappeared, calls that are now awaited or
   reordered, work moved inside or outside a transaction, missing error handling or
   validation, N+1 queries, secrets or data leaving the system, retries and timeouts.
@@ -194,47 +202,55 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 `;
 
 /** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 2;
+export const SKILL_VERSION = 5;
 
 export function buildSkill(): string {
   return `---
 name: reverik
-description: Deliver data-flow diagrams, architecture documents and change reviews to Reverik, the desktop app that shows them. Use when the user asks for a flow, sequence diagram, data flow, overview document or review in Reverik, and whenever the Reverik MCP tools (save_flow, save_document, save_review) are available and the question is about how data moves through a codebase or what a change does to it.
+description: Deliver data-flow diagrams, architecture documents and change reviews to {appName}, the desktop app that shows them. Use when the user asks for a flow, sequence diagram, data flow, overview document or review in {appName}, and whenever the {appName} MCP tools (save_flow, save_document, save_review) are available and the question is about how data moves through a codebase or what a change does to it.
 ---
-<!-- reverik-skill v${SKILL_VERSION}, generated by Reverik, do not edit -->
-# Reverik
+<!-- reverik-skill v${SKILL_VERSION}, generated by {appName}, do not edit -->
+# {appName}
 
-Reverik is a desktop app that shows concise documents and animated sequence
+{appName} is a desktop app that shows concise documents and animated sequence
 diagrams of data flows through a codebase, and reviews of changes against them.
 It is running on the user's machine and you reach it through the MCP server
 \`reverik\` with the tools \`list_repos\`, \`list_analyses\`, \`get_analysis\`,
 \`save_flow\`, \`save_document\` and \`save_review\`. The user sees what you save
 as soon as the tool returns. If the tools are missing, ask the user to start
-Reverik and connect it with the command shown in its Connect panel.
+{appName} and connect it with the command shown in its Connect panel.
 
 **Choose the deliverable that matches the question.** Use a document for a
 short, high-level explanation of how the codebase or a major feature works. Use
-flows for a specific request, operation or failure path. A document can link to
-related flows so the reader can explore details. Do not create Mermaid, ASCII
-diagrams, HTML pages, separate notes or files in the repository.
+flows for a specific request, operation or failure path. Do not create Mermaid,
+ASCII diagrams, HTML pages, separate notes or files in the repository.
+
+When the user asks for a new flow, save the flow first, then save a companion
+document with that flow's name in \`flows\`. In two or three short paragraphs,
+explain it clearly in the user's chosen language, or the language of the request
+if none was chosen. If the flow has \`compare\`,
+explain the important before/after differences and their practical effect. If
+there is no comparison, explain the purpose and main path without inventing
+differences. Avoid repeating every step. Flows created only to support a review
+do not need separate documents unless the user asks for them.
 
 ## Workflow
 
 1. Find the repository root with \`git rev-parse --show-toplevel\` and pass it as
-   \`repo\` to every Reverik tool.
+   \`repo\` to every {appName} tool.
 2. Call \`list_analyses\` to see what is already saved. Reuse a name to update an
    existing flow or document, and \`get_analysis\` to start from its content.
 3. Read the code and build the content following the rules below. The tool's
    input schema describes every field.
 4. Call \`save_flow\`, \`save_document\` or \`save_review\` with a short kebab-case
-   name such as \`add-todo\`. Reverik validates the content and checks that every
+   name such as \`add-todo\`. {appName} validates the content and checks that every
    file and line exists. If the tool returns an error, fix the content and call
    it again with the same name.
 5. Reply in one or two sentences: what you saved and what it shows.
 
 ## Scope
 
-Reverik tasks are read-only. Unless the user explicitly asks for something else
+{appName} tasks are read-only. Unless the user explicitly asks for something else
 in the same message:
 
 - Do not commit, stage, stash, branch, check out, fetch or push. Do not change git state at all.
@@ -252,5 +268,5 @@ ${REVIEW_RULES}
   current flow in \`compare.base\` and the same commit for both labels, then a review that
   says in its summary that this is a current-state analysis.
 
-${EXAMPLE}`;
+${EXAMPLE}`.replaceAll('{appName}', APP_NAME);
 }
