@@ -193,8 +193,6 @@
   "app.mockAgentReply": "Mock agent: nothing was analysed, this is the browser.",
   "agent.stop": "Stop",
   "agent.conversations": "Conversations",
-  "agent.newConversation": "New",
-  "agent.chooseMode": "What would you like to do?",
   "agent.mode.analyse": "Analyse",
   "agent.mode.review": "Review",
   "agent.mode.plan": "Plan",

@@ -9,6 +9,9 @@ import { defaultBaseBranch, listBranchesChannel, useRepo } from '@/features/repo
 import './agent.css';
 
 /** Claude Code säger så när inloggningen i CLI:n gått ut. */
+/** Värdet i konversationsväljaren som startar en ny konversation */
+const NEW = '__new__';
+
 function isLoginError(text: string): boolean {
   return /authenticat|log ?in|oauth/i.test(text);
 }
@@ -110,6 +113,93 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
 
   const composer = (
     <div className="agent__compose">
+      {!activeId && (
+        <div className="agent__mode-picker">
+          <div className="agent__mode-buttons">
+            {(['analyse', 'review', 'plan'] as const).map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                className={`agent__mode-button agent__mode-button--${choice}${mode === choice ? ' is-selected' : ''}`}
+                aria-pressed={mode === choice}
+                disabled={!hasRepo}
+                onClick={() => {
+                  selectMode(choice);
+                  setDraft('');
+                }}
+              >
+                {t(`agent.mode.${choice}`)}
+              </button>
+            ))}
+          </div>
+          <p className="agent__mode-description">{t(`agent.modeDescription.${mode}`)}</p>
+        </div>
+      )}
+      {!activeId && mode === 'review' && (
+        <div className="agent__review-branches">
+          <label>
+            <span>{t('agent.reviewHead')}</span>
+            <select
+              value={head}
+              onChange={(event) => {
+                const next = event.target.value;
+                setHead(next);
+                if (base === next) setBase(defaultBaseBranch(branches, next, null) ?? '');
+              }}
+            >
+              {branches.map((branch) => (
+                <option key={branch} value={branch}>
+                  {branch}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>{t('agent.reviewBase')}</span>
+            <select
+              value={base}
+              onChange={(event) => {
+                setBase(event.target.value);
+              }}
+            >
+              {branches
+                .filter((branch) => branch !== head)
+                .map((branch) => (
+                  <option key={branch} value={branch}>
+                    {branch}
+                  </option>
+                ))}
+            </select>
+          </label>
+          {(!repo?.isGit || branches.length < 2) && (
+            <p className="agent__hint">{t('agent.reviewNeedsBranches')}</p>
+          )}
+        </div>
+      )}
+      <select
+        id={selectId}
+        className="agent__conversation-select"
+        aria-label={t('agent.conversations')}
+        value={activeId ?? NEW}
+        disabled={!hasRepo}
+        onChange={(event) => {
+          if (event.target.value === NEW) startNew();
+          else choose(event.target.value);
+          setDraft('');
+        }}
+      >
+        <option value={NEW}>{t('agent.untitled')}</option>
+        {conversations.map((item) => (
+          <option key={item.id} value={item.id}>
+            {t(`agent.mode.${item.mode}`)}
+            {item.reviewBranches
+              ? ` (${item.reviewBranches.head} vs ${item.reviewBranches.base})`
+              : ''}{' '}
+            · {item.title || t('agent.untitled')} ·{' '}
+            {new Date(item.updatedAt).toLocaleDateString(LOCALE)}
+          </option>
+        ))}
+      </select>
       <textarea
         className="agent__input"
         rows={3}
@@ -187,110 +277,8 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
 
   return (
     <div className="agent">
-      <div className="agent__conversations">
-        <div className="agent__conversations-bar">
-          <label htmlFor={selectId}>{t('agent.conversations')}</label>
-          <button
-            type="button"
-            className="text-button"
-            disabled={!hasRepo}
-            onClick={() => {
-              startNew();
-              setDraft('');
-            }}
-          >
-            <Icon name="plus" size="sm" /> {t('agent.newConversation')}
-          </button>
-        </div>
-        <select
-          id={selectId}
-          className="agent__conversation-select"
-          value={activeId ?? ''}
-          disabled={!hasRepo || conversations.length === 0}
-          onChange={(event) => {
-            choose(event.target.value);
-            setDraft('');
-          }}
-        >
-          {!activeId && <option value="">{t('agent.untitled')}</option>}
-          {conversations.map((item) => (
-            <option key={item.id} value={item.id}>
-              {t(`agent.mode.${item.mode}`)}
-              {item.reviewBranches
-                ? ` (${item.reviewBranches.head} vs ${item.reviewBranches.base})`
-                : ''}{' '}
-              · {item.title || t('agent.untitled')} ·{' '}
-              {new Date(item.updatedAt).toLocaleDateString(LOCALE)}
-            </option>
-          ))}
-        </select>
-      </div>
       <div className="agent__scroll" ref={scroller}>
-        {!activeId && (
-          <div className="agent__mode-picker">
-            <span className="agent__mode-heading">{t('agent.chooseMode')}</span>
-            <div className="agent__mode-buttons">
-              {(['analyse', 'review', 'plan'] as const).map((choice) => (
-                <button
-                  key={choice}
-                  type="button"
-                  className={`agent__mode-button agent__mode-button--${choice}${mode === choice ? ' is-selected' : ''}`}
-                  aria-pressed={mode === choice}
-                  disabled={!hasRepo}
-                  onClick={() => {
-                    selectMode(choice);
-                    setDraft('');
-                  }}
-                >
-                  {t(`agent.mode.${choice}`)}
-                </button>
-              ))}
-            </div>
-            <p className="agent__mode-description">{t(`agent.modeDescription.${mode}`)}</p>
-          </div>
-        )}
-        {!activeId && mode === 'review' && (
-          <div className="agent__review-branches">
-            <label>
-              <span>{t('agent.reviewHead')}</span>
-              <select
-                value={head}
-                onChange={(event) => {
-                  const next = event.target.value;
-                  setHead(next);
-                  if (base === next) setBase(defaultBaseBranch(branches, next, null) ?? '');
-                }}
-              >
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>{t('agent.reviewBase')}</span>
-              <select
-                value={base}
-                onChange={(event) => {
-                  setBase(event.target.value);
-                }}
-              >
-                {branches
-                  .filter((branch) => branch !== head)
-                  .map((branch) => (
-                    <option key={branch} value={branch}>
-                      {branch}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            {(!repo?.isGit || branches.length < 2) && (
-              <p className="agent__hint">{t('agent.reviewNeedsBranches')}</p>
-            )}
-          </div>
-        )}
-        {entries.length === 0 && activeId && (
+        {entries.length === 0 && (
           <p className="shell__empty shell__empty--padded">
             {hasRepo ? t('agent.empty') : t('app.chooseRepo')}
           </p>

@@ -5,35 +5,16 @@
   font-size: 13px;
 }
 
-.agent__conversations {
-  border-bottom: 1px solid var(--border);
-  padding: 8px 12px;
-}
-
-.agent__conversations-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .agent__conversation-select {
-  box-sizing: border-box;
   width: 100%;
-  margin-top: 8px;
   min-width: 0;
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  font-size: 12px;
 }
 
 .agent__mode-picker {
-  padding: 2px 0 12px;
-}
-
-.agent__mode-heading {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--fg-muted);
+  padding: 0 0 8px;
 }
 
 .agent__mode-buttons {
@@ -73,7 +54,7 @@
 }
 
 .agent__mode-description {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   color: var(--fg-muted);
   font-size: 12px;
 }
@@ -81,7 +62,7 @@
 .agent__review-branches {
   display: grid;
   gap: 8px;
-  padding: 0 0 12px;
+  padding: 0 0 8px;
 }
 
 .agent__review-branches label {
