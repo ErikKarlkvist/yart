@@ -140,7 +140,6 @@
   "mcp.listedAnalyses": "Listed {count} analyses",
   "mcp.noSuchAnalysis": "There is no {kind} named \"{name}\" in {appName} for this repository. Use list_analyses to see what exists.",
   "mcp.read": "Read {kind} \"{name}\"",
-  "app.mcpHint": "Open the Connect panel: how agents such as Claude Code deliver to {appName}",
   "panel.connect": "Connect",
   "connect.serverHeading": "MCP server",
   "connect.serverText": "{appName} listens on your machine. Any agent that speaks MCP over HTTP can save flows, documents and reviews.",

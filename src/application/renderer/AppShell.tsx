@@ -95,24 +95,6 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
           <div className="shell__window-items">
             <RepoMenu />
             <ViewsMenu panels={panels} />
-            <button
-              type="button"
-              className="text-button"
-              title={t('app.mcpHint')}
-              onClick={() => {
-                reveal('connect' satisfies PanelId);
-              }}
-            >
-              <Icon name="link" size="sm" /> {t('panel.connect')}
-            </button>
-            <button
-              type="button"
-              className="text-button"
-              title={t('app.guideHint')}
-              onClick={showGuide}
-            >
-              <Icon name="info" size="sm" /> {t('app.guide')}
-            </button>
             <ThemeSelect />
             <DockToggles />
           </div>,
@@ -147,6 +129,14 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
               </span>
             )}
           </span>
+          <button
+            type="button"
+            className="text-button"
+            title={t('app.guideHint')}
+            onClick={showGuide}
+          >
+            <Icon name="info" size="sm" /> {t('app.guide')}
+          </button>
         </footer>
       </div>
     </>
