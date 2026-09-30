@@ -58,6 +58,7 @@ export type AgentEvent =
   | { type: 'entry'; repoPath: string; conversationId: string; entry: AgentEntry }
   | { type: 'state'; repoPath: string; conversationId: string; state: AgentState }
   | { type: 'approval'; repoPath: string; conversationId: string; approval: PendingApproval }
-  | { type: 'approval-done'; repoPath: string; conversationId: string; id: string };
+  | { type: 'approval-done'; repoPath: string; conversationId: string; id: string }
+  | { type: 'title'; repoPath: string; conversationId: string; title: string };
 
 export const agentEvent = defineEvent<AgentEvent>('agent:event');

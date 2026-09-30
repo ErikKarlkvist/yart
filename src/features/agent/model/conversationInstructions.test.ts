@@ -19,4 +19,10 @@ describe('conversation instructions', () => {
     for (const mode of ['analyse', 'review', 'plan'] as const)
       expect(conversationInstructions(mode, { head: 'a', base: 'b' })).toContain('trigger');
   });
+
+  it('ber agenten namnge konversationen med lägets verb', () => {
+    expect(conversationInstructions('plan')).toContain('name_conversation');
+    expect(conversationInstructions('plan')).toContain('"Plan"');
+    expect(conversationInstructions('general')).toContain('name_conversation');
+  });
 });

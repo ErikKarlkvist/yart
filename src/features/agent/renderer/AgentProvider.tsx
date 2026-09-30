@@ -195,6 +195,19 @@ export function AgentProvider({
         });
         return;
       }
+      if (event.type === 'title') {
+        setConversations((current) =>
+          current?.repoPath === repoPath
+            ? {
+                repoPath,
+                value: current.value.map((item) =>
+                  item.id === event.conversationId ? { ...item, title: event.title } : item,
+                ),
+              }
+            : current,
+        );
+        return;
+      }
       if (event.type === 'entry') {
         setConversations((current) => {
           if (current?.repoPath !== repoPath) return current;

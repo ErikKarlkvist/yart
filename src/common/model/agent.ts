@@ -34,6 +34,12 @@ export const AGENT_MODELS: Readonly<Record<RunnableAgent, readonly string[]>> = 
  */
 export const PERMISSION_PROMPT_TOOL = 'permission_prompt';
 
+/**
+ * MCP-verktyget appens agent namnger konversationen med, t.ex. "Analysera hur
+ * todos läggs till". Finns bara för appens egna sessioner.
+ */
+export const NAME_CONVERSATION_TOOL = 'name_conversation';
+
 /** Det agenten vill göra och behöver lov för, t.ex. ett kommando eller en filändring. */
 export interface ApprovalRequest {
   tool: string;

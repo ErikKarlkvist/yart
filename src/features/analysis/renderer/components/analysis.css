@@ -4,15 +4,6 @@
   gap: 8px;
 }
 
-.analyses__heading {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fg-muted);
-}
-
 .analyses__muted {
   margin: 0;
   color: var(--fg-muted);

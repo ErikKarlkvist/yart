@@ -8,6 +8,7 @@ import { z } from 'zod';
 import {
   type ApprovalDecision,
   type ApprovalRequest,
+  NAME_CONVERSATION_TOOL,
   PERMISSION_PROMPT_TOOL,
 } from '@/common/model/agent';
 import { APP_NAME } from '@/common/model/brand';
@@ -62,6 +63,8 @@ export interface McpDeps {
   onActivity?: (activity: McpActivity) => void;
   /** Frågar användaren om lov åt appens egen agent i konversationen */
   requestApproval?: (conversationId: string, request: ApprovalRequest) => Promise<ApprovalDecision>;
+  /** Namnger konversationen åt appens egen agent */
+  nameConversation?: (conversationId: string, title: string) => Promise<void>;
 }
 
 export interface McpServerHandle {
@@ -128,7 +131,10 @@ export async function startMcpServer(
       allowedHosts: [`${MCP_HOST}:${port}`, `localhost:${port}`],
     });
     // Appens egen agent ansluter med sin konversation i adressen, externa agenter utan
-    const server = createSession(deps, url.searchParams.get('conversation'));
+    const server = createSession(deps, {
+      conversationId: url.searchParams.get('conversation'),
+      permissions: url.searchParams.get('permissions') === '1',
+    });
     const session = { server, transport };
     transport.onclose = () => {
       if (transport.sessionId) sessions.delete(transport.sessionId);
@@ -206,7 +212,13 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
 const repoParam = z.string().min(1).describe(REPO_PARAM_DESCRIPTION);
 
 /** En McpServer med Reveriks verktyg och guiden som resurs. */
-function createSession(deps: McpDeps, conversationId: string | null): McpServer {
+/** Appens egen agent ansluter med sin konversation, och om den kan fråga om lov */
+interface OwnSession {
+  conversationId: string | null;
+  permissions: boolean;
+}
+
+function createSession(deps: McpDeps, { conversationId, permissions }: OwnSession): McpServer {
   const server = new McpServer({ name: 'reverik', version: deps.version });
   const client = (): string => server.server.getClientVersion()?.name ?? t('mcp.unknownClient');
 
@@ -277,8 +289,23 @@ function createSession(deps: McpDeps, conversationId: string | null): McpServer 
       return { result: text(summary), summary };
     });
 
+  const nameConversation = deps.nameConversation;
+  if (conversationId !== null && nameConversation) {
+    server.registerTool(
+      NAME_CONVERSATION_TOOL,
+      {
+        description: `Names this conversation in ${APP_NAME}. Call it once, early, with a short title in the user's language that starts with the verb for what you are doing, e.g. "Analyse how todos are added" or "Plan due dates on todos".`,
+        inputSchema: { title: z.string().min(1).max(60) },
+      },
+      async ({ title }) => {
+        await nameConversation(conversationId, title.trim());
+        return text(t('mcp.named', { title: title.trim() }));
+      },
+    );
+  }
+
   const requestApproval = deps.requestApproval;
-  if (conversationId !== null && requestApproval) {
+  if (conversationId !== null && permissions && requestApproval) {
     // Claude Code anropar verktyget när något kräver lov och väntar på svaret.
     server.registerTool(
       PERMISSION_PROMPT_TOOL,

@@ -82,6 +82,11 @@ export class ConversationStore {
     }));
   }
 
+  /** Namnet agenten gav konversationen ersätter den första frågan som titel */
+  setTitle(repoPath: string, id: string, title: string): Promise<Conversation> {
+    return this.update(repoPath, id, (current) => ({ ...current, title }));
+  }
+
   setThread(repoPath: string, id: string, threadId: string): Promise<Conversation> {
     return this.update(repoPath, id, (current) => ({ ...current, threadId }));
   }

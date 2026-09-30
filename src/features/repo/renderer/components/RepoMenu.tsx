@@ -7,10 +7,10 @@ import './repo.css';
 
 /**
  * Mappväljaren i fönsterraden: knappen visar valt repo, menyn listar
- * senaste repon, val av ny mapp och demot.
+ * senaste repon, val av ny mapp, demot och omläsning av valt repo.
  */
 export function RepoMenu(): JSX.Element {
-  const { repo, recent, busy, open, forget, pickLocal, openDemo } = useRepo();
+  const { repo, recent, busy, open, forget, pickLocal, openDemo, fetch } = useRepo();
   const [isOpen, setOpen] = useState(false);
   const root = useRef<HTMLDivElement | null>(null);
 
@@ -76,6 +76,19 @@ export function RepoMenu(): JSX.Element {
             </>
           )}
           <div className="repo-menu__actions">
+            {repo?.isGit && (
+              <button
+                type="button"
+                role="menuitem"
+                className="text-button"
+                disabled={busy}
+                onClick={() => {
+                  choose(fetch);
+                }}
+              >
+                {t('repo.reload')}
+              </button>
+            )}
             <button
               type="button"
               role="menuitem"

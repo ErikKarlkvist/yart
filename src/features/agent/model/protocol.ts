@@ -54,6 +54,7 @@ const ALLOWED_TOOLS: readonly string[] = [
   'mcp__reverik__save_flow',
   'mcp__reverik__save_document',
   'mcp__reverik__save_review',
+  'mcp__reverik__name_conversation',
 ];
 
 /**
@@ -162,10 +163,9 @@ export const codexRunner: AgentRunner = {
       ...(permission === 'manual' ? ['-c', 'approvals_reviewer="auto_review"'] : []),
       '-c',
       `mcp_servers.reverik.url=${JSON.stringify(mcpUrl)}`,
-      ...(['save_flow', 'save_document', 'save_review'] as const).flatMap((tool) => [
-        '-c',
-        `mcp_servers.reverik.tools.${tool}.approval_mode="approve"`,
-      ]),
+      ...(['save_flow', 'save_document', 'save_review', 'name_conversation'] as const).flatMap(
+        (tool) => ['-c', `mcp_servers.reverik.tools.${tool}.approval_mode="approve"`],
+      ),
     ];
     const text = threadId === null ? `${skill}\n\n---\n\n${prompt}` : prompt;
     return {

@@ -291,11 +291,20 @@ select:focus {
   place-self: stretch;
 }
 
-/* Repot och analyserna i en docka */
+/* Analyserna i en docka */
 .explorer {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+}
+
+.explorer__error {
+  padding: 6px 8px;
+  border: 1px solid var(--danger);
+  background: none;
+  color: var(--danger);
+  font-size: 12px;
+  text-align: left;
 }
 
 .shell__footer-tools {

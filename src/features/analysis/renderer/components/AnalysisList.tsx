@@ -20,7 +20,6 @@ export function AnalysisList(): JSX.Element {
 
   return (
     <section className="analyses">
-      <h2 className="analyses__heading">{t('analyses.heading')}</h2>
       {error && <p className="analyses__error">{error}</p>}
       {rejection?.type === 'rejected' && (
         <div className="analyses__error analyses__rejection">

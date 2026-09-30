@@ -36,6 +36,9 @@ export function registerApplicationHandlers(): void {
       agent
         ? agent.requestApproval(conversationId, request)
         : Promise.resolve({ allow: false, message: t('agent.approvalUnknown') }),
+    nameConversation: async (conversationId, title) => {
+      await agent?.nameConversation(conversationId, title);
+    },
   });
   agent = registerAgentHandlers({ mcpUrl: mcp.url, skill: buildSkill });
 }

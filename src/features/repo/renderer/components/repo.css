@@ -1,90 +1,3 @@
-.repo {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.repo__muted {
-  margin: 0;
-  color: var(--fg-muted);
-}
-
-.repo__error {
-  margin: 0;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: var(--danger-bg);
-  color: var(--danger);
-  cursor: pointer;
-}
-.repo-card {
-  padding: 4px 4px 4px 6px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-}
-
-.repo-card__head {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.repo-card__toggle {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding: 4px 4px;
-  border: none;
-  background: none;
-  color: var(--fg-muted);
-  text-align: left;
-}
-
-.repo-card__name {
-  font-weight: 600;
-  color: var(--fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Hämta-knappen snurrar medan repot läses om */
-.repo-card__reload.is-busy .icon {
-  animation: repo-spin 900ms linear infinite;
-}
-
-@keyframes repo-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.repo-card__meta-block {
-  padding: 2px 6px 6px 24px;
-}
-
-.repo-card__meta,
-.repo-card__origin {
-  color: var(--fg-muted);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.repo-card__langs {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  font-size: 12px;
-}
-
-/* Mappmenyn i fönsterraden */
 .repo-menu {
   position: relative;
 }
@@ -159,6 +72,7 @@
 .repo-menu__actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   padding-top: 8px;
   border-top: 1px solid var(--border);

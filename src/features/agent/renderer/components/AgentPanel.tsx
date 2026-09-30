@@ -191,11 +191,7 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
         <option value={NEW}>{t('agent.untitled')}</option>
         {conversations.map((item) => (
           <option key={item.id} value={item.id}>
-            {t(`agent.mode.${item.mode}`)}
-            {item.reviewBranches
-              ? ` (${item.reviewBranches.head} vs ${item.reviewBranches.base})`
-              : ''}{' '}
-            · {item.title || t('agent.untitled')} ·{' '}
+            {item.title || t('agent.untitled')} ·{' '}
             {new Date(item.updatedAt).toLocaleDateString(LOCALE)}
           </option>
         ))}

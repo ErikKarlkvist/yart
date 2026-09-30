@@ -41,6 +41,8 @@ export interface AgentHandle {
    * Svaret kommer när användaren trycker Allow eller Deny i panelen.
    */
   requestApproval: (conversationId: string, request: ApprovalRequest) => Promise<ApprovalDecision>;
+  /** Sparar namnet agenten gett konversationen och visar det i panelen */
+  nameConversation: (conversationId: string, title: string) => Promise<void>;
 }
 
 interface Waiting {
@@ -90,11 +92,11 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
       () => {
         const mcpUrl = deps.mcpUrl();
         if (mcpUrl === null) throw new Error(t('agent.noServer'));
-        // Claude Code frågar om lov via MCP-servern, som behöver veta vilken konversation som frågar
-        const url =
-          agent === 'claude'
-            ? `${mcpUrl}?conversation=${encodeURIComponent(conversationId)}`
-            : mcpUrl;
+        // MCP-servern behöver veta vilken konversation som namnger sig eller frågar om lov.
+        // Bara Claude Code kan fråga om lov, Codex exec saknar det.
+        const url = `${mcpUrl}?conversation=${encodeURIComponent(conversationId)}${
+          agent === 'claude' ? '&permissions=1' : ''
+        }`;
         return { mcpUrl: url, skill: `${deps.skill()}\n\n${instructions}` };
       },
       {
@@ -169,6 +171,12 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
   });
 
   return {
+    nameConversation: async (conversationId, title) => {
+      const repoPath = repoOf.get(conversationId);
+      if (repoPath === undefined) return;
+      await store.setTitle(repoPath, conversationId, title);
+      emitEvent(agentEvent, { type: 'title', repoPath, conversationId, title });
+    },
     requestApproval: (conversationId, request) => {
       const repoPath = repoOf.get(conversationId);
       if (repoPath === undefined)

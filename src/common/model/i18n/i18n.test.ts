@@ -5,7 +5,7 @@ import { t } from './index';
 
 describe('t', () => {
   it('interpolerar parametrar', () => {
-    expect(t('repo.files', { count: 3 })).toBe('3 files');
+    expect(t('review.findings', { count: 3 })).toBe('3 findings');
   });
 
   it('lämnar okända platshållare orörda', () => {

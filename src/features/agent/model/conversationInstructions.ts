@@ -1,10 +1,26 @@
 import { type ConversationMode, type ReviewBranches } from './conversation';
 
+/** Verbet konversationens namn börjar med, på användarens språk. */
+const NAME_VERB: Readonly<Record<ConversationMode, string>> = {
+  analyse: 'Analyse',
+  review: 'Review',
+  plan: 'Plan',
+  general: 'a verb that fits the question',
+};
+
 /** Stable background instructions for each conversation's purpose. */
 export function conversationInstructions(
   mode: ConversationMode,
   branches?: ReviewBranches,
 ): string {
+  return `${modeInstructions(mode, branches)} ${naming(mode)}`;
+}
+
+function naming(mode: ConversationMode): string {
+  return `First, before anything else, call name_conversation once with a short title of at most 60 characters in the user's language that starts with ${mode === 'general' ? NAME_VERB.general : `"${NAME_VERB[mode]}" translated to that language`} and names the subject, for example "Analyse how todos are added" or, in Swedish, "Analysera hur todos läggs till". Do not use branch names alone as the title.`;
+}
+
+function modeInstructions(mode: ConversationMode, branches?: ReviewBranches): string {
   switch (mode) {
     case 'analyse':
       return `Conversation mode: Analyse. Help the user understand existing flows in this repository. Trace the requested paths through real code and save each useful flow with save_flow. Start every flow from what sets it off and record it as trigger (for example a user clicking a button, a webhook arriving, a scheduled job) on the node where the first step begins. Use save_document when the flow needs a written explanation. Write content for people: short Markdown with headings and bullets; put detail for AI in the dedicated fields. Ask a focused question if the requested flow is ambiguous. Ground source references in files that exist; do not invent implementation details.`;

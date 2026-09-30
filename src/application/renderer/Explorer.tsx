@@ -1,13 +1,24 @@
 import { type JSX } from 'react';
+import { t } from '@/common/model/i18n';
 import { AnalysisList } from '@/features/analysis';
-import { RepoPanel } from '@/features/repo';
+import { useRepo } from '@/features/repo';
 
-/** Repot och analyserna i det, det som förr var den fasta vänsterspalten */
-export function Explorer({ hasRepo }: { hasRepo: boolean }): JSX.Element {
+/** Analyserna i valt repo. Repot väljs i fönsterradens meny. */
+export function Explorer(): JSX.Element {
+  const { repo, error, clearError } = useRepo();
   return (
     <div className="explorer">
-      <RepoPanel />
-      {hasRepo && <AnalysisList />}
+      {error && (
+        <button
+          type="button"
+          className="explorer__error"
+          title={t('repo.dismissError')}
+          onClick={clearError}
+        >
+          {error}
+        </button>
+      )}
+      {repo ? <AnalysisList /> : <p className="shell__empty">{t('app.chooseRepo')}</p>}
     </div>
   );
 }

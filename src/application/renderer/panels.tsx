@@ -63,8 +63,8 @@ export function usePanels({
 
   const panels: Record<PanelId, Omit<DockPanel, 'id'>> = {
     explorer: {
-      title: t('panel.explorer'),
-      content: <Explorer hasRepo={repo !== null} />,
+      title: t('panel.analyses'),
+      content: <Explorer />,
     },
     code: {
       title: t('panel.code'),

@@ -164,9 +164,14 @@ describe('startMcpServer', () => {
 
   it('frågar användaren om lov åt appens egen agent, men visar inte verktyget för andra', async () => {
     const asked: { conversationId: string; tool: string }[] = [];
+    const named: { conversationId: string; title: string }[] = [];
     const approving = await startMcpServer(
       {
         ...fakeDeps(activity, delivered),
+        nameConversation: (conversationId, title) => {
+          named.push({ conversationId, title });
+          return Promise.resolve();
+        },
         requestApproval: (conversationId, request) => {
           asked.push({ conversationId, tool: request.tool });
           return Promise.resolve(
@@ -178,7 +183,9 @@ describe('startMcpServer', () => {
     );
     const own = new Client({ name: 'claude-code', version: '1' });
     await own.connect(
-      new StreamableHTTPClientTransport(new URL(`${approving.url}?conversation=c1`)) as Transport,
+      new StreamableHTTPClientTransport(
+        new URL(`${approving.url}?conversation=c1&permissions=1`),
+      ) as Transport,
     );
     try {
       const allowed = await own.callTool({
@@ -198,8 +205,11 @@ describe('startMcpServer', () => {
         { conversationId: 'c1', tool: 'Bash' },
         { conversationId: 'c1', tool: 'Edit' },
       ]);
+      await own.callTool({ name: 'name_conversation', arguments: { title: 'Plan due dates' } });
+      expect(named).toEqual([{ conversationId: 'c1', title: 'Plan due dates' }]);
       const { tools } = await client.listTools();
       expect(tools.map((tool) => tool.name)).not.toContain('permission_prompt');
+      expect(tools.map((tool) => tool.name)).not.toContain('name_conversation');
     } finally {
       await own.close();
       await approving.close();
