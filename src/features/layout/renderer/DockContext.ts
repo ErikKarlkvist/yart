@@ -5,8 +5,10 @@ export interface DockApi {
   layout: DockLayoutState;
   /** Flyttar panelen till dockan, på plats `index` eller sist */
   move: (id: string, side: DockSide, index?: number) => void;
-  /** Öppnar panelens docka och visar panelen */
+  /** Öppnar panelens docka och visar panelen, även en stängd panel */
   reveal: (id: string) => void;
+  /** Stänger panelens flik. Den öppnas igen med reveal eller move. */
+  close: (id: string) => void;
   activate: (id: string) => void;
   setOpen: (side: DockSide, open: boolean) => void;
   toggle: (side: DockSide) => void;

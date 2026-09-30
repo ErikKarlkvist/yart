@@ -26,7 +26,7 @@ interface Props {
  * dockan hålls monterade så inmatning och scroll behålls när man byter flik.
  */
 export function DockArea({ side, panels }: Props): JSX.Element {
-  const { layout, move, activate, setOpen, dragging, setDragging } = useDock();
+  const { layout, move, activate, close, setOpen, dragging, setDragging } = useDock();
   const dock = layout[side];
   const ids = dock.panels.filter((id) => panels.has(id));
   const isAvailable = (id: string): boolean => panels.get(id)?.available !== false;
@@ -115,20 +115,14 @@ export function DockArea({ side, panels }: Props): JSX.Element {
               drop?.index === index ? 'is-drop-before' : '',
               drop?.index === ids.length && index === ids.length - 1 ? 'is-drop-after' : '',
             ];
+            const closeLabel = t('dock.close', { panel: panel.title });
             return (
-              <button
+              <div
                 key={id}
-                type="button"
-                role="tab"
                 data-dock-tab
                 draggable
-                aria-selected={id === shown}
-                aria-disabled={!available}
                 className={classes.filter(Boolean).join(' ')}
                 title={t('dock.tabHint')}
-                onClick={() => {
-                  if (available) activate(id);
-                }}
                 onDragStart={(event) => {
                   event.dataTransfer.effectAllowed = 'move';
                   event.dataTransfer.setData(PANEL_DRAG_TYPE, id);
@@ -141,9 +135,35 @@ export function DockArea({ side, panels }: Props): JSX.Element {
                   event.preventDefault();
                   setMenu({ id, x: event.clientX, y: event.clientY });
                 }}
+                onAuxClick={(event) => {
+                  // Mittenklick stänger, som flikar i en webbläsare
+                  if (event.button === 1) close(id);
+                }}
               >
-                {panel.title}
-              </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={id === shown}
+                  aria-disabled={!available}
+                  className="tab__open"
+                  onClick={() => {
+                    if (available) activate(id);
+                  }}
+                >
+                  {panel.title}
+                </button>
+                <button
+                  type="button"
+                  className="tab__close"
+                  title={closeLabel}
+                  aria-label={closeLabel}
+                  onClick={() => {
+                    close(id);
+                  }}
+                >
+                  <Icon name="close" size="sm" />
+                </button>
+              </div>
             );
           })}
         </div>
@@ -186,7 +206,11 @@ export function DockArea({ side, panels }: Props): JSX.Element {
             move(menu.id, to);
             closeMenu();
           }}
-          onClose={closeMenu}
+          onCloseTab={() => {
+            close(menu.id);
+            closeMenu();
+          }}
+          onDismiss={closeMenu}
         />
       )}
     </section>
@@ -198,13 +222,14 @@ interface MenuProps {
   y: number;
   from: DockSide;
   onMove: (to: DockSide) => void;
-  onClose: () => void;
+  onCloseTab: () => void;
+  onDismiss: () => void;
 }
 
-/** Högerklicksmenyn på en flik: flytta den till en annan docka utan att dra. */
-function DockTabMenu({ x, y, from, onMove, onClose }: MenuProps): JSX.Element {
+/** Högerklicksmenyn på en flik: flytta den till en annan docka utan att dra, eller stäng den. */
+function DockTabMenu({ x, y, from, onMove, onCloseTab, onDismiss }: MenuProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, true, onClose);
+  useClickOutside(ref, true, onDismiss);
   return (
     <div ref={ref} className="dock-menu" role="menu" style={{ left: x, top: y }}>
       {DOCK_SIDES.filter((side) => side !== from).map((side) => (
@@ -220,6 +245,9 @@ function DockTabMenu({ x, y, from, onMove, onClose }: MenuProps): JSX.Element {
           {t('dock.moveTo', { dock: t(`dock.${side}`) })}
         </button>
       ))}
+      <button type="button" role="menuitem" className="dock-menu__item" onClick={onCloseTab}>
+        {t('dock.closeTab')}
+      </button>
     </div>
   );
 }

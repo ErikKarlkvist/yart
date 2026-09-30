@@ -271,9 +271,12 @@
   "dock.hide": "Hide {dock}",
   "dock.resize": "Resize {dock}",
   "dock.moveTo": "Move to {dock}",
-  "dock.tabHint": "Drag to another panel, or right-click to move it",
+  "dock.tabHint": "Drag to another panel, or right-click to move or close it",
   "dock.empty": "Drag a tab here to pin it to this panel.",
   "dock.drop": "Drop to pin to {dock}",
   "views.button": "Views",
-  "views.hint": "Show a panel, or choose which side it is docked to"
+  "views.hint": "Show, move or close a panel. Closed panels stay listed here.",
+  "dock.close": "Close {panel}",
+  "dock.closeTab": "Close tab",
+  "views.closed": "Closed, click to open"
 }

@@ -1,7 +1,7 @@
 /**
  * Dockorna runt arbetsytan: vänster, höger och nederkant. Varje panel i appen
- * ligger i exakt en docka, som en flik. Dockan visar en flik i taget och kan
- * fällas ihop. Allt här är rena funktioner över layouten, så renderern bara
+ * hör till exakt en docka, som en flik eller stängd. En stängd panel minns sin
+ * docka och öppnas där igen. Dockan visar en flik i taget och kan fällas ihop. Allt här är rena funktioner över layouten, så renderern bara
  * ritar och sparar.
  */
 
@@ -11,6 +11,8 @@ export type DockSide = (typeof DOCK_SIDES)[number];
 interface DockState {
   /** Panelernas id i flikordning */
   panels: string[];
+  /** Stängda paneler som hör till dockan, utan flik */
+  closed: string[];
   /** Vald flik, null när dockan är tom */
   active: string | null;
   open: boolean;
@@ -27,13 +29,22 @@ export const DOCK_LIMITS: Readonly<Record<DockSide, { min: number; max: number }
   bottom: { min: 120, max: 700 },
 };
 
+/** Dockan panelen hör till, även om den är stängd */
 export function sideOf(layout: DockLayoutState, id: string): DockSide | null {
-  return DOCK_SIDES.find((side) => layout[side].panels.includes(id)) ?? null;
+  return (
+    DOCK_SIDES.find(
+      (side) => layout[side].panels.includes(id) || layout[side].closed.includes(id),
+    ) ?? null
+  );
+}
+
+export function isClosed(layout: DockLayoutState, id: string): boolean {
+  return DOCK_SIDES.some((side) => layout[side].closed.includes(id));
 }
 
 /**
  * Flyttar panelen till `to`, på plats `index` eller sist. Målet öppnas och
- * visar panelen. En docka som blir tom fälls ihop.
+ * visar panelen, en stängd panel öppnas. En docka som blir tom fälls ihop.
  */
 export function movePanel(
   layout: DockLayoutState,
@@ -62,21 +73,49 @@ export function movePanel(
     next[from] = {
       ...source,
       panels: without,
+      closed: source.closed.filter((p) => p !== id),
       active: source.active === id ? neighbour(source.panels, id) : source.active,
       open: source.open && without.length > 0,
     };
   }
-  next[to] = { ...layout[to], panels, active: id, open: true };
+  const target = next[to];
+  next[to] = {
+    ...target,
+    panels,
+    closed: target.closed.filter((p) => p !== id),
+    active: id,
+    open: true,
+  };
   return next;
 }
 
-/** Öppnar dockan panelen ligger i och väljer den. */
+/** Öppnar dockan panelen hör till och väljer den. En stängd panel får tillbaka sin flik sist. */
 export function revealPanel(layout: DockLayoutState, id: string): DockLayoutState {
   const side = sideOf(layout, id);
   if (side === null) return layout;
   const dock = layout[side];
+  if (dock.closed.includes(id)) return movePanel(layout, id, side);
   if (dock.open && dock.active === id) return layout;
   return { ...layout, [side]: { ...dock, active: id, open: true } };
+}
+
+/** Stänger panelens flik. Panelen minns dockan, och dockan fälls ihop om den blir tom. */
+export function closePanel(layout: DockLayoutState, id: string): DockLayoutState {
+  const side = sideOf(layout, id);
+  if (side === null) return layout;
+  const dock = layout[side];
+  if (!dock.panels.includes(id)) return layout;
+  const panels = dock.panels.filter((p) => p !== id);
+  return {
+    ...layout,
+    [side]: {
+      ...dock,
+      panels,
+      closed: [...dock.closed, id],
+      active: dock.active === id ? neighbour(dock.panels, id) : dock.active,
+      open: dock.open && panels.length > 0,
+    },
+  };
 }
 
 /** Väljer panelen i sin docka utan att öppna den. */
@@ -108,7 +147,9 @@ export function resizeDock(layout: DockLayoutState, side: DockSide, size: number
  * standarddocka. Trasiga värden faller tillbaka på standard.
  */
 export function normalizeLayout(value: unknown, defaults: DockLayoutState): DockLayoutState {
-  const known = new Set(DOCK_SIDES.flatMap((side) => defaults[side].panels));
+  const known = new Set(
+    DOCK_SIDES.flatMap((side) => [...defaults[side].panels, ...defaults[side].closed]),
+  );
   const seen = new Set<string>();
   const stored = isRecord(value) ? value : {};
 
@@ -116,15 +157,21 @@ export function normalizeLayout(value: unknown, defaults: DockLayoutState): Dock
   for (const side of DOCK_SIDES) {
     const raw = stored[side];
     const dock = isRecord(raw) ? raw : {};
-    const panels: string[] = [];
-    for (const id of Array.isArray(dock.panels) ? dock.panels : defaults[side].panels) {
-      if (typeof id !== 'string' || !known.has(id) || seen.has(id)) continue;
-      seen.add(id);
-      panels.push(id);
-    }
+    const pick = (list: unknown, fallback: readonly string[]): string[] => {
+      const result: string[] = [];
+      for (const id of Array.isArray(list) ? (list as unknown[]) : fallback) {
+        if (typeof id !== 'string' || !known.has(id) || seen.has(id)) continue;
+        seen.add(id);
+        result.push(id);
+      }
+      return result;
+    };
+    const panels = pick(dock.panels, defaults[side].panels);
+    const closed = pick(dock.closed, defaults[side].closed);
     const size = typeof dock.size === 'number' && dock.size > 0 ? dock.size : defaults[side].size;
     next[side] = {
       panels,
+      closed,
       active: typeof dock.active === 'string' ? dock.active : defaults[side].active,
       open: typeof dock.open === 'boolean' ? dock.open : defaults[side].open,
       size: Math.max(DOCK_LIMITS[side].min, Math.min(DOCK_LIMITS[side].max, size)),
@@ -132,6 +179,7 @@ export function normalizeLayout(value: unknown, defaults: DockLayoutState): Dock
   }
   for (const side of DOCK_SIDES) {
     for (const id of defaults[side].panels) if (!seen.has(id)) next[side].panels.push(id);
+    for (const id of defaults[side].closed) if (!seen.has(id)) next[side].closed.push(id);
   }
   for (const side of DOCK_SIDES) {
     const dock = next[side];

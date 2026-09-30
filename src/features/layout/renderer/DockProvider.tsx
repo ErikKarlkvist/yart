@@ -2,6 +2,7 @@ import { type JSX, type ReactNode, useCallback, useMemo, useState } from 'react'
 import { readStored, writeStored } from '@/common/renderer/storage';
 import {
   activatePanel,
+  closePanel,
   type DockLayoutState,
   type DockSide,
   movePanel,
@@ -48,6 +49,9 @@ export function DockProvider({ defaults, storageKey, children }: Props): JSX.Ele
       },
       reveal: (id: string) => {
         update((l) => revealPanel(l, id));
+      },
+      close: (id: string) => {
+        update((l) => closePanel(l, id));
       },
       activate: (id: string) => {
         update((l) => activatePanel(l, id));

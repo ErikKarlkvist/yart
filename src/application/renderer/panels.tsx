@@ -28,20 +28,25 @@ const PANEL_IDS = [
 export type PanelId = (typeof PANEL_IDS)[number];
 
 export const DEFAULT_LAYOUT: DockLayoutState = {
-  left: { panels: ['explorer'], active: 'explorer', open: true, size: 300 },
+  left: { panels: ['explorer'], closed: [], active: 'explorer', open: true, size: 300 },
   bottom: {
     panels: ['code', 'summary', 'flowReview', 'log'],
+    closed: [],
     active: 'code',
     open: true,
     size: 220,
   },
   right: {
     panels: ['agent', 'fullReview', 'connect'],
+    closed: [],
     active: 'agent',
     open: false,
     size: 460,
   },
-} satisfies Record<string, { panels: PanelId[]; active: PanelId; open: boolean; size: number }>;
+} satisfies Record<
+  string,
+  { panels: PanelId[]; closed: PanelId[]; active: PanelId; open: boolean; size: number }
+>;
 
 interface PanelContext {
   /** Det valda flödet, null när en annan sorts analys eller ingen är vald */

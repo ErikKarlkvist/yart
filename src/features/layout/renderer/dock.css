@@ -87,7 +87,32 @@
   cursor: grab;
 }
 
-.dock__tab.is-unavailable {
+.dock__tab .tab__open {
+  padding: 6px 4px 6px 10px;
+  cursor: inherit;
+  /* Knappar ärver inte text-transform, så versalerna från .tab--caps förs vidare här */
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+
+.dock__tab.is-active {
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+}
+
+/* Stängknappen syns på vald flik och vid hover, platsen hålls så flikarna inte hoppar */
+.dock__tab .tab__close {
+  visibility: hidden;
+  margin-right: 2px;
+}
+
+.dock__tab.is-active .tab__close,
+.dock__tab:hover .tab__close,
+.dock__tab .tab__close:focus-visible {
+  visibility: visible;
+}
+
+.dock__tab.is-unavailable .tab__open {
   opacity: 0.4;
   cursor: default;
 }
@@ -315,6 +340,15 @@
 
 .views-menu__item.is-visible .views-menu__open {
   font-weight: 600;
+}
+
+.views-menu__item.is-closed .views-menu__open {
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.views-menu__item.is-closed .views-menu__dock:disabled {
+  visibility: hidden;
 }
 
 .views-menu__docks {

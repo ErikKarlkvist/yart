@@ -12,17 +12,18 @@ interface Props {
 }
 
 /**
- * Menyn Views i fönsterraden: alla paneler, grupperade efter docka. Klick på
- * en panel visar den, knapparna bredvid flyttar den till en annan docka.
+ * Menyn Views i fönsterraden: alla paneler, grupperade efter docka, även de
+ * stängda. Klick på en panel visar den och öppnar den om den var stängd.
+ * Knapparna bredvid flyttar den till en annan docka eller stänger den.
  */
 export function ViewsMenu({ panels }: Props): JSX.Element {
-  const { layout, reveal, move } = useDock();
+  const { layout, reveal, move, close } = useDock();
   const [isOpen, setOpen] = useState(false);
   const root = useRef<HTMLDivElement | null>(null);
-  const close = useCallback(() => {
+  const closeMenu = useCallback(() => {
     setOpen(false);
   }, []);
-  useClickOutside(root, isOpen, close);
+  useClickOutside(root, isOpen, closeMenu);
 
   const byId = new Map(panels.map((panel) => [panel.id, panel]));
 
@@ -44,7 +45,7 @@ export function ViewsMenu({ panels }: Props): JSX.Element {
         <div className="views-menu__popover" role="menu">
           {DOCK_ORDER.map((side) => {
             const dock = layout[side];
-            const ids = dock.panels.filter((id) => byId.has(id));
+            const ids = [...dock.panels, ...dock.closed].filter((id) => byId.has(id));
             if (ids.length === 0) return null;
             return (
               <section key={side} className="views-menu__group">
@@ -53,26 +54,42 @@ export function ViewsMenu({ panels }: Props): JSX.Element {
                   {ids.map((id) => {
                     const panel = byId.get(id);
                     if (!panel) return null;
-                    const visible = dock.open && dock.active === id;
+                    const closed = dock.closed.includes(id);
+                    const visible = !closed && dock.open && dock.active === id;
+                    const state = closed ? ' is-closed' : visible ? ' is-visible' : '';
+                    const closeLabel = t('dock.close', { panel: panel.title });
                     return (
-                      <li key={id} className={`views-menu__item${visible ? ' is-visible' : ''}`}>
+                      <li key={id} className={`views-menu__item${state}`}>
                         <button
                           type="button"
                           role="menuitem"
                           className="views-menu__open"
+                          title={closed ? t('views.closed') : undefined}
                           onClick={() => {
                             reveal(id);
-                            close();
+                            closeMenu();
                           }}
                         >
                           {panel.title}
                         </button>
                         <DockChoice
-                          current={side}
+                          current={closed ? null : side}
                           onMove={(to) => {
                             move(id, to);
                           }}
                         />
+                        <button
+                          type="button"
+                          className="icon-button icon-button--quiet views-menu__dock"
+                          title={closeLabel}
+                          aria-label={closeLabel}
+                          disabled={closed}
+                          onClick={() => {
+                            close(id);
+                          }}
+                        >
+                          <Icon name="close" size="sm" />
+                        </button>
                       </li>
                     );
                   })}
@@ -86,12 +103,12 @@ export function ViewsMenu({ panels }: Props): JSX.Element {
   );
 }
 
-/** Tre små knappar, en per docka. Den panelen ligger i är markerad. */
+/** Tre små knappar, en per docka. Den panelen ligger i är markerad, ingen för en stängd panel. */
 function DockChoice({
   current,
   onMove,
 }: {
-  current: DockSide;
+  current: DockSide | null;
   onMove: (to: DockSide) => void;
 }): JSX.Element {
   return (

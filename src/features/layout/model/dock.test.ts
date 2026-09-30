@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  closePanel,
   type DockLayoutState,
+  isClosed,
   movePanel,
   normalizeLayout,
   resizeDock,
@@ -9,9 +11,15 @@ import {
 } from './dock';
 
 const LAYOUT: DockLayoutState = {
-  left: { panels: ['explorer'], active: 'explorer', open: true, size: 300 },
-  right: { panels: ['agent', 'connect'], active: 'agent', open: false, size: 460 },
-  bottom: { panels: ['code', 'summary', 'log'], active: 'summary', open: true, size: 220 },
+  left: { panels: ['explorer'], closed: [], active: 'explorer', open: true, size: 300 },
+  right: { panels: ['agent', 'connect'], closed: [], active: 'agent', open: false, size: 460 },
+  bottom: {
+    panels: ['code', 'summary', 'log'],
+    closed: [],
+    active: 'summary',
+    open: true,
+    size: 220,
+  },
 };
 
 describe('movePanel', () => {
@@ -19,6 +27,7 @@ describe('movePanel', () => {
     const next = movePanel(LAYOUT, 'summary', 'right', 1);
     expect(next.right).toEqual({
       panels: ['agent', 'summary', 'connect'],
+      closed: [],
       active: 'summary',
       open: true,
       size: 460,
@@ -33,7 +42,7 @@ describe('movePanel', () => {
 
   it('fäller ihop dockan som blir tom', () => {
     const next = movePanel(LAYOUT, 'explorer', 'bottom', 0);
-    expect(next.left).toEqual({ panels: [], active: null, open: false, size: 300 });
+    expect(next.left).toEqual({ panels: [], closed: [], active: null, open: false, size: 300 });
     expect(next.bottom.panels).toEqual(['explorer', 'code', 'summary', 'log']);
   });
 
@@ -60,6 +69,40 @@ describe('revealPanel', () => {
   });
 });
 
+describe('closePanel', () => {
+  it('tar bort fliken men låter panelen höra till dockan', () => {
+    const next = closePanel(LAYOUT, 'summary');
+    expect(next.bottom.panels).toEqual(['code', 'log']);
+    expect(next.bottom.closed).toEqual(['summary']);
+    expect(next.bottom.active).toBe('code');
+    expect(sideOf(next, 'summary')).toBe('bottom');
+    expect(isClosed(next, 'summary')).toBe(true);
+  });
+
+  it('fäller ihop dockan när sista fliken stängs', () => {
+    expect(closePanel(LAYOUT, 'explorer').left.open).toBe(false);
+  });
+
+  it('öppnas igen sist i sin docka när den visas', () => {
+    const next = revealPanel(closePanel(LAYOUT, 'code'), 'code');
+    expect(next.bottom.panels).toEqual(['summary', 'log', 'code']);
+    expect(next.bottom.closed).toEqual([]);
+    expect(next.bottom.active).toBe('code');
+  });
+
+  it('öppnas i en annan docka när den flyttas', () => {
+    const next = movePanel(closePanel(LAYOUT, 'log'), 'log', 'left', 0);
+    expect(next.left.panels).toEqual(['log', 'explorer']);
+    expect(next.bottom.closed).toEqual([]);
+    expect(isClosed(next, 'log')).toBe(false);
+  });
+
+  it('överlever en sparad layout', () => {
+    const stored = JSON.parse(JSON.stringify(closePanel(LAYOUT, 'agent'))) as unknown;
+    expect(normalizeLayout(stored, LAYOUT).right.closed).toEqual(['agent']);
+  });
+});
+
 describe('resizeDock', () => {
   it('håller storleken inom gränserna', () => {
     expect(resizeDock(LAYOUT, 'left', 10).left.size).toBe(200);
@@ -83,11 +126,18 @@ describe('normalizeLayout', () => {
     );
     expect(next.left).toEqual({
       panels: ['agent', 'explorer'],
+      closed: [],
       active: 'agent',
       open: true,
       size: 250,
     });
-    expect(next.right).toEqual({ panels: ['connect'], active: 'connect', open: false, size: 460 });
+    expect(next.right).toEqual({
+      panels: ['connect'],
+      closed: [],
+      active: 'connect',
+      open: false,
+      size: 460,
+    });
     expect(next.bottom.panels).toEqual(['code', 'summary', 'log']);
   });
 });
