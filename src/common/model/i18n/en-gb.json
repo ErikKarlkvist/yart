@@ -273,5 +273,7 @@
   "dock.moveTo": "Move to {dock}",
   "dock.tabHint": "Drag to another panel, or right-click to move it",
   "dock.empty": "Drag a tab here to pin it to this panel.",
-  "dock.drop": "Drop to pin to {dock}"
+  "dock.drop": "Drop to pin to {dock}",
+  "views.button": "Views",
+  "views.hint": "Show a panel, or choose which side it is docked to"
 }

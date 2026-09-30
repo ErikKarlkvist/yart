@@ -32,6 +32,7 @@ import {
   faRoute,
   faServer,
   faSun,
+  faTableColumns,
   faTriangleExclamation,
   faWindowMaximize,
   faXmark,
@@ -92,6 +93,7 @@ const ICONS = {
   link: faLink,
   zoomIn: faMagnifyingGlassPlus,
   zoomOut: faMagnifyingGlassMinus,
+  views: faTableColumns,
 } satisfies Record<string, IconDefinition>;
 
 export type IconName = keyof typeof ICONS;

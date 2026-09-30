@@ -53,8 +53,8 @@ arkitekturen som säger nej, inte lintern som är fel.
 ## Paneler och dockor
 
 Allt utom huvudytan i mitten är en panel som ligger i en av tre dockor: vänster, höger
-eller nederkant. Användaren drar flikar mellan dockorna (eller högerklickar) och fäller
-ihop dockorna med knapparna i fönsterraden. Layouten sparas i `reverik.layout` och delas
+eller nederkant. Användaren drar flikar mellan dockorna, högerklickar eller använder menyn
+Views i fönsterraden, och fäller ihop dockorna med knapparna där. Layouten sparas i `reverik.layout` och delas
 av alla appflikar. Mekaniken är generisk och ligger i `src/features/layout/` (ren logik i
 `model/dock.ts`). Vilka paneler som finns och var de ligger från början står i
 `src/application/renderer/panels.tsx`: en ny panel är ett id, en plats i `DEFAULT_LAYOUT`

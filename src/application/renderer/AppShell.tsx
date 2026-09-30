@@ -7,7 +7,7 @@ import { Icon } from '@/common/renderer/Icon';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { useAgent } from '@/features/agent';
 import { analysisTitle, findingsForFlow, useAnalyses } from '@/features/analysis';
-import { DockLayout, DockResizeHandle, DockToggles, useDock } from '@/features/layout';
+import { DockLayout, DockResizeHandle, DockToggles, useDock, ViewsMenu } from '@/features/layout';
 import { useSetup } from '@/features/mcp';
 import { RepoMenu, useRepo } from '@/features/repo';
 import { useTabTitle } from './AppTabsContext';
@@ -94,6 +94,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
         createPortal(
           <div className="shell__window-items">
             <RepoMenu />
+            <ViewsMenu panels={panels} />
             <button
               type="button"
               className="text-button"

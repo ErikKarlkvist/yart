@@ -254,3 +254,81 @@
 .dock-toggles__button.is-open {
   color: var(--fg);
 }
+
+/* Menyn Views i fönsterraden */
+.views-menu {
+  position: relative;
+}
+
+.views-menu__popover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 280px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.views-menu__heading {
+  margin: 2px 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+
+.views-menu__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.views-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+}
+
+.views-menu__item:hover {
+  background: var(--bg);
+}
+
+.views-menu__open {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  text-align: left;
+}
+
+.views-menu__item.is-visible .views-menu__open {
+  font-weight: 600;
+}
+
+.views-menu__docks {
+  display: inline-flex;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+.views-menu__dock {
+  width: 24px;
+  height: 24px;
+}
+
+.views-menu__dock.is-current:disabled {
+  opacity: 1;
+  color: var(--accent);
+}
