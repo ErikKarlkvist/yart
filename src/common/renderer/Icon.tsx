@@ -9,6 +9,7 @@ import {
   faCircleExclamation,
   faCircleHalfStroke,
   faCircleInfo,
+  faClock,
   faCommentDots,
   faCopy,
   faCloud,
@@ -34,6 +35,7 @@ import {
   faSun,
   faTableColumns,
   faTriangleExclamation,
+  faUser,
   faWindowMaximize,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -94,6 +96,8 @@ const ICONS = {
   zoomIn: faMagnifyingGlassPlus,
   zoomOut: faMagnifyingGlassMinus,
   views: faTableColumns,
+  user: faUser,
+  clock: faClock,
 } satisfies Record<string, IconDefinition>;
 
 export type IconName = keyof typeof ICONS;

@@ -15,6 +15,8 @@ export interface AgentApi {
   /** Senaste frågan, att kopiera när agenten inte gick att nå */
   lastPrompt: string | null;
   ask: (prompt: string, reviewBranches?: ReviewBranches) => void;
+  /** Startar en ny konversation i läget och skickar frågan där */
+  askNew: (prompt: string, mode: ConversationMode) => void;
   stop: () => void;
   choose: (id: string) => void;
   startNew: () => void;

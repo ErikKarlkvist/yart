@@ -6,6 +6,7 @@ export const listTodosFlow: Flow = {
   title: 'Load the list',
   summary:
     'On start the hook fetches the list. The backend asks Redis first, falls back to Postgres on a miss and fills the cache for 60 seconds.',
+  trigger: { kind: 'user', label: 'User opens the todo page', nodeId: 'use-todos' },
   systems: [
     {
       id: 'frontend',

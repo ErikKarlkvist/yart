@@ -285,6 +285,30 @@ export function AgentProvider({
     },
     [repoPath, agent, approvalPolicy, accessModes, conversations, create, draftMode],
   );
+  // En ny konversation i läget, med frågan som första meddelande. För planer som skickas från ett dokument.
+  const askNew = useCallback(
+    (prompt: string, mode: ConversationMode) => {
+      if (!repoPath || creatingRef.current) return;
+      creatingRef.current = true;
+      void (async () => {
+        try {
+          const conversation = await create(mode);
+          if (conversation)
+            await invokeChannel(askAgentChannel, {
+              repoPath,
+              agent,
+              approvalPolicy,
+              accessMode: agent === 'manual' ? 'read-only' : accessModes[agent],
+              prompt,
+              conversationId: conversation.id,
+            });
+        } finally {
+          creatingRef.current = false;
+        }
+      })().catch(console.error);
+    },
+    [repoPath, agent, approvalPolicy, accessModes, create],
+  );
   const stop = useCallback(() => {
     if (repoPath && activeId)
       void invokeChannel(stopAgentChannel, { repoPath, conversationId: activeId }).catch(
@@ -314,6 +338,7 @@ export function AgentProvider({
     startNew,
     selectMode,
     ask,
+    askNew,
     stop,
   };
   return <AgentContext.Provider value={api}>{children}</AgentContext.Provider>;

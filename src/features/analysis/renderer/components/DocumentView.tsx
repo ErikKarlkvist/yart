@@ -1,16 +1,24 @@
 import { type JSX } from 'react';
 import { t } from '@/common/model/i18n';
+import { Markdown } from '@/common/renderer/Markdown';
 import { type SavedDocumentAnalysis, type SavedFlowAnalysis } from '../../model/analysis';
+import { buildImplementationPlan, hasImplementationPlan } from '../../model/plan';
+import { AiActions } from './AiActions';
 import './document.css';
 
 interface Props {
   analysis: SavedDocumentAnalysis;
   flows: readonly SavedFlowAnalysis[];
   onOpenFlow: (id: string) => void;
+  /** Skickar en text till agenten appen kör. Saknas med extern AI. */
+  onSendToAgent?: ((text: string) => void) | undefined;
 }
 
-/** Textuell repoöversikt med genvägar till flöden som beskriver detaljerna. */
-export function DocumentView({ analysis, flows, onOpenFlow }: Props): JSX.Element {
+/**
+ * Dokumentet: kort, läsbar text för människor med genvägar till flödena. När
+ * det föreslår en ändring kan implementationsplanen för AI kopieras eller skickas.
+ */
+export function DocumentView({ analysis, flows, onOpenFlow, onSendToAgent }: Props): JSX.Element {
   const related = analysis.document.flows.flatMap((name) => {
     const flow = flows.find((item) => item.name === name);
     return flow ? [flow] : [];
@@ -23,14 +31,7 @@ export function DocumentView({ analysis, flows, onOpenFlow }: Props): JSX.Elemen
         <h2 className="document-view__title">{analysis.document.title}</h2>
         <p className="document-view__summary">{analysis.document.summary}</p>
       </header>
-      <div className="document-view__content">
-        {analysis.document.content
-          .split(/\n\s*\n/)
-          .filter(Boolean)
-          .map((paragraph, index) => (
-            <p key={index}>{paragraph}</p>
-          ))}
-      </div>
+      <Markdown text={analysis.document.content} className="document-view__content" />
       {related.length > 0 && (
         <section className="document-view__flows">
           <h3>{t('document.relatedFlows')}</h3>
@@ -51,6 +52,14 @@ export function DocumentView({ analysis, flows, onOpenFlow }: Props): JSX.Elemen
             ))}
           </ul>
         </section>
+      )}
+      {hasImplementationPlan(analysis, flows) && (
+        <AiActions
+          build={() => buildImplementationPlan(analysis, flows)}
+          copyLabel={t('plan.copyImplementation')}
+          hint={t('plan.implementationHint')}
+          onSend={onSendToAgent}
+        />
       )}
     </article>
   );

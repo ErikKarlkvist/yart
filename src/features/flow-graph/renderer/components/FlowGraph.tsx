@@ -190,6 +190,7 @@ export function FlowGraph({
           tables: node.tables,
           change: node.change,
           findings: node.findings,
+          trigger: node.trigger,
           onResize,
         },
       };

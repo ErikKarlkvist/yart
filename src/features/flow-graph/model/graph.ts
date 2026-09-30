@@ -3,6 +3,7 @@ import {
   type Flow,
   type FlowEdge,
   type FlowStep,
+  type FlowTrigger,
   type NodeKind,
   type SourceRef,
   type SystemKind,
@@ -41,6 +42,8 @@ export interface GraphNode {
   change: FlowChange | undefined;
   /** I en review: fynd som gäller noden, eller för ett system dess noder och interna anrop */
   findings: ReviewFinding[];
+  /** Det som startar flödet, på noden där det börjar eller systemet den ligger i */
+  trigger: FlowTrigger | undefined;
 }
 
 /** Det en review lägger ovanpå flödet när grafen byggs. */
@@ -134,6 +137,7 @@ function collapse(
         tables: tablesOf(flow, members),
         change: systemChange(members, diff),
         findings: systemFindings(flow, members, findings),
+        trigger: members.some((m) => m.id === flow.trigger?.nodeId) ? flow.trigger : undefined,
       });
       for (const member of members) nodeToTarget.set(member.id, system.id);
     } else {
@@ -159,6 +163,7 @@ function collapse(
               columnCount: info.columns?.length ?? 0,
               change: diff.nodes.get(member.id) ?? member.highlight,
               findings: nodeFindings(member.id),
+              trigger: undefined,
             });
             for (const column of info.columns ?? []) {
               if (!column.references) continue;
@@ -185,6 +190,7 @@ function collapse(
           tables: tablesOf(flow, [member]),
           change: diff.nodes.get(member.id) ?? member.highlight,
           findings: nodeFindings(member.id),
+          trigger: member.id === flow.trigger?.nodeId ? flow.trigger : undefined,
         });
         nodeToTarget.set(member.id, member.id);
       }

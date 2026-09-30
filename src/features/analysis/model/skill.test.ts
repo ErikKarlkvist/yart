@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { demoFlows } from '@/common/model/fixtures';
-import { nodeKindSchema, systemKindSchema, validateFlow } from '@/common/model/flow';
+import {
+  nodeKindSchema,
+  systemKindSchema,
+  triggerKindSchema,
+  validateFlow,
+} from '@/common/model/flow';
 import { buildSkill, SKILL_VERSION } from './skill';
 
 describe('buildSkill', () => {
@@ -35,6 +40,19 @@ describe('buildSkill', () => {
     expect(skill).toContain('before/after differences');
     expect(skill).toContain('interface Review {');
     expect(skill).toContain('interface FlowCompare {');
+  });
+
+  it('asks for the trigger, readable text and hidden detail for AI', () => {
+    expect(skill).toContain('trigger: Trigger;');
+    expect(skill).toContain('interface Trigger {');
+    for (const kind of triggerKindSchema.options) expect(skill).toContain(`'${kind}'`);
+    expect(skill).toContain('Write for people, keep the detail for AI');
+    expect(skill).toContain('plan?: string;');
+    expect(skill).toContain('fix?: string;');
+    const example = JSON.parse(/```json\n([\s\S]*?)\n```/.exec(skill)?.[1] ?? '{}') as {
+      trigger?: unknown;
+    };
+    expect(example.trigger).toBeDefined();
   });
 
   it('embeds an example that validates against the schema', () => {

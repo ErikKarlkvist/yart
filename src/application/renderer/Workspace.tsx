@@ -29,6 +29,8 @@ interface Props {
   onFocusFindingIn: (analysisId: string, findingId: string) => void;
   /** Draghandtag mellan grafen och uppspelningen, som styr den nedre dockan */
   beforeControls: ReactNode;
+  /** Skickar en plan till agenten appen kör. Saknas med extern AI. */
+  onSendToAgent: ((text: string) => void) | undefined;
 }
 
 /** Huvudytan i mitten: grafen, dokumentet eller reviewn för den valda analysen. */
@@ -46,6 +48,7 @@ export function Workspace({
   onFocusFinding,
   onFocusFindingIn,
   beforeControls,
+  onSendToAgent,
 }: Props): JSX.Element {
   const relatedFlows = analyses.filter((item): item is SavedFlowAnalysis => item.kind === 'flow');
 
@@ -67,13 +70,20 @@ export function Workspace({
           beforeControls={beforeControls}
         />
       ) : analysis?.kind === 'document' ? (
-        <DocumentView analysis={analysis} flows={relatedFlows} onOpenFlow={onOpenFlow} />
+        <DocumentView
+          analysis={analysis}
+          flows={relatedFlows}
+          onOpenFlow={onOpenFlow}
+          onSendToAgent={onSendToAgent}
+        />
       ) : analysis?.kind === 'review' ? (
         <ReviewView
+          key={analysis.id}
           analysis={analysis}
           flows={relatedFlows}
           onOpenFlow={onOpenFlow}
           onOpenFinding={onFocusFindingIn}
+          onSendToAgent={onSendToAgent}
         />
       ) : (
         <p className="shell__empty">{hasRepo ? t('app.chooseAnalysis') : t('app.chooseRepo')}</p>

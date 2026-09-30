@@ -1,8 +1,9 @@
 import { Handle, NodeResizer, type Node, type NodeProps, Position } from '@xyflow/react';
 import { type JSX, memo, useCallback } from 'react';
+import { type FlowTrigger } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
 import { type FlowChange, type ReviewFinding } from '@/common/model/review';
-import { Icon } from '@/common/renderer/Icon';
+import { Icon, type IconName } from '@/common/renderer/Icon';
 import { type GraphKind, type GraphLevel, type TableInfo } from '../../model/graph';
 import { type Size } from '../../model/layout';
 import { useNodeState } from './GraphStateContext';
@@ -21,7 +22,18 @@ type GraphNodeData = {
   tables: TableInfo[];
   change: FlowChange | undefined;
   findings: ReviewFinding[];
+  trigger: FlowTrigger | undefined;
   onResize: (id: string, size: Size) => void;
+};
+
+const TRIGGER_ICONS: Readonly<Record<FlowTrigger['kind'], IconName>> = {
+  user: 'user',
+  webhook: 'external',
+  schedule: 'clock',
+  queue: 'queue',
+  request: 'http',
+  startup: 'play',
+  system: 'service',
 };
 
 export type GraphNode = Node<GraphNodeData, 'flow'>;
@@ -74,6 +86,15 @@ export const FlowNodeView = memo(function FlowNodeView({
         </span>
         <span className="graph-node__label">{data.label}</span>
       </span>
+      {data.trigger && (
+        <span
+          className={`graph-node__trigger is-${data.trigger.kind}`}
+          title={t('graph.triggerHint', { label: data.trigger.label })}
+        >
+          <Icon name={TRIGGER_ICONS[data.trigger.kind]} size="sm" />
+          <span className="graph-node__trigger-text">{data.trigger.label}</span>
+        </span>
+      )}
       <FindingFlag findings={data.findings} className="graph-node__flag" />
       {system && (
         <button

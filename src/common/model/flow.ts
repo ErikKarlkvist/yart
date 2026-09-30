@@ -173,6 +173,31 @@ const flowStepSchema = z
   })
   .describe('One step of the playback, in the order the flow actually runs');
 
+/** Vad som sätter igång flödet. Visas där flödet börjar, så det är lätt att följa. */
+export const triggerKindSchema = z
+  .enum(['user', 'webhook', 'schedule', 'queue', 'request', 'startup', 'system'])
+  .describe(
+    'user: a person clicks, submits or opens something. webhook: an external system calls in. schedule: a cron job or timer. queue: a message arrives on a queue or topic. request: another service or client calls an API. startup: the application starts. system: anything else inside the system, such as a file change or an internal event.',
+  );
+
+const flowTriggerSchema = z
+  .object({
+    kind: triggerKindSchema,
+    label: z
+      .string()
+      .min(1)
+      .max(80)
+      .describe(
+        'What starts the flow, in plain words, e.g. "User clicks Add" or "Stripe sends payment_succeeded"',
+      ),
+    nodeId: z.string().min(1).describe('The node where the flow starts, a nodes[].id'),
+  })
+  .describe(
+    brandText(
+      'The action that starts the flow. {appName} marks it on the start node so the reader can follow the flow from the beginning.',
+    ),
+  );
+
 const NODE_KINDS_WITHOUT_SOURCE: ReadonlySet<z.infer<typeof nodeKindSchema>> = new Set([
   'db',
   'cache',
@@ -185,6 +210,11 @@ export const flowSchema = z
     question: z.string().min(1).describe("The user's question the flow answers"),
     title: z.string().min(1).describe('Short, e.g. "Add todo"'),
     summary: z.string().min(1).describe('One or two sentences about what the flow does'),
+    trigger: flowTriggerSchema
+      .optional()
+      .describe(
+        'Always include: the action that starts the flow, on the node where the first step begins',
+      ),
     systems: z.array(flowSystemSchema).min(1),
     nodes: z.array(flowNodeSchema).min(1),
     edges: z.array(flowEdgeSchema).min(1),
@@ -299,6 +329,14 @@ export const flowSchema = z
       }
     });
 
+    if (flow.trigger && !nodeIds.has(flow.trigger.nodeId)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['trigger', 'nodeId'],
+        message: t('validation.unknownTriggerNode', { node: flow.trigger.nodeId }),
+      });
+    }
+
     flow.steps.forEach((step, i) => {
       if (!edgeIds.has(step.edgeId)) {
         ctx.addIssue({
@@ -317,6 +355,7 @@ export type FlowNode = z.infer<typeof flowNodeSchema>;
 export type DataTable = z.infer<typeof dataTableSchema>;
 export type FlowEdge = z.infer<typeof flowEdgeSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
+export type FlowTrigger = z.infer<typeof flowTriggerSchema>;
 export type Flow = z.infer<typeof flowSchema>;
 
 export type FlowValidation = { ok: true; flow: Flow } | { ok: false; errors: string[] };

@@ -27,6 +27,7 @@ export const addTodoWithListFlow: Flow = {
   title: 'Add todo to a list',
   summary:
     'The form sends the title and a list id. The service checks that the list exists, stores the row in Postgres and waits for the webhook before the response updates the client. The cached list is no longer invalidated.',
+  trigger: { kind: 'user', label: 'User picks a list and clicks Add', nodeId: 'add-form' },
   systems: base.systems,
   nodes: [
     {
@@ -138,8 +139,17 @@ export const addTodoReview: Review = {
   title: 'Todo lists',
   summary:
     'Todos can be added to a list. The change validates the list at the route and the service, but drops the cache invalidation and waits for the webhook inside the request.',
-  content:
-    'The form gets a list picker and sends listId with the title. The route validates it with the same zod schema as the title, and the service looks the list up before inserting the todo.\n\nTwo things regress on the write path: the Redis cache is no longer invalidated after the insert, and the webhook is awaited before the 201 goes out. The list check also runs outside the insert, so a list deleted in between turns into a 500.',
+  content: [
+    '## What changes',
+    '- The form gets a **list picker** and sends `listId` with the title',
+    '- The route validates `listId` with the same schema as the title',
+    '- The service checks that the list exists before inserting',
+    '',
+    '## What regresses',
+    '- The cached list is **no longer invalidated** after a todo is added',
+    '- The webhook is **awaited** before the response goes out',
+    '- A list deleted mid-request turns into a 500 instead of a 404',
+  ].join('\n'),
   baseLabel: 'main',
   headLabel: 'feature/todo-lists',
   flows: [ADD_TODO_WITH_LIST_NAME],
@@ -152,6 +162,7 @@ export const addTodoReview: Review = {
         'create() used to call cache.invalidate() after the insert. That call is gone, so GET /api/todos keeps serving the old list from Redis for up to 60 seconds after a todo is added.',
       suggestion:
         'Call cache.invalidate() after repository.insert(), as setCompleted() and remove() still do.',
+      fix: 'In TodoService.create (backend/src/services/TodoService.ts), add `await this.cache.invalidate();` directly after `this.repository.insert(input)`, before the webhook call. Verify: add a todo, then GET /api/todos returns it immediately instead of the cached list.',
       flow: ADD_TODO_WITH_LIST_NAME,
       nodeId: 'todo-service',
       source: { file: 'backend/src/services/TodoService.ts', line: 22 },
@@ -164,6 +175,7 @@ export const addTodoReview: Review = {
         'notifyTodoCreated() is now awaited before the route responds. A slow or failing webhook delays or breaks the 201, even though the todo is already saved.',
       suggestion:
         'Keep the call fire-and-forget, or move it to a queue and let the response go out first.',
+      fix: 'In TodoService.create, change `await notifyTodoCreated(todo)` back to `void notifyTodoCreated(todo)` so the route answers 201 without waiting. Keep the error logging inside notifyTodoCreated. Verify: with the webhook URL pointing at a slow server, POST /api/todos still answers at once.',
       flow: ADD_TODO_WITH_LIST_NAME,
       edgeId: 'notify',
       source: { file: 'backend/src/services/TodoService.ts', line: 24 },

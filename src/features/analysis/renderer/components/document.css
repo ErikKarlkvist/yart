@@ -174,3 +174,134 @@ button.document-view__finding-open:hover .document-view__finding-title {
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* Läsbar text: rubriker och listor i dokumentets innehåll */
+.document-view__content h3 {
+  margin: 24px 0 8px;
+  font-size: 16px;
+}
+
+.document-view__content h4 {
+  margin: 18px 0 6px;
+  font-size: 14px;
+}
+
+.document-view__content > :first-child {
+  margin-top: 0;
+}
+
+.document-view__content ul,
+.document-view__content ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.document-view__content li {
+  margin: 0 0 4px;
+}
+
+.document-view__content code,
+.document-view__finding-text code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg-panel);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+/* Reviewpunkterna, att välja till en fix-plan */
+.document-view__points {
+  max-width: 720px;
+  margin-top: 32px;
+}
+
+.document-view__points-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.document-view__points-head h3 {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+
+.document-view__points-tools {
+  display: flex;
+  gap: 4px;
+}
+
+.document-view__point-group {
+  margin-bottom: 16px;
+}
+
+.document-view__point-flow {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+button.document-view__point-flow:hover {
+  color: var(--accent);
+}
+
+.document-view__finding.is-checked {
+  outline: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.document-view__finding-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.document-view__finding-row input {
+  flex: none;
+  margin: 0;
+}
+
+.document-view__finding-body {
+  padding-left: 23px;
+}
+
+/* Kopiera eller skicka texten för AI. Klistrad mot nederkanten medan man läser. */
+.ai-actions {
+  position: sticky;
+  /* Dokumentets padding i nederkant räknas in, så -48px lägger raden mot kanten */
+  bottom: -48px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 720px;
+  margin-top: 24px;
+  padding: 12px 0 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.ai-actions__hint {
+  flex: 1;
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ai-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ai-actions__send {
+  border-color: var(--accent);
+  color: var(--accent);
+}

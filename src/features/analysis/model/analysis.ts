@@ -124,19 +124,3 @@ export function findingsForFlow(analyses: readonly SavedAnalysis[], name: string
     analysis.kind === 'review' ? analysis.review.findings.filter((f) => f.flow === name) : [],
   );
 }
-
-/** Reviewn som hör till en analys: analysen själv, eller den första som pekar på flödet. */
-export function reviewFor(
-  analyses: readonly SavedAnalysis[],
-  current: SavedAnalysis | null,
-): SavedReviewAnalysis | null {
-  if (!current) return null;
-  if (current.kind === 'review') return current;
-  if (current.kind !== 'flow') return null;
-  const name = current.name;
-  return (
-    analyses.find(
-      (a): a is SavedReviewAnalysis => a.kind === 'review' && a.review.flows.includes(name),
-    ) ?? null
-  );
-}

@@ -9,9 +9,7 @@ import { validateFlow } from './flow';
 import {
   checkFindingTargets,
   diffFlows,
-  findingLocation,
   flowCompareSchema,
-  formatFindings,
   mergeForReview,
   reviewSchema,
   sortFindings,
@@ -131,20 +129,5 @@ describe('checkFindingTargets', () => {
       lookup,
     );
     expect(errors).toEqual([]);
-  });
-});
-
-describe('formatFindings', () => {
-  it('skriver en numrerad lista med plats, fil och förslag, allvarligast först', () => {
-    const text = formatFindings(addTodoReview.findings.slice(0, 2).reverse(), (finding) =>
-      findingLocation(finding, addTodoWithListFlow, base),
-    );
-    expect(text.split('\n')[0]).toBe(
-      '1. [error] The cached list is no longer invalidated (TodoService.create, backend/src/services/TodoService.ts:22)',
-    );
-    expect(text).toContain(
-      '2. [warning] The webhook is awaited inside the request (await POST webhook, ',
-    );
-    expect(text).toContain('   Suggestion: Call cache.invalidate()');
   });
 });

@@ -64,6 +64,16 @@ button.crumb:hover:not(:disabled) {
   font-size: 18px;
 }
 
+.player__trigger {
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.player__trigger strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
 .player__review {
   display: inline-flex;
   align-items: center;
@@ -169,6 +179,31 @@ button.crumb:hover:not(:disabled) {
 .graph-flag:hover .icon,
 .graph-flag:hover .graph-flag__count {
   color: var(--bg-panel);
+}
+
+/* Startpunkten: vad som sätter igång flödet, ovanför noden där det börjar */
+.graph-node__trigger {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 240px;
+  padding: 2px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.graph-node__trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .graph-flag.graph-node__flag {
@@ -297,54 +332,6 @@ button.crumb:hover:not(:disabled) {
 
 .finding-details__source {
   margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  color: var(--fg-muted);
-}
-
-/* Fliken Summary i nedre panelen */
-.flow-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 720px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.flow-summary__question {
-  margin: 0;
-  color: var(--fg-muted);
-  font-style: italic;
-}
-
-.flow-summary__text {
-  margin: 0;
-}
-
-.flow-summary__heading {
-  margin: 8px 0 0;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fg-muted);
-}
-
-.flow-summary__steps {
-  margin: 0;
-  padding-left: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.flow-summary__label {
-  display: inline-block;
-  margin-right: 8px;
-  padding: 0 6px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
   color: var(--fg-muted);

@@ -5,4 +5,4 @@ export { DeliveryLog } from './renderer/components/DeliveryLog';
 export { AnalysisProvider } from './renderer/AnalysisProvider';
 export { useAnalyses } from './renderer/AnalysisContext';
 export type { SavedAnalysis, SavedFlowAnalysis } from './model/analysis';
-export { analysisTitle, findingsForFlow, reviewFor } from './model/analysis';
+export { analysisTitle, findingsForFlow } from './model/analysis';

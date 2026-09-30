@@ -14,4 +14,9 @@ describe('conversation instructions', () => {
     expect(instructions).toContain('critical questions');
     expect(instructions).toContain('save_document');
   });
+
+  it('asks every flow-producing mode for the trigger', () => {
+    for (const mode of ['analyse', 'review', 'plan'] as const)
+      expect(conversationInstructions(mode, { head: 'a', base: 'b' })).toContain('trigger');
+  });
 });

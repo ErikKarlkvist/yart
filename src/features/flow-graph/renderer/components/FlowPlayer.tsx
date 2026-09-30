@@ -212,6 +212,11 @@ export function FlowPlayer({
           <h2 className="player__title" title={flow.summary}>
             {flow.title}
           </h2>
+          {flow.trigger && (
+            <span className="player__trigger">
+              {t('graph.startsWhen')} <strong>{flow.trigger.label}</strong>
+            </span>
+          )}
           {(compare !== undefined || findings.length > 0) && (
             <span className="player__review">
               {compare && (

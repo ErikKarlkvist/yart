@@ -1,7 +1,18 @@
 import { z } from 'zod';
 import { analysisNameSchema } from './name';
 
-/** En kort, läsbar översikt av ett repo med länkar till mer detaljerade flöden. */
+/**
+ * Texten människor läser. En liten del markdown: rubriker, punktlistor,
+ * numrerade listor, fetstil och kod. Allt detaljerat för AI ligger i egna fält.
+ */
+export const READABLE_TEXT =
+  'Markdown for people to skim: "## " headings, "- " bullet lists, "1. " numbered lists, **bold** and `code`. Short sentences, mostly bullets, around 150 words at most. Leave details for AI in the dedicated fields.';
+
+/**
+ * En kort, läsbar översikt av ett repo eller en plan, med länkar till mer
+ * detaljerade flöden. `plan` är för AI och visas inte, den kopieras eller
+ * skickas som implementationsplan.
+ */
 export const documentSchema = z.object({
   title: z.string().min(1).describe('Short title, e.g. "How orders are processed"'),
   summary: z
@@ -13,7 +24,14 @@ export const documentSchema = z.object({
     .string()
     .min(1)
     .describe(
-      'A few short paragraphs, separated by blank lines, explaining the code at a high level. For a document linked to a compared flow, explain the important before/after differences and practical effect.',
+      `${READABLE_TEXT} Explain the code at a high level. For a document linked to a compared flow, explain the important before/after differences and practical effect.`,
+    ),
+  plan: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      'For a document that proposes a change: a detailed implementation plan for an AI coding agent, in Markdown. Concrete ordered steps with files, functions, data changes, edge cases and how to verify each step. Not shown to the user; they copy it or send it to their agent.',
     ),
   flows: z
     .array(analysisNameSchema)

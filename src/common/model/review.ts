@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { brandText } from './brand';
 import { type Flow, type FlowEdge, type FlowNode, flowSchema, sourceRefSchema } from './flow';
 import { t } from './i18n';
+import { READABLE_TEXT } from './document';
 import { analysisNameSchema } from './name';
 
 /**
@@ -45,8 +46,18 @@ const reviewFindingSchema = z
     id: z.string().min(1).describe('Unique within findings'),
     severity: findingSeveritySchema,
     title: z.string().min(1).describe('Short, e.g. "The cached list is no longer invalidated"'),
-    description: z.string().min(1).describe('What happens and why it matters'),
-    suggestion: z.string().optional().describe('What to do instead'),
+    description: z
+      .string()
+      .min(1)
+      .describe('What happens and why it matters, one or two short sentences for a person'),
+    suggestion: z.string().optional().describe('What to do instead, one short sentence'),
+    fix: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'Detailed fix instructions for an AI coding agent: which files and functions to change, how, and how to verify it. Not shown to the user; included when they copy or send a fix plan.',
+      ),
     flow: analysisNameSchema
       .optional()
       .describe('The saved flow the finding is about, one of the names in flows'),
@@ -80,7 +91,7 @@ export const reviewSchema = z
       .string()
       .min(1)
       .describe(
-        'A few short paragraphs, separated by blank lines, about what the change does and how it affects the data flows',
+        `${READABLE_TEXT} What the change does and how it affects the data flows. Do not repeat the findings, they are listed below the text.`,
       ),
     baseLabel: z
       .string()
@@ -307,30 +318,4 @@ export function findingLocation(
     return [...(flow?.edges ?? []), ...(base?.edges ?? [])].find((e) => e.id === id)?.label ?? id;
   }
   return null;
-}
-
-/**
- * Fynden som text att kopiera eller skicka till agenten: en numrerad lista
- * med allvarlighet, titel, var i flödet, fil och rad, beskrivning och förslag.
- */
-export function formatFindings(
-  findings: readonly ReviewFinding[],
-  location: (finding: ReviewFinding) => string | null,
-): string {
-  return sortFindings(findings)
-    .map((finding, i) => {
-      const where = [
-        location(finding),
-        finding.source && `${finding.source.file}:${finding.source.line}`,
-      ]
-        .filter(Boolean)
-        .join(', ');
-      const lines = [
-        `${i + 1}. [${finding.severity}] ${finding.title}${where ? ` (${where})` : ''}`,
-        `   ${finding.description}`,
-      ];
-      if (finding.suggestion) lines.push(`   Suggestion: ${finding.suggestion}`);
-      return lines.join('\n');
-    })
-    .join('\n');
 }

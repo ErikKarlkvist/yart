@@ -6,6 +6,7 @@ export const addTodoFlow: Flow = {
   title: 'Add todo',
   summary:
     'The form calls the hook, which POSTs to the backend. The service stores the row in Postgres, invalidates the list in Redis and pings a webhook before the response updates the list in the client.',
+  trigger: { kind: 'user', label: 'User clicks Add', nodeId: 'add-form' },
   systems: [
     {
       id: 'frontend',

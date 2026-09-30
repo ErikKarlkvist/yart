@@ -27,7 +27,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
   const { analyses, current, select } = useAnalyses();
   const { layout, reveal } = useDock();
   const agent = useAgent();
-  const { showGuide } = useSetup();
+  const { showGuide, agent: agentKind } = useSetup();
   // Koden för steget som spelas eller klickats i grafen, visas i panelen Kod.
   const [source, setSource] = useState<SourceRef | null>(null);
   // Valt fynd taggas med analysen. Räknaren låter samma fynd fokuseras igen.
@@ -69,13 +69,21 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
     [agent, reveal],
   );
 
+  // Planer från dokument och reviewer startar en egen konversation, så de inte blandas med en analys.
+  const onSendToAgent = useCallback(
+    (text: string) => {
+      agent.askNew(text, 'general');
+      reveal('agent' satisfies PanelId);
+    },
+    [agent, reveal],
+  );
+
   const panels = usePanels({
     flow,
     findings,
     source: flow ? source : null,
     focusedFindingId,
     onFocusFinding: onFocusInCurrent,
-    onFocusFindingIn: focusFinding,
   });
 
   useTabTitle(repo ? (current ? `${repo.name} · ${analysisTitle(current)}` : repo.name) : null);
@@ -116,6 +124,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
             onFocusFinding={onFocusInCurrent}
             onFocusFindingIn={focusFinding}
             beforeControls={layout.bottom.open ? <DockResizeHandle side="bottom" /> : null}
+            onSendToAgent={agentKind === 'manual' ? undefined : onSendToAgent}
           />
         </DockLayout>
 

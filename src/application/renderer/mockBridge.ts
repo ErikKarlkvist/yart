@@ -33,6 +33,7 @@ export function installMockBridge(): void {
       name: demo.name,
     };
     if (demo.kind === 'review') return { ...base, kind: 'review', review: demo.review };
+    if (demo.kind === 'document') return { ...base, kind: 'document', document: demo.document };
     return {
       ...base,
       kind: 'flow',
