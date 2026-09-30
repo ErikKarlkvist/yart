@@ -123,72 +123,9 @@ select:focus {
 }
 
 .shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-width, 300px) 1fr var(--side-width, 460px);
-  grid-template-rows: 1fr 32px;
-  grid-template-areas:
-    'sidebar work side'
-    'footer footer footer';
-  height: 100%;
-}
-
-.shell--side-closed {
-  grid-template-columns: var(--sidebar-width, 300px) 1fr;
-  grid-template-areas:
-    'sidebar work'
-    'footer footer';
-}
-
-.shell__side {
-  position: relative;
-  grid-area: side;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-  border-left: 1px solid var(--border);
-  background: var(--bg-panel);
-}
-
-.shell__side-modes {
-  height: auto;
-  padding: 6px 8px 0;
-}
-
-.shell__side-spacer {
-  flex: 1;
-}
-
-.shell__side-body {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Båda panelerna monterade, den inaktiva gömd med opacity så måtten behålls */
-.shell__side-pane {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  z-index: 0;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.shell__side-pane.is-active {
-  z-index: 1;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.shell__side-pane > .review-side,
-.shell__side-pane > .agent,
-.shell__side-pane > .connect,
-.shell__side-pane > .shell__empty {
-  flex: 1;
-  min-width: 0;
+  height: 100%;
 }
 
 /* Reviewläget i högerpanelen */
@@ -339,31 +276,10 @@ select:focus {
   justify-content: center;
   gap: 6px;
 }
-/* Arbetsytan: flikrad och en arbetsyta per flik, alla monterade */
-.shell__work {
-  grid-area: work;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-}
-
-.shell__work {
-  position: relative;
-}
-
+/* Huvudytan i mitten. Absolut så grafen får dockans mått och inte sitt innehålls. */
 .workspace {
   position: absolute;
   inset: 0;
-  display: grid;
-  grid-template-rows: 1fr var(--bottom-height, 220px);
-}
-
-.shell--log-closed .workspace {
-  grid-template-rows: 1fr;
-}
-
-.workspace__canvas {
   display: grid;
   place-items: center;
   min-height: 0;
@@ -371,38 +287,15 @@ select:focus {
   overflow: hidden;
 }
 
-.workspace__canvas > .player {
+.workspace > .player {
   place-self: stretch;
 }
 
-.workspace__bottom {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  padding: 10px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--bg-panel);
-  overflow-y: auto;
-}
-
-.shell__sidebar {
-  position: relative;
-  grid-area: sidebar;
+/* Repot och analyserna i en docka */
+.explorer {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px;
-  border-right: 1px solid var(--border);
-  background: var(--bg-panel);
-  overflow-y: auto;
-}
-
-.shell__panel-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
 }
 
 .shell__footer-tools {
@@ -436,31 +329,6 @@ select:focus {
   -webkit-app-region: no-drag;
 }
 
-.shell__tabs {
-  display: flex;
-  gap: 2px;
-}
-
-.shell__tab {
-  padding: 3px 10px;
-  border: 1px solid transparent;
-  background: none;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fg-muted);
-}
-
-.shell__tab.is-active {
-  color: var(--fg);
-  border-color: var(--border);
-  background: var(--bg);
-}
-
-.shell__tab:disabled {
-  opacity: 0.4;
-}
 .shell__empty {
   margin: 0;
   color: var(--fg-muted);
@@ -486,7 +354,8 @@ select:focus {
 }
 
 .shell__footer {
-  grid-area: footer;
+  flex: none;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;

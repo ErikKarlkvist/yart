@@ -1,0 +1,256 @@
+/* Huvudytan med dockor: vänster | mitten (huvudyta över nedre docka) | höger */
+.dock-layout {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.dock-layout__center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dock-layout__main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.dock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  min-height: 0;
+  min-width: 0;
+  background: var(--bg-panel);
+}
+
+.dock--left {
+  width: var(--dock-left, 300px);
+  border-right: 1px solid var(--border);
+}
+
+.dock--right {
+  width: var(--dock-right, 460px);
+  border-left: 1px solid var(--border);
+}
+
+.dock--bottom {
+  height: var(--dock-bottom, 220px);
+  border-top: 1px solid var(--border);
+}
+
+.dock.is-drop-target::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  pointer-events: none;
+}
+
+.dock__tabs {
+  flex: none;
+  height: auto;
+  padding: 6px 8px 0;
+  overflow: visible;
+}
+
+.dock__tab-list {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.dock__spacer {
+  flex: 1;
+}
+
+.dock__tabs > .icon-button {
+  align-self: center;
+}
+
+.dock__tab {
+  position: relative;
+  flex: none;
+  cursor: grab;
+}
+
+.dock__tab.is-unavailable {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dock__tab.is-dragging {
+  opacity: 0.5;
+}
+
+/* Var fliken hamnar vid släpp */
+.dock__tab.is-drop-before::before,
+.dock__tab.is-drop-after::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.dock__tab.is-drop-before::before {
+  left: -2px;
+}
+
+.dock__tab.is-drop-after::after {
+  right: -2px;
+}
+
+.dock__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/*
+ * Alla paneler monterade, den inaktiva gömd med opacity så måtten behålls.
+ * Se .app-window för varför display: none inte räcker.
+ */
+.dock__pane {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 12px 14px;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.dock__pane--fill {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dock__pane--fill > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.dock__pane.is-active {
+  z-index: 1;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.dock__empty {
+  margin: 0;
+  padding: 16px 14px;
+  color: var(--fg-muted);
+}
+
+/* Släppyta för en hopfälld docka */
+.dock-edge {
+  position: absolute;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-panel) 85%, transparent);
+  opacity: 0.7;
+}
+
+.dock-edge.is-over {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-panel));
+}
+
+.dock-edge--left,
+.dock-edge--right {
+  top: 8px;
+  bottom: 8px;
+  width: 56px;
+}
+
+.dock-edge--left {
+  left: 8px;
+}
+
+.dock-edge--right {
+  right: 8px;
+}
+
+.dock-edge--bottom {
+  left: 72px;
+  right: 72px;
+  bottom: 8px;
+  height: 56px;
+}
+
+.dock-edge__label {
+  padding: 0 8px;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+.dock-edge--left .dock-edge__label,
+.dock-edge--right .dock-edge__label {
+  writing-mode: vertical-rl;
+}
+
+/* Högerklicksmenyn på en flik */
+.dock-menu {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+}
+
+.dock-menu__item {
+  padding: 5px 8px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  text-align: left;
+}
+
+.dock-menu__item:hover {
+  background: var(--bg);
+}
+
+/* Växlarna i fönsterraden */
+.dock-toggles {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.dock-toggles__button {
+  color: var(--fg-muted);
+}
+
+.dock-toggles__button.is-open {
+  color: var(--fg);
+}

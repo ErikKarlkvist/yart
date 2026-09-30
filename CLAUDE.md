@@ -50,6 +50,17 @@ Samma lagernamn överallt: `model` och `ipc` är rena och körs i båda processe
 eslint-plugin-boundaries i eslint.config.js. Om lintern klagar på en import är det
 arkitekturen som säger nej, inte lintern som är fel.
 
+## Paneler och dockor
+
+Allt utom huvudytan i mitten är en panel som ligger i en av tre dockor: vänster, höger
+eller nederkant. Användaren drar flikar mellan dockorna (eller högerklickar) och fäller
+ihop dockorna med knapparna i fönsterraden. Layouten sparas i `reverik.layout` och delas
+av alla appflikar. Mekaniken är generisk och ligger i `src/features/layout/` (ren logik i
+`model/dock.ts`). Vilka paneler som finns och var de ligger från början står i
+`src/application/renderer/panels.tsx`: en ny panel är ett id, en plats i `DEFAULT_LAYOUT`
+och en definition i `usePanels`. Kod som vill visa en panel anropar `reveal(id)` från
+`useDock()` i stället för att veta vilken docka den ligger i.
+
 ## IPC
 
 Kanaler definieras med `defineChannel<Req, Res>('feature:namn')` i en features `ipc/`,
