@@ -28,6 +28,9 @@ rl.on('line', (line) => {
   out({ type: 'assistant', message: { content: [{ type: 'text', text: 'Reply to ' + text }] } });
   if (text === 'fail') out({ type: 'result', subtype: 'success', is_error: true, result: 'Failed to authenticate' });
   else out({ type: 'result', subtype: 'success' });
+  // Som en underagent i bakgrunden: mer text efter att turen rapporterats klar
+  if (text === 'background')
+    setTimeout(() => out({ type: 'assistant', message: { content: [{ type: 'text', text: 'Later' }] } }), 50);
 });
 `;
 const FAKE_CODEX = `
@@ -130,6 +133,25 @@ describe('AgentSession med Claude Code', () => {
     await c.until(() => c.entries.filter((e) => e.kind === 'assistant').length === 2);
     session.stop();
     expect(c.states.at(-1)).toBe('stopped');
+  });
+
+  it('skickar påminnelsen till agenten men visar bara frågan', async () => {
+    const c = collect();
+    const session = new AgentSession(tmpdir(), fake(claudeRunner, claudeScript), context, c.events);
+    session.ask('hello', undefined, '[save it]');
+    await c.until(() => c.states.at(-1) === 'idle');
+    expect(c.entries[0]).toMatchObject({ kind: 'user', text: 'hello' });
+    expect(c.entries.at(-1)).toMatchObject({ text: 'Reply to hello\n\n[save it]' });
+    session.stop();
+  });
+
+  it('räknas som arbetande igen när det kommer mer efter att turen verkat klar', async () => {
+    const c = collect();
+    const session = new AgentSession(tmpdir(), fake(claudeRunner, claudeScript), context, c.events);
+    session.ask('background');
+    await c.until(() => c.entries.some((e) => e.kind === 'assistant' && e.text === 'Later'));
+    expect(c.states).toEqual(['busy', 'idle', 'busy']);
+    session.stop();
   });
 
   it('visar agentens fel när svaret misslyckas', async () => {

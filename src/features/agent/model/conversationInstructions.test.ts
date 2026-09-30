@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   conversationInstructions,
+  deliveryHint,
   deliveryReminder,
   isDeliveryTool,
 } from './conversationInstructions';
@@ -30,12 +31,12 @@ describe('conversation instructions', () => {
     expect(conversationInstructions('general')).toContain('name_conversation');
   });
 
-  it('säger att svaret ska sparas i Reverik och inte skrivas i chatten', () => {
+  it('säger att svaret ska sparas i appen och inte skrivas i chatten', () => {
     for (const mode of ['analyse', 'review', 'plan'] as const)
       expect(conversationInstructions(mode, { head: 'a', base: 'b' })).toContain(
-        'Deliver the answer in Reverik, not in the chat',
+        'Deliver the answer in Kire',
       );
-    expect(conversationInstructions('general')).not.toContain('Deliver the answer in Reverik');
+    expect(conversationInstructions('general')).not.toContain('Deliver the answer in');
   });
 });
 
@@ -50,5 +51,15 @@ describe('deliveryReminder', () => {
     expect(isDeliveryTool('reverik.save_review')).toBe(true);
     expect(isDeliveryTool('list_analyses')).toBe(false);
     expect(isDeliveryTool('name_conversation')).toBe(false);
+  });
+
+  it('använder appens namn, inte det gamla', () => {
+    for (const mode of ['analyse', 'review', 'plan', 'general'] as const) {
+      expect(conversationInstructions(mode, { head: 'a', base: 'b' })).not.toContain('Reverik');
+      expect(deliveryReminder(mode) ?? '').not.toContain('Reverik');
+      expect(deliveryHint(mode) ?? '').not.toContain('Reverik');
+    }
+    expect(deliveryHint('analyse')).toContain('save_flow');
+    expect(deliveryHint('general')).toBeNull();
   });
 });

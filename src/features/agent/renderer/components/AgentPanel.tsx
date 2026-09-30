@@ -296,8 +296,14 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
         )}
         <span className="agent__spacer" />
         {busy && (
-          <button type="button" className="agent__stop" onClick={stop}>
-            <Icon name="stop" size="sm" /> {t('agent.stop')}
+          <button
+            type="button"
+            className="icon-button agent__stop"
+            title={t('agent.stop')}
+            aria-label={t('agent.stop')}
+            onClick={stop}
+          >
+            <Icon name="stop" size="sm" />
           </button>
         )}
         <button

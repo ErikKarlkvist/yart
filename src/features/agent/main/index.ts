@@ -31,6 +31,7 @@ import { AgentSession } from './session';
 import { ConversationStore } from './conversations';
 import {
   conversationInstructions,
+  deliveryHint,
   deliveryReminder,
   isDeliveryTool,
 } from '../model/conversationInstructions';
@@ -43,6 +44,9 @@ export interface AgentDeps {
   /** Skillen: systemprompt för Claude Code, inledning för Codex */
   skill: () => string;
 }
+
+/** Hur länge en tur ska ha varit klar innan appen påminner om att leverera */
+const REMINDER_DELAY_MS = 8000;
 
 export interface AgentHandle {
   /**
@@ -65,6 +69,7 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
   const sessions = new Map<string, AgentSession>();
   const repoOf = new Map<string, string>();
   // Per konversation: sparade turen något, har appen redan påmint, och med vilka inställningar
+  const reminders = new Map<string, ReturnType<typeof setTimeout>>();
   const turns = new Map<
     string,
     { saved: boolean; failed: boolean; reminded: boolean; settings: AgentSettings }
@@ -124,13 +129,22 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
         },
         onState: (state) => {
           emitEvent(agentEvent, { type: 'state', repoPath, conversationId, state });
-          // En tur utan leverans i ett läge som ska leverera får en påminnelse, en gång per fråga
-          const turn = turns.get(conversationId);
+          // En tur utan leverans i ett läge som ska leverera får en påminnelse, en gång per
+          // fråga. Den väntar en stund, en underagent i bakgrunden kan fortfarande arbeta.
+          clearTimeout(reminders.get(conversationId));
+          reminders.delete(conversationId);
           const reminder = deliveryReminder(mode);
-          if (state !== 'idle' || !turn || reminder === null) return;
-          if (turn.saved || turn.failed || turn.reminded) return;
-          turn.reminded = true;
-          created.ask(reminder, turn.settings);
+          if (state !== 'idle' || reminder === null) return;
+          reminders.set(
+            conversationId,
+            setTimeout(() => {
+              reminders.delete(conversationId);
+              const turn = turns.get(conversationId);
+              if (!turn || turn.saved || turn.failed || turn.reminded) return;
+              turn.reminded = true;
+              created.ask(reminder, turn.settings);
+            }, REMINDER_DELAY_MS),
+          );
         },
         onThread: (id) => {
           void store.setThread(repoPath, conversationId, id).catch(console.error);
@@ -185,7 +199,7 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
       effort: isSafeChoice(settings.effort) ? settings.effort : DEFAULT_CHOICE,
     };
     turns.set(conversationId, { saved: false, failed: false, reminded: false, settings: checked });
-    running.ask(prompt, checked);
+    running.ask(prompt, checked, deliveryHint(conversation.mode) ?? undefined);
   });
   handleChannel(stopAgentChannel, ({ conversationId }) => {
     denyWaiting(conversationId);

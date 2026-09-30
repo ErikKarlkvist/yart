@@ -197,14 +197,18 @@
 .agent__compose-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin-top: 6px;
 }
 
 /* Läge och modell under textrutan, tysta tills man pekar på dem */
 .agent__setting {
-  max-width: 150px;
-  padding: 3px 6px;
+  /* Lika bred som valet, så allt får plats på en rad */
+  field-sizing: content;
+  min-width: 0;
+  max-width: 120px;
+  padding: 3px 4px;
+  text-overflow: ellipsis;
   border-color: transparent;
   background: none;
   color: var(--fg-muted);
@@ -222,12 +226,10 @@
 }
 
 .agent__stop {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  flex: none;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
-  font-weight: 600;
 }
 
 /* Något agenten väntar på lov för */
@@ -271,6 +273,8 @@
 }
 
 .agent__send {
+  flex: none;
+  margin-left: 4px;
   display: inline-flex;
   align-items: center;
   gap: 6px;

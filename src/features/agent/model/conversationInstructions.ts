@@ -1,3 +1,4 @@
+import { brandText } from '@/common/model/brand';
 import { type ConversationMode, type ReviewBranches } from './conversation';
 
 /** Verbet konversationens namn börjar med, på användarens språk. */
@@ -13,33 +14,64 @@ export function conversationInstructions(
   mode: ConversationMode,
   branches?: ReviewBranches,
 ): string {
-  return `${modeInstructions(mode, branches)} ${mode === 'general' ? '' : `${DELIVER} `}${naming(mode)}`;
+  return brandText(
+    `${modeInstructions(mode, branches)} ${mode === 'general' ? '' : `${DELIVER} `}${naming(mode)}`,
+  );
 }
 
 /**
- * Lägena som levererar till Reverik. Svaret hör hemma i appen, inte i chatten:
+ * Lägena som levererar till appen. Svaret hör hemma i appen, inte i chatten:
  * utan det här skriver agenten gärna en lång rapport i stället för att spara.
  */
 const DELIVER =
-  'Deliver the answer in Reverik, not in the chat: the user reads flows, documents and reviews in the app, and the chat is only for a one or two sentence confirmation of what you saved, or a short question when you need an answer before you can continue. Never write reports, call-chain summaries, code listings or file lists in the chat; put that detail into the saved flow (sources, descriptions, payloads) and the document instead. If the Reverik tools are not available, say so in one sentence instead of answering in the chat.';
+  'Deliver the answer in {appName} (its tools are on the MCP server called reverik), not in the chat: the user reads flows, documents and reviews in the app, and the chat is only for a one or two sentence confirmation of what you saved, or a short question when you need an answer before you can continue. Never write reports, call-chain summaries, code listings or file lists in the chat; put that detail into the saved flow (sources, descriptions, payloads) and the document instead. If the {appName} tools are not available, say so in one sentence instead of answering in the chat.';
 
-/** Verktygen som sparar något i Reverik, med eller utan MCP-prefix */
+/** Verktygen som sparar något i appen, med eller utan MCP-prefix */
 export function isDeliveryTool(name: string): boolean {
   return /(^|[_.])save_(flow|document|review)$/.test(name);
 }
 
 /**
  * Påminnelsen appen skickar när agenten avslutat en tur utan att spara något,
- * i lägen där svaret ska levereras i Reverik. null när chatten räcker.
+ * i lägen där svaret ska levereras i appen. null när chatten räcker.
  */
 export function deliveryReminder(mode: ConversationMode): string | null {
+  const text = reminderText(mode);
+  return text === null ? null : brandText(text);
+}
+
+/**
+ * En rad som följer med varje fråga i lägen som levererar, men inte visas i
+ * panelen. Instruktionerna i systemprompten räcker inte alltid; agenten svarar
+ * gärna i chatten när frågan låter som en fråga.
+ */
+export function deliveryHint(mode: ConversationMode): string | null {
   switch (mode) {
     case 'analyse':
-      return 'Nothing was saved in Reverik this turn. Save what you found: the flow with save_flow, including its trigger, and a short document with save_document that links it. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+      return brandText(
+        '[{appName}: answer by saving the flow with save_flow, including its trigger, and a short document with save_document. Keep the chat reply to one or two sentences.]',
+      );
     case 'review':
-      return 'Nothing was saved in Reverik this turn. Save the affected flows with save_flow, each with a compare, and then the review with save_review. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+      return brandText(
+        '[{appName}: answer by saving the affected flows with save_flow and the review with save_review. Keep the chat reply to one or two sentences.]',
+      );
     case 'plan':
-      return 'Nothing was saved in Reverik this turn. Save the planning document with save_document, with short content for people and the detailed plan for an AI agent in plan, and any proposed flows with save_flow. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+      return brandText(
+        '[{appName}: keep the planning document up to date with save_document, and proposed flows with save_flow. Keep the chat reply short.]',
+      );
+    case 'general':
+      return null;
+  }
+}
+
+function reminderText(mode: ConversationMode): string | null {
+  switch (mode) {
+    case 'analyse':
+      return 'Nothing was saved in {appName} this turn. Save what you found: the flow with save_flow, including its trigger, and a short document with save_document that links it. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+    case 'review':
+      return 'Nothing was saved in {appName} this turn. Save the affected flows with save_flow, each with a compare, and then the review with save_review. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+    case 'plan':
+      return 'Nothing was saved in {appName} this turn. Save the planning document with save_document, with short content for people and the detailed plan for an AI agent in plan, and any proposed flows with save_flow. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
     case 'general':
       return null;
   }
@@ -58,6 +90,6 @@ function modeInstructions(mode: ConversationMode, branches?: ReviewBranches): st
     case 'plan':
       return `Conversation mode: Plan. Collaborate on a plan for a new feature or flow. Ask reasonable critical questions about requirements, edge cases, constraints, and tradeoffs; keep them focused and do not block useful progress. Trace and save current or older flows when they help explain the design. Save proposed flows with their trigger and with highlight added on new nodes and calls, and highlight changed on existing ones to update; update these flows as the plan evolves. A new proposed node or call may omit source when code does not exist; never invent references. Mark proposed behavior clearly in titles and playback descriptions. Maintain a planning document with save_document and update it as decisions change during the conversation: short human content, and the detailed step-by-step implementation plan for an AI agent in plan. Clearly separate observed implementation from proposed behavior. Implement changes only when the user asks.`;
     case 'general':
-      return 'Conversation mode: General. Respond to the user and use the repository and Reverik tools when useful.';
+      return 'Conversation mode: General. Respond to the user and use the repository and {appName} tools when useful.';
   }
 }

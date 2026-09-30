@@ -274,7 +274,7 @@
   "agent.permission.auto": "Auto",
   "agent.permission.manual": "Manual",
   "agent.modelLabel": "Model",
-  "agent.modelDefault": "Default model",
+  "agent.modelDefault": "Model",
   "agent.approvalAsk": "The agent wants to use {tool}",
   "agent.allow": "Allow",
   "agent.deny": "Deny",
@@ -284,5 +284,5 @@
   "repo.reload": "Fetch and reload",
   "agent.toolCalls": "{count} tool calls",
   "agent.effortLabel": "Effort",
-  "agent.effortDefault": "Default effort"
+  "agent.effortDefault": "Effort"
 }

@@ -52,15 +52,20 @@ export class AgentSession {
     this.threadId = threadId;
   }
 
-  ask(prompt: string, settings: AgentSettings = DEFAULT_SETTINGS): void {
+  /**
+   * Skickar frågan. `hint` följer med till agenten men visas inte i panelen,
+   * t.ex. en påminnelse om att leverera i appen.
+   */
+  ask(prompt: string, settings: AgentSettings = DEFAULT_SETTINGS, hint?: string): void {
     this.emit({ at: now(), kind: 'user', text: prompt });
+    const text = hint ? `${prompt}\n\n${hint}` : prompt;
     if (this.runner.persistent && this.child && this.activeSettings === key(settings)) {
       this.setState('busy');
-      this.child.stdin?.write(this.runner.message(prompt));
+      this.child.stdin?.write(this.runner.message(text));
       return;
     }
     if (this.child) this.stop();
-    this.start(prompt, settings);
+    this.start(text, settings);
   }
 
   stop(): void {
@@ -132,13 +137,23 @@ export class AgentSession {
     if (!this.runner.persistent) child.stdin?.end();
   }
 
+  /**
+   * Mer från agenten efter att turen verkat klar, t.ex. från en underagent den
+   * startat i bakgrunden: den arbetar fortfarande.
+   */
+  private resume(): void {
+    if (this.state === 'idle' && this.child) this.setState('busy');
+  }
+
   private onLine(line: string): void {
     for (const output of this.runner.parse(line)) {
       switch (output.type) {
         case 'text':
+          this.resume();
           this.emit({ at: now(), kind: 'assistant', text: output.text });
           break;
         case 'tool':
+          this.resume();
           this.emit({ at: now(), kind: 'tool', name: output.name });
           break;
         case 'thread':
