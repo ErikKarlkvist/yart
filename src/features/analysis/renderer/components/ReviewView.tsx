@@ -17,7 +17,7 @@ interface Props {
   analysis: SavedReviewAnalysis;
   flows: readonly SavedFlowAnalysis[];
   onOpenFlow: (id: string) => void;
-  /** Öppnar flödet och fokuserar fyndet i grafen och Review-fliken */
+  /** Öppnar flödet och fokuserar fyndet i grafen och panelen Review */
   onOpenFinding: (flowAnalysisId: string, findingId: string) => void;
   /** Skickar en text till agenten appen kör. Saknas med extern AI. */
   onSendToAgent?: ((text: string) => void) | undefined;

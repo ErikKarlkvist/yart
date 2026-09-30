@@ -11,12 +11,12 @@ import {
 } from './dock';
 
 const LAYOUT: DockLayoutState = {
-  left: { panels: ['explorer'], closed: [], active: 'explorer', open: true, size: 300 },
+  left: { panels: ['analyses'], closed: [], active: 'analyses', open: true, size: 300 },
   right: { panels: ['agent', 'connect'], closed: [], active: 'agent', open: false, size: 460 },
   bottom: {
-    panels: ['code', 'summary', 'log'],
+    panels: ['code', 'flowReview', 'log'],
     closed: [],
-    active: 'summary',
+    active: 'flowReview',
     open: true,
     size: 220,
   },
@@ -24,11 +24,11 @@ const LAYOUT: DockLayoutState = {
 
 describe('movePanel', () => {
   it('flyttar till en annan docka, öppnar den och väljer panelen', () => {
-    const next = movePanel(LAYOUT, 'summary', 'right', 1);
+    const next = movePanel(LAYOUT, 'flowReview', 'right', 1);
     expect(next.right).toEqual({
-      panels: ['agent', 'summary', 'connect'],
+      panels: ['agent', 'flowReview', 'connect'],
       closed: [],
-      active: 'summary',
+      active: 'flowReview',
       open: true,
       size: 460,
     });
@@ -37,22 +37,26 @@ describe('movePanel', () => {
   });
 
   it('lägger panelen sist utan index', () => {
-    expect(movePanel(LAYOUT, 'code', 'left').left.panels).toEqual(['explorer', 'code']);
+    expect(movePanel(LAYOUT, 'code', 'left').left.panels).toEqual(['analyses', 'code']);
   });
 
   it('fäller ihop dockan som blir tom', () => {
-    const next = movePanel(LAYOUT, 'explorer', 'bottom', 0);
+    const next = movePanel(LAYOUT, 'analyses', 'bottom', 0);
     expect(next.left).toEqual({ panels: [], closed: [], active: null, open: false, size: 300 });
-    expect(next.bottom.panels).toEqual(['explorer', 'code', 'summary', 'log']);
+    expect(next.bottom.panels).toEqual(['analyses', 'code', 'flowReview', 'log']);
   });
 
   it('flyttar inom samma docka med index räknat före flytten', () => {
     expect(movePanel(LAYOUT, 'code', 'bottom', 3).bottom.panels).toEqual([
-      'summary',
+      'flowReview',
       'log',
       'code',
     ]);
-    expect(movePanel(LAYOUT, 'log', 'bottom', 0).bottom.panels).toEqual(['log', 'code', 'summary']);
+    expect(movePanel(LAYOUT, 'log', 'bottom', 0).bottom.panels).toEqual([
+      'log',
+      'code',
+      'flowReview',
+    ]);
   });
 
   it('lämnar layouten orörd för okända paneler', () => {
@@ -71,28 +75,28 @@ describe('revealPanel', () => {
 
 describe('closePanel', () => {
   it('tar bort fliken men låter panelen höra till dockan', () => {
-    const next = closePanel(LAYOUT, 'summary');
+    const next = closePanel(LAYOUT, 'flowReview');
     expect(next.bottom.panels).toEqual(['code', 'log']);
-    expect(next.bottom.closed).toEqual(['summary']);
+    expect(next.bottom.closed).toEqual(['flowReview']);
     expect(next.bottom.active).toBe('code');
-    expect(sideOf(next, 'summary')).toBe('bottom');
-    expect(isClosed(next, 'summary')).toBe(true);
+    expect(sideOf(next, 'flowReview')).toBe('bottom');
+    expect(isClosed(next, 'flowReview')).toBe(true);
   });
 
   it('fäller ihop dockan när sista fliken stängs', () => {
-    expect(closePanel(LAYOUT, 'explorer').left.open).toBe(false);
+    expect(closePanel(LAYOUT, 'analyses').left.open).toBe(false);
   });
 
   it('öppnas igen sist i sin docka när den visas', () => {
     const next = revealPanel(closePanel(LAYOUT, 'code'), 'code');
-    expect(next.bottom.panels).toEqual(['summary', 'log', 'code']);
+    expect(next.bottom.panels).toEqual(['flowReview', 'log', 'code']);
     expect(next.bottom.closed).toEqual([]);
     expect(next.bottom.active).toBe('code');
   });
 
   it('öppnas i en annan docka när den flyttas', () => {
     const next = movePanel(closePanel(LAYOUT, 'log'), 'log', 'left', 0);
-    expect(next.left.panels).toEqual(['log', 'explorer']);
+    expect(next.left.panels).toEqual(['log', 'analyses']);
     expect(next.bottom.closed).toEqual([]);
     expect(isClosed(next, 'log')).toBe(false);
   });
@@ -125,7 +129,7 @@ describe('normalizeLayout', () => {
       LAYOUT,
     );
     expect(next.left).toEqual({
-      panels: ['agent', 'explorer'],
+      panels: ['agent', 'analyses'],
       closed: [],
       active: 'agent',
       open: true,
@@ -138,6 +142,6 @@ describe('normalizeLayout', () => {
       open: false,
       size: 460,
     });
-    expect(next.bottom.panels).toEqual(['code', 'summary', 'log']);
+    expect(next.bottom.panels).toEqual(['code', 'flowReview', 'log']);
   });
 });

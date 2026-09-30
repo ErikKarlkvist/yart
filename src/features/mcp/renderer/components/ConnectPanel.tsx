@@ -1,5 +1,5 @@
 import { type JSX, useState } from 'react';
-import { LOCALE, t } from '@/common/model/i18n';
+import { formatTime, t } from '@/common/model/i18n';
 import { type AgentKind } from '@/common/model/agent';
 import { type McpState } from '../useMcpStatus';
 import { AgentSetup } from './AgentSetup';
@@ -35,9 +35,7 @@ export function ConnectPanel({ mcp }: { mcp: McpState }): JSX.Element {
                 key={`${entry.at}:${entry.tool}`}
                 className={`connect__entry${entry.ok ? '' : ' connect__entry--failed'}`}
               >
-                <span className="connect__time">
-                  {new Date(entry.at).toLocaleTimeString(LOCALE, { timeStyle: 'medium' })}
-                </span>
+                <span className="connect__time">{formatTime(entry.at)}</span>
                 <div className="connect__entry-body">
                   <span className="connect__entry-head">
                     {entry.client} · {entry.tool}

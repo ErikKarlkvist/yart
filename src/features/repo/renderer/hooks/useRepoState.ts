@@ -10,6 +10,7 @@ import {
   pickLocalRepoChannel,
 } from '../../ipc/channels';
 import { type RepoInfo } from '../../model/repo';
+import { errorMessage } from '@/common/model/json';
 
 export interface RepoState {
   repo: RepoInfo | null;
@@ -46,7 +47,7 @@ export function useRepoState(): RepoState {
         }
       } catch (e) {
         if (quiet) writeStored(lastRepoKey, null);
-        else setError(e instanceof Error ? e.message : String(e));
+        else setError(errorMessage(e));
       } finally {
         setBusy(false);
       }

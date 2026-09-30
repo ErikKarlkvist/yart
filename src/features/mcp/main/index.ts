@@ -16,6 +16,7 @@ import {
 } from '../model/mcp';
 import { type McpDeps, type McpServerHandle, startMcpServer } from './server';
 import { installSkill, skillPath, skillState } from './skill';
+import { errorMessage } from '@/common/model/json';
 
 export type McpRegistration = Omit<McpDeps, 'onActivity'>;
 
@@ -61,7 +62,7 @@ export function registerMcpHandlers(deps: McpRegistration): McpHandle {
       handle = started;
     })
     .catch((e: unknown) => {
-      error = e instanceof Error ? e.message : String(e);
+      error = errorMessage(e);
       console.error(e);
     });
 

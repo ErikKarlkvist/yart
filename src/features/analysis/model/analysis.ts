@@ -120,7 +120,7 @@ export function analysisTitle(analysis: SavedAnalysis): string {
   }
 }
 
-/** Fynden i repots reviewer som pekar på ett flöde, för grafen och Review-fliken. */
+/** Fynden i repots reviewer som pekar på ett flöde, för grafen och panelen Review. */
 export function findingsForFlow(analyses: readonly SavedAnalysis[], name: string): ReviewFinding[] {
   return analyses.flatMap((analysis) =>
     analysis.kind === 'review' ? analysis.review.findings.filter((f) => f.flow === name) : [],

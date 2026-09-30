@@ -1,8 +1,10 @@
+import { isRecord } from '@/common/model/json';
+
 /**
  * Dockorna runt arbetsytan: vänster, höger och nederkant. Varje panel i appen
  * hör till exakt en docka, som en flik eller stängd. En stängd panel minns sin
- * docka och öppnas där igen. Dockan visar en flik i taget och kan fällas ihop. Allt här är rena funktioner över layouten, så renderern bara
- * ritar och sparar.
+ * docka och öppnas där igen. Dockan visar en flik i taget och kan fällas ihop.
+ * Allt här är rena funktioner över layouten, så renderern bara ritar och sparar.
  */
 
 export const DOCK_SIDES = ['left', 'right', 'bottom'] as const;
@@ -193,8 +195,4 @@ export function normalizeLayout(value: unknown, defaults: DockLayoutState): Dock
 function neighbour(panels: readonly string[], id: string): string | null {
   const index = panels.indexOf(id);
   return panels[index - 1] ?? panels[index + 1] ?? null;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

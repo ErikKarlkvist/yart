@@ -217,7 +217,7 @@ button.crumb:hover:not(:disabled) {
   z-index: 950;
 }
 
-/* Fliken Review i nedre panelen */
+/* Panelen Review */
 .review {
   display: flex;
   flex-direction: column;
@@ -328,13 +328,6 @@ button.crumb:hover:not(:disabled) {
 .finding-details__text {
   margin: 0;
   line-height: 1.5;
-}
-
-.finding-details__source {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  color: var(--fg-muted);
 }
 
 .graph {

@@ -20,9 +20,9 @@ export interface GraphState {
   zoomInto: (systemId: string) => void;
   /** Tillbaka till systemvyn, från förstoringsglaset på en systemram */
   zoomOut: () => void;
-  /** Fyndet som är valt i review-fliken, elementet det gäller ringas in */
+  /** Fyndet som är valt i panelen Review, elementet det gäller ringas in */
   focusedFindingId: string | null;
-  /** Klick på en fyndflagga öppnar fyndet i review-fliken */
+  /** Klick på en fyndflagga öppnar fyndet i panelen Review */
   focusFinding: (findingId: string) => void;
 }
 
@@ -47,7 +47,7 @@ export function useNodeState(
   status: StepStatus;
   hovered: boolean;
   asking: boolean;
-  /** Ett av nodens fynd är valt i review-fliken */
+  /** Ett av nodens fynd är valt i panelen Review */
   focused: boolean;
   hide: () => void;
   ask: () => void;

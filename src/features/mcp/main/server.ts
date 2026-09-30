@@ -19,6 +19,7 @@ import { analysisNameSchema } from '@/common/model/name';
 import { flowCompareSchema, reviewSchema } from '@/common/model/review';
 import { MCP_HOST, MCP_PATH, type McpActivity, mcpUrl } from '../model/mcp';
 import { REPO_PARAM_DESCRIPTION, TOOL_DESCRIPTIONS, type ToolName } from '../model/tools';
+import { errorMessage } from '@/common/model/json';
 
 interface McpRepo {
   path: string;
@@ -259,7 +260,7 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
       record(result.isError !== true, summary, repoPath);
       return result;
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = errorMessage(error);
       record(false, message, repoPath);
       return text(message, true);
     }

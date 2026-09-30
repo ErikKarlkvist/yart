@@ -6,19 +6,19 @@ import { DeliveryLog, type SavedFlowAnalysis } from '@/features/analysis';
 import { ReviewPanel } from '@/features/flow-graph';
 import { type DockLayoutState, type DockPanel } from '@/features/layout';
 import { ConnectPanel, useMcpStatus } from '@/features/mcp';
-import { SourceView, useRepo } from '@/features/repo';
-import { Explorer } from './Explorer';
+import { SourceView } from '@/features/repo';
+import { AnalysesPanel } from './AnalysesPanel';
 
 /**
  * Alla paneler som kan dockas. En ny panel läggs till här: ett id, en plats i
  * standardlayouten och en definition i usePanels. Sparade layouter får nya
  * paneler i sin standarddocka.
  */
-const PANEL_IDS = ['explorer', 'code', 'flowReview', 'log', 'agent', 'connect'] as const;
+const PANEL_IDS = ['analyses', 'code', 'flowReview', 'log', 'agent', 'connect'] as const;
 export type PanelId = (typeof PANEL_IDS)[number];
 
 export const DEFAULT_LAYOUT: DockLayoutState = {
-  left: { panels: ['explorer'], closed: [], active: 'explorer', open: true, size: 300 },
+  left: { panels: ['analyses'], closed: [], active: 'analyses', open: true, size: 300 },
   bottom: {
     panels: ['code', 'flowReview', 'log'],
     closed: [],
@@ -58,13 +58,12 @@ export function usePanels({
   focusedFindingId,
   onFocusFinding,
 }: PanelContext): DockPanel[] {
-  const { repo } = useRepo();
   const mcp = useMcpStatus();
 
   const panels: Record<PanelId, Omit<DockPanel, 'id'>> = {
-    explorer: {
+    analyses: {
       title: t('panel.analyses'),
-      content: <Explorer />,
+      content: <AnalysesPanel />,
     },
     code: {
       title: t('panel.code'),
@@ -92,7 +91,7 @@ export function usePanels({
     agent: {
       title: t('panel.agent'),
       fill: true,
-      content: <AgentPanel hasRepo={repo !== null} />,
+      content: <AgentPanel />,
     },
     connect: {
       title: t('panel.connect'),

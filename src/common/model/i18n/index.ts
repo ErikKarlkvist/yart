@@ -10,6 +10,11 @@ export type MessageKey = keyof typeof en;
 
 export const LOCALE = 'en-GB';
 
+/** Klockslag med sekunder, för loggar. */
+export function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(LOCALE, { timeStyle: 'medium' });
+}
+
 type Params = Record<string, string | number>;
 
 export function t(key: MessageKey, params?: Params): string {

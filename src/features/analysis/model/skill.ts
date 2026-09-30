@@ -236,7 +236,7 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 `;
 
 /** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 8;
+export const SKILL_VERSION = 9;
 
 export function buildSkill(): string {
   return `---
@@ -300,13 +300,16 @@ do not need separate documents unless the user asks for them.
 
 ## Scope
 
-{appName} tasks are read-only. Unless the user explicitly asks for something else
-in the same message:
+Analysing, reviewing and planning only read the code and deliver through the tools:
 
-- Do not commit, stage, stash, branch, check out, fetch or push. Do not change git state at all.
-- Do not modify, create or delete any file in the repository: no code changes,
-  no plan or notes documents, no README updates. Deliver only through the tools.
-- Do not run builds, tests, linters or dev servers. Reading code is enough.
+- Do not commit, stage, stash, branch, check out, fetch or push. Do not change git state.
+- Do not modify, create or delete files in the repository for an analysis, review or
+  plan: no code changes, no plan or notes documents, no README updates.
+- Do not run builds, tests, linters or dev servers to answer a question. Reading code is enough.
+
+Change code only when the user asks you to implement something, for example by sending
+an implementation plan or a fix plan from {appName}. Then work in the repository as asked,
+still without committing or changing git state unless the user asks for that too.
 
 ${HOW_TO_BUILD}
 

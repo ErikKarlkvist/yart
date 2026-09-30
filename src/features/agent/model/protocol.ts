@@ -9,6 +9,7 @@ import {
   PERMISSION_PROMPT_TOOL,
   type RunnableAgent,
 } from '@/common/model/agent';
+import { isRecord } from '@/common/model/json';
 
 export type AgentState =
   /** Ingen process, eller processen väntar på nästa fråga */
@@ -37,7 +38,11 @@ export interface AgentCheck {
   error?: string;
 }
 
-/** Verktyg Claude Code får använda utan att fråga: läsa kod, läsa git och leverera till Reverik. */
+/**
+ * Verktyg Claude Code får använda utan att fråga i båda lägena: läsa kod, läsa git,
+ * leverera till appen och namnge konversationen. Filändringar godkänns av Auto,
+ * allt annat frågar via permission_prompt.
+ */
 const ALLOWED_TOOLS: readonly string[] = [
   'Read',
   'Glob',
@@ -202,7 +207,7 @@ interface ContentBlock {
 function parseJson(line: string): Record<string, unknown> | null {
   try {
     const json: unknown = JSON.parse(line);
-    return typeof json === 'object' && json !== null ? (json as Record<string, unknown>) : null;
+    return isRecord(json) ? json : null;
   } catch {
     return null;
   }

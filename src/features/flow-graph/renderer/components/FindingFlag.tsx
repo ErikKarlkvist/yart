@@ -12,7 +12,7 @@ interface Props {
 
 /**
  * Flaggan med antal fynd på en nod eller en linje. Klick öppnar det
- * allvarligaste fyndet i review-fliken, klick igen går vidare till nästa.
+ * allvarligaste fyndet i panelen Review, klick igen går vidare till nästa.
  */
 export function FindingFlag({ findings, className = '', style }: Props): JSX.Element | null {
   const { focusedFindingId, focusFinding } = useFindingState();

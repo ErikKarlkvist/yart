@@ -5,6 +5,7 @@ import { invokeChannel } from '@/common/renderer/ipc';
 import { readSourceChannel, type SourceExcerpt } from '../../ipc/channels';
 import { useRepo } from '../RepoContext';
 import './source.css';
+import { errorMessage } from '@/common/model/json';
 
 interface Props {
   source: SourceRef;
@@ -34,7 +35,7 @@ export function SourceView({ source, commit }: Props): JSX.Element {
         if (!cancelled) setResult({ key, excerpt });
       })
       .catch((e: unknown) => {
-        if (!cancelled) setResult({ key, error: e instanceof Error ? e.message : String(e) });
+        if (!cancelled) setResult({ key, error: errorMessage(e) });
       });
     return () => {
       cancelled = true;

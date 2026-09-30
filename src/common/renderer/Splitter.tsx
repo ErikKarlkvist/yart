@@ -7,7 +7,7 @@ interface Props {
   size: number;
   min: number;
   max: number;
-  /** Om det som ändras ligger efter handtaget (t.ex. nedre panel som växer när man drar uppåt) */
+  /** Om det som ändras ligger efter handtaget (t.ex. den nedre dockan som växer när man drar uppåt) */
   inverted?: boolean;
   onResize: (size: number) => void;
   label: string;
@@ -15,7 +15,7 @@ interface Props {
   edge?: 'start' | 'end';
 }
 
-/** Dragbart handtag mellan två paneler. Storleken ägs av föräldern. */
+/** Dragbart handtag som ändrar storlek på det det sitter på, t.ex. en docka. Storleken ägs av föräldern. */
 export function Splitter({
   orientation,
   size,

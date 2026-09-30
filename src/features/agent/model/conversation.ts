@@ -1,16 +1,16 @@
 import { z } from 'zod';
 import { AGENT_KINDS } from '@/common/model/agent';
 
-export const agentEntrySchema = z.discriminatedUnion('kind', [
+const agentEntrySchema = z.discriminatedUnion('kind', [
   z.object({ at: z.string(), kind: z.literal('user'), text: z.string() }),
   z.object({ at: z.string(), kind: z.literal('assistant'), text: z.string() }),
   z.object({ at: z.string(), kind: z.literal('tool'), name: z.string() }),
   z.object({ at: z.string(), kind: z.literal('error'), text: z.string() }),
 ]);
 
-export const CONVERSATION_MODES = ['analyse', 'review', 'plan', 'general'] as const;
+const CONVERSATION_MODES = ['analyse', 'review', 'plan', 'general'] as const;
 export type ConversationMode = (typeof CONVERSATION_MODES)[number];
-export const reviewBranchesSchema = z.object({ head: z.string().min(1), base: z.string().min(1) });
+const reviewBranchesSchema = z.object({ head: z.string().min(1), base: z.string().min(1) });
 export type ReviewBranches = z.infer<typeof reviewBranchesSchema>;
 
 export const conversationSummarySchema = z.object({

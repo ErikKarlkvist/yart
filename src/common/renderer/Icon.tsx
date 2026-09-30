@@ -5,7 +5,6 @@ import {
   faChevronDown,
   faChevronLeft,
   faChevronRight,
-  faChevronUp,
   faCircleExclamation,
   faCircleHalfStroke,
   faCircleInfo,
@@ -58,7 +57,6 @@ function dockIcon(name: string, hole: string): IconDefinition {
 /** Ikonerna appen använder. Lägg till här i stället för att importera Font Awesome direkt. */
 const ICONS = {
   chevronDown: faChevronDown,
-  chevronUp: faChevronUp,
   play: faPlay,
   plus: faPlus,
   pause: faPause,

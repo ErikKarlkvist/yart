@@ -23,7 +23,7 @@ function isLoginError(text: string): boolean {
  * egna frågor, agentens svar och verktyg, och fel med prompten att kopiera
  * när agenten inte gick att nå.
  */
-export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
+export function AgentPanel(): JSX.Element {
   const selectId = useId();
   const {
     conversations,
@@ -41,6 +41,7 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
     answer,
   } = useAgent();
   const { repo } = useRepo();
+  const hasRepo = repo !== null;
   const { agent, permission, setPermission, models, setModel, efforts, setEffort } = useSetup();
   const currentAgent = conversations.find((item) => item.id === activeId)?.agent ?? agent;
   const [draft, setDraft] = useState('');

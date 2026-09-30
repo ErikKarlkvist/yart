@@ -47,7 +47,7 @@ type GraphEdgeData = {
   onGoToStep: (index: number) => void;
   /** Strongest change or issue on this drawn line. */
   highlight: FlowHighlight | undefined;
-  /** Ett av linjens fynd är valt i review-fliken */
+  /** Ett av linjens fynd är valt i panelen Review */
   focused: boolean;
 };
 

@@ -1,22 +1,44 @@
 # Reverik
 
-PoC: Electron-app som visar dataflöden i en kodbas som animerade sekvensdiagram.
-Appen har ingen egen AI. En agent (Claude Code eller annan) körs fristående och
-levererar flöden, dokument och reviewer via MCP-servern som appen startar på
-`http://127.0.0.1:7390/mcp` (`src/features/mcp/`). Verktygens JSON-scheman kommer
-från zod-schemana i `src/common/model/`, så beskrivningar där är dokumentation för
-modellen. Skillen för Claude Code, som också serveras som MCP-resurs, byggs i
-`src/features/analysis/model/skill.ts` och installeras från appens Anslut-panel.
-Frågor från grafen, reviewuppdrag och panelen Agent går till en headless agentsession
-som appen kör per repo (`src/features/agent/`). Claude Code körs som en långlivad
-`claude -p` med strömmande JSON på stdin och stdout; Codex som `codex exec --json` per
-fråga som återupptar tråden. Båda får Reveriks MCP-server som enda server och skillen
-som instruktioner, och har skrivrätt i repot. Läget under textrutan styr godkännanden:
-Auto ändrar filer utan att fråga, Manual frågar först. Claude Code frågar via MCP-verktyget
-`permission_prompt`, som bara finns för appens egna sessioner, och frågan visas i panelen. Guiden vid första
-starten väljer mellan Claude Code, Codex och extern AI, och valet styr vad appen kör. Svaren visas i panelen och
-det agenten sparar landar i listan. Går sessionen inte att starta visas felet med
-prompten att kopiera. Externa agenter kan fortfarande leverera via MCP.
+PoC: Electron-app som visar dataflöden i en kodbas som animerade sekvensdiagram, med
+dokument och reviewer som pekar in i dem. Det synliga namnet är Kire (`APP_NAME` i
+`src/common/model/brand.ts`); internt heter allt fortfarande `reverik`: mappen, sparad
+data, MCP-servern och skillen. Texter som når modellen tar namnet via `brandText`.
+
+## MCP och agenter
+
+Appen har ingen egen AI. Agenter levererar flöden, dokument och reviewer via MCP-servern
+som appen startar på `http://127.0.0.1:7390/mcp` (`src/features/mcp/`). Verktygens
+JSON-scheman kommer från zod-schemana i `src/common/model/`, så beskrivningar där är
+dokumentation för modellen. Skillen byggs i `src/features/analysis/model/skill.ts`,
+serveras som MCP-resurs och installeras från panelen Connect.
+
+Panelen Agent kör en headless agentsession per konversation (`src/features/agent/`).
+Claude Code körs som en långlivad `claude -p` med strömmande JSON på stdin och stdout;
+Codex som `codex exec --json` per fråga som återupptar tråden. Båda får appens MCP-server
+som enda server, skillen och lägets instruktioner
+(`src/features/agent/model/conversationInstructions.ts`), och har skrivrätt i repot.
+
+- Auto/Manual under textrutan styr godkännanden. Claude Code frågar via MCP-verktyget
+  `permission_prompt` och frågan visas i panelen med Allow och Deny.
+- Agenten namnger konversationen via `name_conversation`. Båda verktygen finns bara för
+  appens egna sessioner, som ansluter med `?conversation=<id>` i MCP-adressen. Det som
+  sparas i en konversation får dess id, och analyslistan grupperar på det.
+- Modellerna och effort-nivåerna hämtas från den installerade Claude Code via
+  `initialize` i stream-json (`src/features/agent/main/models.ts`).
+- I Analyse, Review och Plan ska svaret sparas i appen, inte skrivas i chatten. Varje
+  fråga får en dold påminnelse, och sparas inget under en tur skickar appen en påminnelse.
+
+Guiden vid första starten väljer mellan Claude Code, Codex och extern AI. Externa agenter
+levererar via MCP som vanligt.
+
+## Innehåll: kort för människor, detaljer för AI
+
+Dokument och reviewer skrivs som kort markdown med rubriker och punktlistor
+(`src/common/model/markdown.ts`). Det en agent behöver ligger i egna fält som inte visas:
+`plan` på dokument och `fix` på fynd. Ur dem och flödena byggs implementationsplanen och
+fix-planen som kopieras eller skickas till agenten (`src/features/analysis/model/plan.ts`).
+Flöden har en `trigger`, det som startar dem, som ritas på startnoden.
 
 ## Kommandon
 

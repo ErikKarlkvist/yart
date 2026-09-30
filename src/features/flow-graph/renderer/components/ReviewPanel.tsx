@@ -24,7 +24,7 @@ interface Props {
   onFocus: (findingId: string | null) => void;
 }
 
-/** Fliken Review i nedre panelen: vad som ändrats och fynden, allvarligast först. */
+/** Panelen Review: vad som ändrats och fynden, allvarligast först. */
 export function ReviewPanel({
   flow,
   compare,
@@ -80,7 +80,7 @@ export function ReviewPanel({
               </button>
               {open && (
                 <div className="review__body">
-                  <FindingDetails finding={finding} showSource commit={commit} />
+                  <FindingDetails finding={finding} commit={commit} />
                 </div>
               )}
             </li>

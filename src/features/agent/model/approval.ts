@@ -1,10 +1,11 @@
+import { asRecord } from '@/common/model/json';
+
 /**
  * En rad som säger vad agenten vill göra, för godkännandet i panelen:
  * kommandot för Bash, filen för en ändring, annars verktygets indata kort.
  */
 export function describeApproval(input: unknown): string {
-  const record =
-    typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
+  const record = asRecord(input);
   const text = (key: string): string | null => {
     const value = record[key];
     return typeof value === 'string' ? value : null;

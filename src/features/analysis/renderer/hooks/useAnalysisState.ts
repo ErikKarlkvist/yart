@@ -11,6 +11,7 @@ import {
 } from '../../ipc/channels';
 import { t } from '@/common/model/i18n';
 import { analysisTitle, type SavedAnalysis } from '../../model/analysis';
+import { errorMessage } from '@/common/model/json';
 
 /** En rad i leveransloggen: en sparad analys eller ett avvisat försök. */
 type DeliveryEntry = { at: string; source: string } & (
@@ -78,7 +79,7 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
     if (!repoPath) return;
     let cancelled = false;
     const fail = (e: unknown): void => {
-      if (!cancelled) setLoadError({ repoPath, value: e instanceof Error ? e.message : String(e) });
+      if (!cancelled) setLoadError({ repoPath, value: errorMessage(e) });
     };
     invokeChannel(listAnalysesChannel, { repoPath })
       .then((list) => {

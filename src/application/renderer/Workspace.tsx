@@ -20,7 +20,7 @@ interface Props {
   onAsk: (prompt: string) => void;
   onActiveEdgeChange: (edge: FlowEdge | null) => void;
   onSelectSource: (source: SourceRef) => void;
-  /** Valt fynd, ägs av skalet så Full review kan sätta det */
+  /** Valt fynd, ägs av skalet så reviewdokumentet kan sätta det */
   focusedFindingId: string | null;
   /** Räknas upp vid varje fokusering, så samma fynd kan fokuseras igen */
   focusSeq: number;
