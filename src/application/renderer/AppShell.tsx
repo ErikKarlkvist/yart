@@ -101,8 +101,8 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
         windowBar &&
         createPortal(
           <div className="shell__window-items">
-            <RepoMenu />
             <ViewsMenu panels={panels} />
+            <RepoMenu />
             <ThemeSelect />
             <DockToggles />
           </div>,
