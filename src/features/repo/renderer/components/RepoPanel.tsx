@@ -4,7 +4,7 @@ import { useRepo } from '../RepoContext';
 import { RepoCard } from './RepoCard';
 import './repo.css';
 
-/** Kortet med det valda repot. Val av repo sker i sidfotens meny. */
+/** Kortet med det valda repot. Val av repo sker i fönsterradens meny. */
 export function RepoPanel(): JSX.Element {
   const { repo, busy, error, clearError, fetch } = useRepo();
 

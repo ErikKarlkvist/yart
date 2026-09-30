@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, nativeTheme, shell } from 'electron';
 import { is } from '@electron-toolkit/utils';
 import { APP_NAME } from '@/common/model/brand';
 
@@ -11,7 +11,16 @@ export function createMainWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     title: APP_NAME,
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: process.platform === 'win32' ? 'hidden' : 'hiddenInset',
+    ...(process.platform === 'win32'
+      ? {
+          titleBarOverlay: {
+            color: nativeTheme.shouldUseDarkColors ? '#161a22' : '#ffffff',
+            symbolColor: nativeTheme.shouldUseDarkColors ? '#e6e8ee' : '#1c2230',
+            height: 38,
+          },
+        }
+      : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,

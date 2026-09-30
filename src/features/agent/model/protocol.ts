@@ -4,7 +4,7 @@
  * tolkningen av raderna processerna skriver.
  */
 
-import { type RunnableAgent } from '@/common/model/agent';
+import { type AccessMode, type ApprovalPolicy, type RunnableAgent } from '@/common/model/agent';
 
 export type AgentState =
   /** Ingen process, eller processen väntar på nästa fråga */
@@ -67,6 +67,8 @@ export interface LaunchInput {
   prompt: string;
   /** Tråden att fortsätta, null vid första frågan */
   threadId: string | null;
+  approvalPolicy: ApprovalPolicy;
+  accessMode: AccessMode;
 }
 
 /** Det som en rad från processen betyder för panelen. */
@@ -96,7 +98,7 @@ export interface AgentRunner {
 export const claudeRunner: AgentRunner = {
   kind: 'claude',
   persistent: true,
-  launch: ({ mcpUrl, skill, prompt }) => ({
+  launch: ({ mcpUrl, skill, prompt, threadId, accessMode }) => ({
     command: 'claude',
     args: [
       '-p',
@@ -110,8 +112,12 @@ export const claudeRunner: AgentRunner = {
       JSON.stringify({ mcpServers: { reverik: { type: 'http', url: mcpUrl } } }),
       '--allowedTools',
       ...ALLOWED_TOOLS,
+      '--permission-mode',
+      accessMode === 'workspace-write' ? 'acceptEdits' : 'dontAsk',
+      ...(accessMode === 'read-only' ? ['--tools', 'Read,Glob,Grep,Bash'] : []),
       '--append-system-prompt',
       skill,
+      ...(threadId ? ['--resume', threadId] : []),
     ],
     stdin: claudeMessage(prompt),
   }),
@@ -128,10 +134,13 @@ export const claudeRunner: AgentRunner = {
 export const codexRunner: AgentRunner = {
   kind: 'codex',
   persistent: false,
-  launch: ({ mcpUrl, skill, prompt, threadId }) => {
+  launch: ({ mcpUrl, skill, prompt, threadId, approvalPolicy, accessMode }) => {
     const shared = [
       '--json',
       '--skip-git-repo-check',
+      '-c',
+      `approval_policy="${approvalPolicy}"`,
+      ...(approvalPolicy === 'on-request' ? ['-c', 'approvals_reviewer="auto_review"'] : []),
       '-c',
       `mcp_servers.reverik.url=${JSON.stringify(mcpUrl)}`,
       ...(['save_flow', 'save_document', 'save_review'] as const).flatMap((tool) => [
@@ -144,8 +153,8 @@ export const codexRunner: AgentRunner = {
       command: 'codex',
       args:
         threadId === null
-          ? ['exec', ...shared, '--sandbox', 'read-only', '-']
-          : ['exec', 'resume', ...shared, '-c', 'sandbox_mode="read-only"', threadId, '-'],
+          ? ['exec', ...shared, '--sandbox', accessMode, '-']
+          : ['exec', 'resume', ...shared, '-c', `sandbox_mode="${accessMode}"`, threadId, '-'],
       stdin: text,
     };
   },
@@ -181,6 +190,12 @@ function parseJson(line: string): Record<string, unknown> | null {
 export function parseClaudeLine(line: string): AgentOutput[] {
   const record = parseJson(line);
   if (!record) return [];
+  if (
+    record.type === 'system' &&
+    record.subtype === 'init' &&
+    typeof record.session_id === 'string'
+  )
+    return [{ type: 'thread', id: record.session_id }];
   if (record.type === 'assistant') {
     const message = record.message as { content?: unknown } | undefined;
     const blocks = Array.isArray(message?.content) ? (message.content as ContentBlock[]) : [];

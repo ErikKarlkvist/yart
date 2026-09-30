@@ -82,18 +82,18 @@ button.crumb:hover:not(:disabled) {
 /* Review: ändringar mot base */
 .graph-node.is-change-added,
 .graph-table.is-change-added {
-  border-color: var(--ok);
+  border-color: var(--flow-added);
 }
 
 .graph-node.is-change-changed,
 .graph-table.is-change-changed {
-  border-color: var(--warn);
+  border-color: var(--flow-changed);
 }
 
 .graph-node.is-change-removed,
 .graph-table.is-change-removed {
   border-style: dashed;
-  border-color: var(--danger);
+  border-color: var(--flow-removed);
   opacity: 0.5;
 }
 
@@ -109,29 +109,15 @@ button.crumb:hover:not(:disabled) {
 }
 
 .graph-node__change.is-added {
-  background: var(--ok);
+  background: var(--flow-added);
 }
 
 .graph-node__change.is-changed {
-  background: var(--warn);
+  background: var(--flow-changed);
 }
 
 .graph-node__change.is-removed {
-  background: var(--danger);
-}
-
-.graph .graph-edge.is-change-added {
-  stroke: var(--ok);
-}
-
-.graph .graph-edge.is-change-changed {
-  stroke: var(--warn);
-}
-
-.graph .graph-edge.is-change-removed {
-  stroke: var(--danger);
-  stroke-dasharray: 6 4;
-  opacity: 0.6;
+  background: var(--flow-removed);
 }
 
 /* Valt fynd ringas in */
@@ -783,7 +769,7 @@ button.crumb:hover:not(:disabled) {
 }
 
 .graph-table__pk {
-  color: #d4a017;
+  color: var(--node-primary-key);
 }
 
 .graph-table__fk {
@@ -875,22 +861,22 @@ button.crumb:hover:not(:disabled) {
 }
 
 .graph-group--app {
-  --node-color: #8b5cf6;
+  --node-color: var(--node-app);
 }
 .graph-group--api {
-  --node-color: #10b981;
+  --node-color: var(--node-api);
 }
 .graph-group--db {
-  --node-color: #f59e0b;
+  --node-color: var(--node-db);
 }
 .graph-group--cache {
-  --node-color: #ef4444;
+  --node-color: var(--node-cache);
 }
 .graph-group--external {
-  --node-color: #64748b;
+  --node-color: var(--node-external);
 }
 .graph-group--queue {
-  --node-color: #ec4899;
+  --node-color: var(--node-queue);
 }
 
 .graph-node__kind {
@@ -909,34 +895,34 @@ button.crumb:hover:not(:disabled) {
 }
 
 .graph-node--app {
-  --node-color: #8b5cf6;
+  --node-color: var(--node-app);
 }
 .graph-node--api {
-  --node-color: #10b981;
+  --node-color: var(--node-api);
 }
 .graph-node--ui {
-  --node-color: #8b5cf6;
+  --node-color: var(--node-app);
 }
 .graph-node--handler {
-  --node-color: #3b82f6;
+  --node-color: var(--node-handler);
 }
 .graph-node--http {
-  --node-color: #0ea5e9;
+  --node-color: var(--node-http);
 }
 .graph-node--service {
-  --node-color: #10b981;
+  --node-color: var(--node-api);
 }
 .graph-node--db {
-  --node-color: #f59e0b;
+  --node-color: var(--node-db);
 }
 .graph-node--cache {
-  --node-color: #ef4444;
+  --node-color: var(--node-cache);
 }
 .graph-node--external {
-  --node-color: #64748b;
+  --node-color: var(--node-external);
 }
 .graph-node--queue {
-  --node-color: #ec4899;
+  --node-color: var(--node-queue);
 }
 
 .graph-handle {
@@ -1206,4 +1192,156 @@ button.crumb:hover:not(:disabled) {
 
 .playback__description {
   min-height: 1.4em;
+}
+
+/* The same semantic colours apply to arrows, their labels and playback text. */
+.graph .graph-edge.is-highlight-added,
+.graph-edge__leader.is-highlight-added,
+.graph-edge-label.is-highlight-added,
+.graph-edge-label__member.is-highlight-added,
+.graph-edge__pulse.is-highlight-added,
+.playback__text.is-highlight-added {
+  --highlight-color: var(--flow-added);
+}
+
+.graph .graph-edge.is-highlight-changed,
+.graph-edge__leader.is-highlight-changed,
+.graph-edge-label.is-highlight-changed,
+.graph-edge-label__member.is-highlight-changed,
+.graph-edge__pulse.is-highlight-changed,
+.playback__text.is-highlight-changed {
+  --highlight-color: var(--flow-changed);
+}
+
+.graph .graph-edge.is-highlight-removed,
+.graph-edge__leader.is-highlight-removed,
+.graph-edge-label.is-highlight-removed,
+.graph-edge-label__member.is-highlight-removed,
+.graph-edge__pulse.is-highlight-removed,
+.playback__text.is-highlight-removed {
+  --highlight-color: var(--flow-removed);
+}
+
+.graph .graph-edge.is-highlight-problem,
+.graph-edge__leader.is-highlight-problem,
+.graph-edge-label.is-highlight-problem,
+.graph-edge-label__member.is-highlight-problem,
+.graph-edge__pulse.is-highlight-problem,
+.playback__text.is-highlight-problem {
+  --highlight-color: var(--flow-problem);
+}
+
+.graph .graph-edge.is-highlight-warning,
+.graph-edge__leader.is-highlight-warning,
+.graph-edge-label.is-highlight-warning,
+.graph-edge-label__member.is-highlight-warning,
+.graph-edge__pulse.is-highlight-warning,
+.playback__text.is-highlight-warning {
+  --highlight-color: var(--flow-warning);
+}
+
+.graph .react-flow__edge-path.graph-edge[class*='is-highlight-'] {
+  stroke: var(--highlight-color);
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.graph .react-flow__edge-path.graph-edge.is-highlight-removed {
+  stroke-dasharray: 6 4;
+  opacity: 0.7;
+}
+
+.graph-arrow.is-highlight-added path {
+  fill: var(--flow-added);
+}
+.graph-arrow.is-highlight-changed path {
+  fill: var(--flow-changed);
+}
+.graph-arrow.is-highlight-removed path {
+  fill: var(--flow-removed);
+}
+.graph-arrow.is-highlight-problem path {
+  fill: var(--flow-problem);
+}
+.graph-arrow.is-highlight-warning path {
+  fill: var(--flow-warning);
+}
+
+.graph-edge__leader[class*='is-highlight-'] {
+  stroke: var(--highlight-color);
+}
+
+.graph-edge__pulse[class*='is-highlight-'] {
+  fill: var(--highlight-color);
+  filter: drop-shadow(0 0 4px var(--highlight-color));
+}
+
+.graph-edge-label[class*='is-highlight-'] {
+  border-color: var(--highlight-color);
+}
+
+.graph-edge-label__member[class*='is-highlight-'] .graph-edge-label__text {
+  color: var(--highlight-color);
+}
+
+.playback__text[class*='is-highlight-'] {
+  padding-left: 10px;
+  border-left: 3px solid var(--highlight-color);
+}
+
+.playback__highlight {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--highlight-color);
+  border-radius: 999px;
+  color: var(--highlight-color);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.playback__description {
+  color: var(--highlight-color, var(--fg));
+}
+
+.graph-edge-label.is-open
+  .graph-edge-label__member[class*='is-highlight-']
+  .graph-edge-label__text {
+  color: var(--highlight-color);
+}
+
+.player__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
+.player__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.player__legend-item.is-highlight-added {
+  --highlight-color: var(--flow-added);
+}
+.player__legend-item.is-highlight-changed {
+  --highlight-color: var(--flow-changed);
+}
+.player__legend-item.is-highlight-removed {
+  --highlight-color: var(--flow-removed);
+}
+.player__legend-item.is-highlight-problem {
+  --highlight-color: var(--flow-problem);
+}
+.player__legend-item.is-highlight-warning {
+  --highlight-color: var(--flow-warning);
+}
+
+.player__legend-swatch {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--highlight-color);
 }

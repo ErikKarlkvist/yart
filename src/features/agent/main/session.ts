@@ -1,6 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { t } from '@/common/model/i18n';
+import { type AccessMode, type ApprovalPolicy } from '@/common/model/agent';
 import {
   type AgentEntry,
   type AgentRunner,
@@ -13,6 +14,7 @@ import { agentExecutable } from './executable';
 export interface SessionEvents {
   onEntry: (entry: AgentEntry) => void;
   onState: (state: AgentState) => void;
+  onThread?: (id: string) => void;
 }
 
 /** Adressen och skillen, hämtade när processen ska startas. */
@@ -28,7 +30,8 @@ export class AgentSession {
   private child: ChildProcess | null = null;
   private state: AgentState = 'idle';
   private stderr = '';
-  private threadId: string | null = null;
+  private threadId: string | null;
+  private activeAccessMode: AccessMode | null = null;
   /** Om ett avslut redan rapporterats för pågående process, så exit inte dubblar */
   private finished = false;
 
@@ -37,17 +40,24 @@ export class AgentSession {
     private readonly runner: AgentRunner,
     private readonly context: LaunchContext,
     private readonly events: SessionEvents,
-  ) {}
+    threadId: string | null = null,
+  ) {
+    this.threadId = threadId;
+  }
 
-  ask(prompt: string): void {
+  ask(
+    prompt: string,
+    approvalPolicy: ApprovalPolicy = 'never',
+    accessMode: AccessMode = 'read-only',
+  ): void {
     this.emit({ at: now(), kind: 'user', text: prompt });
-    if (this.runner.persistent && this.child) {
+    if (this.runner.persistent && this.child && this.activeAccessMode === accessMode) {
       this.setState('busy');
       this.child.stdin?.write(this.runner.message(prompt));
       return;
     }
     if (this.child) this.stop();
-    this.start(prompt);
+    this.start(prompt, approvalPolicy, accessMode);
   }
 
   stop(): void {
@@ -59,10 +69,16 @@ export class AgentSession {
     this.setState('stopped');
   }
 
-  private start(prompt: string): void {
+  private start(prompt: string, approvalPolicy: ApprovalPolicy, accessMode: AccessMode): void {
     let launch;
     try {
-      launch = this.runner.launch({ ...this.context(), prompt, threadId: this.threadId });
+      launch = this.runner.launch({
+        ...this.context(),
+        prompt,
+        threadId: this.threadId,
+        approvalPolicy,
+        accessMode,
+      });
     } catch (error) {
       this.fail(error);
       return;
@@ -80,6 +96,7 @@ export class AgentSession {
       return;
     }
     this.child = child;
+    this.activeAccessMode = accessMode;
     this.stderr = '';
     this.finished = false;
     this.setState('busy');
@@ -124,6 +141,7 @@ export class AgentSession {
           break;
         case 'thread':
           this.threadId = output.id;
+          this.events.onThread?.(output.id);
           break;
         case 'done':
           if (output.error !== null) this.emit({ at: now(), kind: 'error', text: output.error });

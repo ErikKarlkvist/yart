@@ -2,6 +2,7 @@ import { type IpcBridge } from '@/common/ipc/bridge';
 import { APP_NAME } from '@/common/model/brand';
 import { DEMO_REPO_RELATIVE_PATH, demoAnalyses } from '@/common/model/fixtures';
 import { t } from '@/common/model/i18n';
+import { type Conversation } from '@/features/agent/model/conversation';
 
 /**
  * Ersätter preload-bryggan när renderern körs i en vanlig webbläsare under
@@ -40,6 +41,7 @@ export function installMockBridge(): void {
     };
   });
   let recent: (typeof demoRepo)[] = [];
+  const conversations: Conversation[] = [];
   const listeners = new Map<string, Set<(payload: unknown) => void>>();
   const emit = (event: string, payload: unknown): void => {
     for (const listener of listeners.get(event) ?? []) listener(payload);
@@ -56,7 +58,8 @@ export function installMockBridge(): void {
   };
 
   const handlers: Record<string, (payload: unknown) => unknown> = {
-    'app:info': () => ({ version: 'mock', electron: t('app.mockElectron'), platform: 'web' }),
+    'app:info': () => ({ version: '0.1.0', electron: t('app.mockElectron'), platform: 'web' }),
+    'app:titlebar-theme': () => undefined,
     'repo:list-recent': () => recent,
     'repo:pick-local': () => null,
     'repo:open-demo': () => {
@@ -86,22 +89,77 @@ export function installMockBridge(): void {
       return { ...mockMcpStatus, skills };
     },
     'mcp:skill-text': () => `# ${APP_NAME} guide (mock)`,
+    'agent:list-conversations': () =>
+      conversations.map((item) => ({
+        id: item.id,
+        repoPath: item.repoPath,
+        agent: item.agent,
+        mode: item.mode,
+        ...(item.reviewBranches ? { reviewBranches: item.reviewBranches } : {}),
+        title: item.title,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      })),
+    'agent:get-conversation': (payload) =>
+      conversations.find((item) => item.id === (payload as { id: string }).id) ?? null,
+    'agent:create-conversation': (payload) => {
+      const { repoPath, agent, mode, reviewBranches } = payload as {
+        repoPath: string;
+        agent: Conversation['agent'];
+        mode: Conversation['mode'];
+        reviewBranches?: Conversation['reviewBranches'];
+      };
+      const at = new Date().toISOString();
+      const conversation: Conversation = {
+        id: crypto.randomUUID(),
+        repoPath,
+        agent,
+        mode,
+        ...(reviewBranches ? { reviewBranches } : {}),
+        title: '',
+        createdAt: at,
+        updatedAt: at,
+        entries: [],
+        threadId: null,
+      };
+      conversations.unshift(conversation);
+      return conversation;
+    },
     // Låtsasagenten svarar med ett verktyg och en mening efter en stund
     'agent:ask': (payload) => {
-      const { repoPath, prompt } = payload as { repoPath: string; prompt: string };
+      const { repoPath, prompt, conversationId } = payload as {
+        repoPath: string;
+        prompt: string;
+        conversationId: string;
+      };
+      const conversation = conversations.find((item) => item.id === conversationId);
       const entry = (value: unknown): void => {
+        const message = { at: new Date().toISOString(), ...(value as object) };
+        if (conversation) {
+          conversation.entries.push(message as Conversation['entries'][number]);
+          conversation.updatedAt = message.at;
+          if (
+            !conversation.title &&
+            value &&
+            typeof value === 'object' &&
+            'kind' in value &&
+            value.kind === 'user'
+          )
+            conversation.title = prompt.slice(0, 70);
+        }
         emit('agent:event', {
           type: 'entry',
           repoPath,
-          entry: { at: new Date().toISOString(), ...(value as object) },
+          conversationId,
+          entry: message,
         });
       };
       entry({ kind: 'user', text: prompt });
-      emit('agent:event', { type: 'state', repoPath, state: 'busy' });
+      emit('agent:event', { type: 'state', repoPath, conversationId, state: 'busy' });
       setTimeout(() => {
         entry({ kind: 'tool', name: 'save_flow' });
         entry({ kind: 'assistant', text: t('app.mockAgentReply') });
-        emit('agent:event', { type: 'state', repoPath, state: 'idle' });
+        emit('agent:event', { type: 'state', repoPath, conversationId, state: 'idle' });
       }, 1200);
     },
     'agent:stop': () => undefined,

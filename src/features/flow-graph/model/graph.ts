@@ -157,7 +157,7 @@ function collapse(
               tables: [],
               table: info,
               columnCount: info.columns?.length ?? 0,
-              change: diff.nodes.get(member.id),
+              change: diff.nodes.get(member.id) ?? member.highlight,
               findings: nodeFindings(member.id),
             });
             for (const column of info.columns ?? []) {
@@ -183,7 +183,7 @@ function collapse(
           systemId: system.id,
           memberOf: undefined,
           tables: tablesOf(flow, [member]),
-          change: diff.nodes.get(member.id),
+          change: diff.nodes.get(member.id) ?? member.highlight,
           findings: nodeFindings(member.id),
         });
         nodeToTarget.set(member.id, member.id);
@@ -232,7 +232,7 @@ function systemChange(
   members: readonly Flow['nodes'][number][],
   diff: FlowDiff,
 ): FlowChange | undefined {
-  const changes = members.map((m) => diff.nodes.get(m.id));
+  const changes = members.map((m) => diff.nodes.get(m.id) ?? m.highlight);
   if (changes.every((c) => c === 'added')) return 'added';
   if (changes.every((c) => c === 'removed')) return 'removed';
   return changes.some((c) => c !== undefined) ? 'changed' : undefined;

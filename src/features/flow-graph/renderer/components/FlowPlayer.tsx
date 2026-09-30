@@ -18,6 +18,7 @@ import {
 } from '../../model/graph';
 import { type AskTarget, buildAskPrompt } from '../../model/ask';
 import { type Point } from '../../model/layout';
+import { edgeHighlight, type FlowHighlight } from '../../model/highlight';
 import { AskComposer } from './AskComposer';
 import { useFlowPlayback } from '../hooks/useFlowPlayback';
 import { FlowGraph } from './FlowGraph';
@@ -83,6 +84,22 @@ export function FlowPlayer({
   const model = useMemo(
     () => hideElements(buildModel(graphFlow, view, annotations), hiddenNodes, hiddenEdges),
     [graphFlow, view, annotations, hiddenNodes, hiddenEdges],
+  );
+  const highlights = useMemo(() => {
+    const result = new Map<string, FlowHighlight>();
+    for (const edge of model.edges) {
+      const highlight = edgeHighlight(
+        diff?.edges.get(edge.id) ?? edge.highlight,
+        findings.filter((finding) => finding.edgeId === edge.id),
+      );
+      if (highlight) result.set(edge.id, highlight);
+    }
+    return result;
+  }, [model.edges, diff, findings]);
+  const legend = (['added', 'changed', 'removed', 'problem', 'warning'] as const).filter((kind) =>
+    kind === 'problem' || kind === 'warning'
+      ? [...highlights.values()].includes(kind)
+      : [...highlights.values(), ...model.nodes.map((node) => node.change)].includes(kind),
   );
   const playback = useFlowPlayback(model.steps.length);
   const hiddenCount = hiddenNodes.size + hiddenEdges.size;
@@ -155,7 +172,7 @@ export function FlowPlayer({
   }, [focusSeq, focusedFindingId, findings, model, graphFlow, playback]);
   const onEdgeClick = useCallback(
     (edge: FlowEdge) => {
-      onSelectSource?.(edge.source);
+      if (edge.source) onSelectSource?.(edge.source);
     },
     [onSelectSource],
   );
@@ -245,6 +262,15 @@ export function FlowPlayer({
             {t('graph.allDetails')}
           </button>
         </nav>
+        {legend.length > 0 && (
+          <div className="player__legend" aria-label={t('flow.highlight.legend')}>
+            {legend.map((kind) => (
+              <span key={kind} className={`player__legend-item is-highlight-${kind}`}>
+                <span className="player__legend-swatch" /> {t(`flow.highlight.${kind}`)}
+              </span>
+            ))}
+          </div>
+        )}
       </header>
       <FlowGraph
         key={viewKey}
@@ -280,7 +306,7 @@ export function FlowPlayer({
         }
       />
       <div className="player__divider">{beforeControls}</div>
-      <PlaybackControls steps={model.steps} playback={playback} />
+      <PlaybackControls steps={model.steps} playback={playback} highlights={highlights} />
     </div>
   );
 }

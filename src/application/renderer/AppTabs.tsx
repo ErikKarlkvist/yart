@@ -8,6 +8,7 @@ import { useSetup } from '@/features/mcp';
 import { RepoProvider, useRepo } from '@/features/repo';
 import { AppShell } from './AppShell';
 import { AppTabsContext } from './AppTabsContext';
+import { WindowBarContext } from './WindowBarContext';
 
 interface TabsState {
   ids: number[];
@@ -39,6 +40,7 @@ function isTabsState(value: unknown): value is TabsState {
 export function AppTabs(): JSX.Element {
   const [tabs, setTabs] = useState<TabsState>(() => readStoredJson(TABS_KEY, isTabsState) ?? FRESH);
   const [titles, setTitles] = useState<ReadonlyMap<number, string>>(() => new Map());
+  const [windowActions, setWindowActions] = useState<HTMLDivElement | null>(null);
 
   const update = useCallback((next: (current: TabsState) => TabsState) => {
     setTabs((current) => {
@@ -80,52 +82,58 @@ export function AppTabs(): JSX.Element {
 
   return (
     <div className="app">
-      <div className="tab-strip app__tabs" role="tablist">
-        {tabs.ids.map((id) => {
-          const active = id === tabs.active;
-          return (
-            <div key={id} className={`tab${active ? ' is-active' : ''}`}>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={active}
-                className="tab__open"
-                onClick={() => {
-                  activate(id);
-                }}
-              >
-                {titles.get(id) ?? t('tabs.empty')}
-              </button>
-              {tabs.ids.length > 1 && (
+      <div className="tab-strip app__tabs">
+        <div className="app__tab-list" role="tablist">
+          {tabs.ids.map((id) => {
+            const active = id === tabs.active;
+            return (
+              <div key={id} className={`tab${active ? ' is-active' : ''}`}>
                 <button
                   type="button"
-                  className="tab__close"
-                  title={t('tabs.close')}
-                  aria-label={t('tabs.close')}
+                  role="tab"
+                  aria-selected={active}
+                  className="tab__open"
                   onClick={() => {
-                    close(id);
+                    activate(id);
                   }}
                 >
-                  <Icon name="close" size="sm" />
+                  {titles.get(id) ?? t('tabs.empty')}
                 </button>
-              )}
-            </div>
-          );
-        })}
-        <button
-          type="button"
-          className="icon-button icon-button--quiet tab__add"
-          title={t('tabs.new')}
-          aria-label={t('tabs.new')}
-          onClick={add}
-        >
-          <Icon name="plus" size="sm" />
-        </button>
+                {tabs.ids.length > 1 && (
+                  <button
+                    type="button"
+                    className="tab__close"
+                    title={t('tabs.close')}
+                    aria-label={t('tabs.close')}
+                    onClick={() => {
+                      close(id);
+                    }}
+                  >
+                    <Icon name="close" size="sm" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          <button
+            type="button"
+            className="icon-button icon-button--quiet tab__add"
+            title={t('tabs.new')}
+            aria-label={t('tabs.new')}
+            onClick={add}
+          >
+            <Icon name="plus" size="sm" />
+          </button>
+        </div>
+        <span className="app__tab-spacer" />
+        <div className="app__window-actions" ref={setWindowActions} />
       </div>
       <div className="app__windows">
-        {tabs.ids.map((id) => (
-          <TabWindow key={id} id={id} active={id === tabs.active} onTitle={setTitle} />
-        ))}
+        <WindowBarContext.Provider value={windowActions}>
+          {tabs.ids.map((id) => (
+            <TabWindow key={id} id={id} active={id === tabs.active} onTitle={setTitle} />
+          ))}
+        </WindowBarContext.Provider>
       </div>
     </div>
   );
@@ -154,7 +162,7 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
         <AppTabsContext.Provider value={titleApi}>
           <RepoProvider>
             <Providers>
-              <AppShell />
+              <AppShell active={active} />
             </Providers>
           </RepoProvider>
         </AppTabsContext.Provider>
@@ -166,10 +174,15 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
 /** Providers som beror på valt repo. */
 function Providers({ children }: { children: JSX.Element }): JSX.Element {
   const { repo } = useRepo();
-  const { agent } = useSetup();
+  const { agent, approvalPolicy, accessModes } = useSetup();
   return (
     <AnalysisProvider repoPath={repo?.path ?? null}>
-      <AgentProvider repoPath={repo?.path ?? null} agent={agent}>
+      <AgentProvider
+        repoPath={repo?.path ?? null}
+        agent={agent}
+        approvalPolicy={approvalPolicy}
+        accessModes={accessModes}
+      >
         {children}
       </AgentProvider>
     </AnalysisProvider>

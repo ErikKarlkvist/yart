@@ -11,6 +11,7 @@ import { type FlowChange, type ReviewFinding } from '@/common/model/review';
 import { formatPayload } from '../../model/format';
 import { type Direction } from '../../model/layout';
 import { type StepStatus } from '../../model/playback';
+import { edgeHighlight, type FlowHighlight } from '../../model/highlight';
 import { AskButton } from './AskButton';
 import { FindingFlag } from './FindingFlag';
 
@@ -44,8 +45,8 @@ type GraphEdgeData = {
   onTogglePinned: (edgeId: string) => void;
   /** Hoppar i uppspelningen, 0-baserat */
   onGoToStep: (index: number) => void;
-  /** Linjens ändring i en review: borttagen om alla anrop är det, annars den första ändringen */
-  change: FlowChange | undefined;
+  /** Strongest change or issue on this drawn line. */
+  highlight: FlowHighlight | undefined;
   /** Ett av linjens fynd är valt i review-fliken */
   focused: boolean;
 };
@@ -95,12 +96,12 @@ export const FlowEdgeView = memo(function FlowEdgeView({
       <BaseEdge
         id={id}
         path={path}
-        className={`graph-edge is-${data.status}${selected ? ' is-selected' : ''}${data.askingId ? ' is-asking' : ''}${data.focused ? ' is-focused' : ''}${data.change ? ` is-change-${data.change}` : ''}`}
-        markerEnd={`url(#graph-arrow-${data.status})`}
+        className={`graph-edge is-${data.status}${selected ? ' is-selected' : ''}${data.askingId ? ' is-asking' : ''}${data.focused ? ' is-focused' : ''}${data.highlight ? ` is-highlight-${data.highlight}` : ''}`}
+        markerEnd={`url(#graph-arrow-${data.highlight ? `highlight-${data.highlight}` : data.status})`}
       />
       {shown.length > 0 && (
         <line
-          className={`graph-edge__leader is-${data.status}`}
+          className={`graph-edge__leader is-${data.status}${data.highlight ? ` is-highlight-${data.highlight}` : ''}`}
           x1={labelX}
           y1={labelY}
           x2={labelX}
@@ -108,7 +109,10 @@ export const FlowEdgeView = memo(function FlowEdgeView({
         />
       )}
       {data.status === 'active' && (
-        <circle r="5" className="graph-edge__pulse">
+        <circle
+          r="5"
+          className={`graph-edge__pulse${data.highlight ? ` is-highlight-${data.highlight}` : ''}`}
+        >
           <animateMotion dur="1.2s" repeatCount="indefinite" path={path} />
         </circle>
       )}
@@ -138,7 +142,7 @@ export const FlowEdgeView = memo(function FlowEdgeView({
         )}
         {shown.length > 0 && (
           <div
-            className={`graph-edge-label is-${data.status}${open ? ' is-open' : ''}${data.pinned ? ' is-pinned' : ''} graph-edge-label--${data.direction}`}
+            className={`graph-edge-label is-${data.status}${data.highlight ? ` is-highlight-${data.highlight}` : ''}${open ? ' is-open' : ''}${data.pinned ? ' is-pinned' : ''} graph-edge-label--${data.direction}`}
             style={{
               transform: `translate(-50%, ${side < 0 ? '-100%' : '0'}) translate(${labelX}px, ${labelOffsetY}px)`,
             }}
@@ -146,7 +150,7 @@ export const FlowEdgeView = memo(function FlowEdgeView({
             {shown.map((member) => (
               <div
                 key={member.id}
-                className={`graph-edge-label__member is-${member.status}${member.id === data.askingId ? ' is-asking' : ''}${member.change ? ` is-change-${member.change}` : ''}`}
+                className={`graph-edge-label__member is-${member.status}${member.id === data.askingId ? ' is-asking' : ''}${edgeHighlight(member.change, member.findings) ? ` is-highlight-${edgeHighlight(member.change, member.findings)}` : ''}`}
               >
                 <span className="graph-edge-label__text">
                   {open && member.steps.length > 0 && (

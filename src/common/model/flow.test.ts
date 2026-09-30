@@ -25,6 +25,23 @@ describe('fixturer', () => {
 describe('validateFlow', () => {
   const base: Flow = addTodoFlow;
 
+  it('allows proposed new nodes and calls without invented source references', () => {
+    const firstNode = base.nodes[0];
+    const firstEdge = base.edges[0];
+    if (!firstNode || !firstEdge) throw new Error('fixture is missing a node or edge');
+    const { source: _nodeSource, ...node } = firstNode;
+    const { source: _edgeSource, ...edge } = firstEdge;
+    const flow = {
+      ...base,
+      nodes: [{ ...node, highlight: 'added' as const }, ...base.nodes.slice(1)],
+      edges: [{ ...edge, highlight: 'added' as const }, ...base.edges.slice(1)],
+    };
+    expect(validateFlow(flow).ok).toBe(true);
+    expect(errorsOf({ ...flow, edges: [{ ...edge }, ...base.edges.slice(1)] })).toContainEqual(
+      expect.stringContaining('must have a source reference'),
+    );
+  });
+
   it('avvisar kant som pekar på okänd nod', () => {
     const flow = { ...base, edges: [{ ...base.edges[0], to: 'finns-inte' }] };
     expect(errorsOf(flow)).toContainEqual(expect.stringContaining('unknown node "finns-inte"'));

@@ -19,7 +19,7 @@ function collectRefs(flow: Flow): Ref[] {
     });
   });
   flow.edges.forEach((edge, i) => {
-    refs.push({ where: `edges.${i}.source`, source: edge.source });
+    if (edge.source) refs.push({ where: `edges.${i}.source`, source: edge.source });
   });
   return refs;
 }

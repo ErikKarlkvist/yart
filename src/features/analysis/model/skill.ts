@@ -42,6 +42,11 @@ const HOW_TO_BUILD = `## How to build a good flow
    fails, what catches it, what is rolled back or retried, and what the caller sees.
 8. Use \`role\` to name a handler more specifically when useful, such as \`Hook\`, \`Action\` or
    \`Event\`. Use node kind \`queue\` for a queue, topic or event bus.
+9. In a proposed plan, put \`highlight: 'added'\` on new nodes and calls and
+   \`highlight: 'changed'\` on existing ones that need updating. These colours
+   appear on the arrows and their playback descriptions. A proposed new node or
+   call may omit \`source\` when no code exists yet; never fabricate a file or line.
+   Make it clear in the title and step descriptions that this is proposed behavior.
 `;
 
 const SCHEMA = `## Schema
@@ -91,7 +96,8 @@ interface Node {
   label: string;
   role?: string;      // optional, specific type label such as "Hook", "Action" or "Event"
   description?: string;
-  source?: Source;    // required unless kind is db, cache, external or queue
+  highlight?: 'added' | 'changed'; // proposed new or updated component
+  source?: Source;    // required except for infrastructure or a proposed new component
   tables?: Table[];   // what the node stores, mainly for db and cache
 }
 
@@ -117,7 +123,8 @@ interface Edge {
   label: string;      // short, e.g. "POST /api/todos" or "INSERT todos"
   payload?: string;   // what is sent, free text or example JSON
   response?: string;  // what comes back, if anything
-  source: Source;     // the line where the call is made
+  highlight?: 'added' | 'changed'; // proposed new or updated call
+  source?: Source;    // required except for a proposed new call
   tables?: string[];  // Table.name on the target node
 }
 
@@ -188,6 +195,8 @@ Rules for reviews:
   not exist. Look for: cache invalidation that disappeared, calls that are now awaited or
   reordered, work moved inside or outside a transaction, missing error handling or
   validation, N+1 queries, secrets or data leaving the system, retries and timeouts.
+- Point to \`edgeId\` when a specific call has the problem. {appName} highlights that
+  arrow and its playback step in the finding's severity colour.
 - If nothing looks wrong, say so with an \`info\` finding rather than inventing problems.
 - Represent warnings as findings, never as warning emojis in labels.`;
 
@@ -202,7 +211,7 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 `;
 
 /** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 5;
+export const SKILL_VERSION = 6;
 
 export function buildSkill(): string {
   return `---

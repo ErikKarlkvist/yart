@@ -4,8 +4,8 @@ import { t } from './i18n';
 
 /**
  * Kontraktet mellan analysen (AI:n) och visualiseringen. AI:n producerar ett
- * Flow, UI:t ritar och spelar upp det. Allt som ritas ska gå att spåra
- * tillbaka till en fil och rad i repot. Beskrivningarna är på engelska och
+ * Flow, UI:t ritar och spelar upp det. Befintlig kod spåras till en fil och
+ * rad i repot; nya delar i en plan får sakna källa. Beskrivningarna är på engelska och
  * följer med i JSON-schemat som MCP-verktygen visar för modellen.
  */
 
@@ -115,10 +115,16 @@ const flowNodeSchema = z
       .optional()
       .describe('A more specific type label when useful, such as "Hook", "Action" or "Event"'),
     description: z.string().optional(),
+    highlight: z
+      .enum(['added', 'changed'])
+      .optional()
+      .describe(
+        'For a proposed plan: added means a new component; changed means an existing component to update. Omit for current behavior and reviews with compare.',
+      ),
     source: sourceRefSchema
       .optional()
       .describe(
-        'Where the node is declared. Required unless kind is db, cache, external or queue.',
+        'Where the node is declared. Required unless kind is db, cache, external or queue, or highlight is added for a proposed component.',
       ),
     tables: z
       .array(dataTableSchema)
@@ -135,7 +141,17 @@ const flowEdgeSchema = z
     label: z.string().min(1).describe('Short, e.g. "POST /api/todos" or "INSERT todos"'),
     payload: z.string().optional().describe('What is sent: free text or example JSON'),
     response: z.string().optional().describe('What comes back, if anything'),
-    source: sourceRefSchema.describe('The line where the call is made'),
+    highlight: z
+      .enum(['added', 'changed'])
+      .optional()
+      .describe(
+        'For a proposed plan: added means a new call; changed means an existing call to update. Omit for current behavior and reviews with compare.',
+      ),
+    source: sourceRefSchema
+      .optional()
+      .describe(
+        'The line where the call exists. Required except for a proposed new call with highlight added; never invent a source for future code.',
+      ),
     tables: z
       .array(z.string().min(1))
       .optional()
@@ -204,7 +220,7 @@ export const flowSchema = z
         });
       }
       nodeIds.add(node.id);
-      if (!node.source && !NODE_KINDS_WITHOUT_SOURCE.has(node.kind)) {
+      if (!node.source && node.highlight !== 'added' && !NODE_KINDS_WITHOUT_SOURCE.has(node.kind)) {
         ctx.addIssue({
           code: 'custom',
           path: ['nodes', i, 'source'],
@@ -248,6 +264,13 @@ export const flowSchema = z
     );
     const edgeIds = new Set<string>();
     flow.edges.forEach((edge, i) => {
+      if (!edge.source && edge.highlight !== 'added') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['edges', i, 'source'],
+          message: t('validation.missingEdgeSource', { id: edge.id }),
+        });
+      }
       for (const table of edge.tables ?? []) {
         if (!tablesByNode.get(edge.to)?.has(table)) {
           ctx.addIssue({

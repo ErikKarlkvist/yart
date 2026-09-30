@@ -6,7 +6,7 @@ import { useRepo } from '../RepoContext';
 import './repo.css';
 
 /**
- * Mappväljaren i sidfoten: knappen visar valt repo, menyn ovanför listar
+ * Mappväljaren i fönsterraden: knappen visar valt repo, menyn listar
  * senaste repon, val av ny mapp och demot.
  */
 export function RepoMenu(): JSX.Element {

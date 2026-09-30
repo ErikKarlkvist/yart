@@ -1,23 +1,25 @@
 import { type JSX, useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { type AppInfo, appInfoChannel } from '@/application/ipc/channels';
 import { t } from '@/common/model/i18n';
-import { APP_NAME } from '@/common/model/brand';
 import { Icon } from '@/common/renderer/Icon';
 import { Splitter } from '@/common/renderer/Splitter';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { AgentPanel, useAgent } from '@/features/agent';
 import { AnalysisList, analysisTitle, useAnalyses } from '@/features/analysis';
 import { useTabTitle } from './AppTabsContext';
-import { BranchBar, RepoMenu, RepoPanel, useRepo } from '@/features/repo';
+import { RepoMenu, RepoPanel, useRepo } from '@/features/repo';
 import { ConnectPanel, useMcpStatus, useSetup } from '@/features/mcp';
 import { ThemeSelect } from './ThemeSelect';
 import { useStoredChoice, useStoredFlag, useStoredNumber } from '@/common/renderer/useStored';
 import { ReviewSidebar } from './ReviewSidebar';
 import { Workspace } from './Workspace';
+import { useWindowBar } from './WindowBarContext';
 
 const SIDE_MODES = ['agent', 'review', 'connect'] as const;
 
-export function AppShell(): JSX.Element {
+export function AppShell({ active }: { active: boolean }): JSX.Element {
+  const windowBar = useWindowBar();
   const [info, setInfo] = useState<AppInfo | null>(null);
   const { repo } = useRepo();
   const { analyses, current, select } = useAnalyses();
@@ -65,22 +67,19 @@ export function AppShell(): JSX.Element {
   useTabTitle(repo ? (current ? `${repo.name} · ${analysisTitle(current)}` : repo.name) : null);
 
   useEffect(() => {
-    void invokeChannel(appInfoChannel, undefined).then(setInfo);
+    void invokeChannel(appInfoChannel, undefined).then((value) => {
+      setInfo(value);
+      document.documentElement.dataset.platform = value.platform;
+    });
   }, []);
 
-  // Frågor från grafen och reviewuppdrag går till agenten appen kör i bakgrunden.
+  // Frågor från grafen går till agenten appen kör i bakgrunden.
   const onAsk = useCallback(
     (prompt: string) => {
       agent.ask(prompt);
       openSide('agent');
     },
     [agent, openSide],
-  );
-  const onRunReview = useCallback(
-    (base: string, head: string) => {
-      onAsk(t('branch.reviewPrompt', { base, head }));
-    },
-    [onAsk],
   );
 
   const shellClass = [
@@ -92,163 +91,164 @@ export function AppShell(): JSX.Element {
     .join(' ');
 
   return (
-    <div
-      className={shellClass}
-      style={{
-        '--sidebar-width': `${sidebarWidth}px`,
-        '--side-width': `${sideWidth}px`,
-      }}
-    >
-      <aside className="shell__sidebar">
-        <div className="shell__drag" />
-        <h1 className="shell__title">{APP_NAME.toUpperCase()}</h1>
-        <RepoPanel />
-        <BranchBar onRunReview={onRunReview} />
-        {repo && <AnalysisList />}
-        <Splitter
-          orientation="vertical"
-          size={sidebarWidth}
-          min={220}
-          max={600}
-          onResize={setSidebarWidth}
-          label={t('panel.resizeSidebar')}
-        />
-      </aside>
-
-      <div className="shell__work">
-        <Workspace
-          analysis={current}
-          analyses={analyses}
-          onOpenFlow={(id) => {
-            select(id);
-          }}
-          hasRepo={repo !== null}
-          logOpen={logOpen}
-          bottomHeight={bottomHeight}
-          onBottomResize={setBottomHeight}
-          onLogOpenChange={setLogOpen}
-          onAsk={onAsk}
-          focusedFindingId={focusedFindingId}
-          focusSeq={focusSeq}
-          onFocusFinding={onFocusInCurrent}
-          onFocusFindingIn={focusFinding}
-        />
-      </div>
-
-      {sideOpen && (
-        <div className="shell__side">
-          <Splitter
-            orientation="vertical"
-            size={sideWidth}
-            min={320}
-            max={900}
-            inverted
-            edge="start"
-            onResize={setSideWidth}
-            label={t('panel.resizeSide')}
-          />
-          <div className="tab-strip shell__side-modes" role="tablist">
-            {SIDE_MODES.map((mode) => (
+    <>
+      {active &&
+        windowBar &&
+        createPortal(
+          <div className="shell__window-items">
+            <RepoMenu />
+            <button
+              type="button"
+              className="text-button"
+              title={t('app.mcpHint')}
+              onClick={() => {
+                openSide('connect');
+              }}
+            >
+              <Icon name="link" size="sm" /> {t('side.connect')}
+            </button>
+            <button
+              type="button"
+              className="text-button"
+              title={t('app.guideHint')}
+              onClick={showGuide}
+            >
+              <Icon name="info" size="sm" /> {t('app.guide')}
+            </button>
+            <ThemeSelect />
+            {!logOpen && (
               <button
-                key={mode}
                 type="button"
-                role="tab"
-                aria-selected={sideMode === mode}
-                className={`tab tab--caps${sideMode === mode ? ' is-active' : ''}`}
+                className="text-button"
+                title={t('panel.show')}
                 onClick={() => {
-                  setSideMode(mode);
+                  setLogOpen(true);
                 }}
               >
-                {t(`side.${mode}`)}
+                <Icon name="chevronUp" size="sm" /> {t('panel.show')}
               </button>
-            ))}
-            <span className="shell__side-spacer" />
-            <button
-              type="button"
-              className="icon-button icon-button--quiet"
-              title={t('panel.hideSide')}
-              aria-label={t('panel.hideSide')}
-              onClick={() => {
-                setSideOpen(false);
-              }}
-            >
-              <Icon name="close" size="sm" />
-            </button>
-          </div>
-          <div className="shell__side-body">
-            <div className={`shell__side-pane${sideMode === 'agent' ? ' is-active' : ''}`}>
-              <AgentPanel hasRepo={repo !== null} />
-            </div>
-            <div className={`shell__side-pane${sideMode === 'review' ? ' is-active' : ''}`}>
-              <ReviewSidebar onFocus={focusFinding} />
-            </div>
-            <div className={`shell__side-pane${sideMode === 'connect' ? ' is-active' : ''}`}>
-              <ConnectPanel mcp={mcp} />
-            </div>
-          </div>
-        </div>
-      )}
+            )}
+            {!sideOpen && (
+              <button
+                type="button"
+                className="text-button"
+                title={t('panel.showAgent')}
+                onClick={() => {
+                  openSide('agent');
+                }}
+              >
+                <Icon name="chat" size="sm" /> {t('panel.showAgent')}
+              </button>
+            )}
+          </div>,
+          windowBar,
+        )}
+      <div
+        className={shellClass}
+        style={{
+          '--sidebar-width': `${sidebarWidth}px`,
+          '--side-width': `${sideWidth}px`,
+        }}
+      >
+        <aside className="shell__sidebar">
+          <RepoPanel />
+          {repo && <AnalysisList />}
+          <Splitter
+            orientation="vertical"
+            size={sidebarWidth}
+            min={220}
+            max={600}
+            onResize={setSidebarWidth}
+            label={t('panel.resizeSidebar')}
+          />
+        </aside>
 
-      <footer className="shell__footer">
-        <span className="shell__footer-tools">
-          <RepoMenu />
-          <span>
-            {info
-              ? `v${info.version} · Electron ${info.electron} · ${info.platform}`
-              : t('app.starting')}
-          </span>
-          <button
-            type="button"
-            className="text-button"
-            title={t('app.mcpHint')}
-            onClick={() => {
-              openSide('connect');
+        <div className="shell__work">
+          <Workspace
+            analysis={current}
+            analyses={analyses}
+            onOpenFlow={(id) => {
+              select(id);
             }}
-          >
-            <Icon name="link" size="sm" />{' '}
-            {mcp.status?.url
-              ? t('app.mcp', { url: mcp.status.url })
-              : mcp.status?.error
-                ? t('app.mcpFailed', { error: mcp.status.error })
-                : t('app.mcpStarting')}
-          </button>
-        </span>
-        <span className="shell__footer-tools">
-          <button
-            type="button"
-            className="text-button"
-            title={t('app.guideHint')}
-            onClick={showGuide}
-          >
-            <Icon name="info" size="sm" /> {t('app.guide')}
-          </button>
-          {!logOpen && (
-            <button
-              type="button"
-              className="text-button"
-              title={t('panel.show')}
-              onClick={() => {
-                setLogOpen(true);
-              }}
-            >
-              <Icon name="chevronUp" size="sm" /> {t('panel.show')}
-            </button>
-          )}
-          {!sideOpen && (
-            <button
-              type="button"
-              className="text-button"
-              title={t('panel.showAgent')}
-              onClick={() => {
-                openSide('agent');
-              }}
-            >
-              <Icon name="chat" size="sm" /> {t('panel.showAgent')}
-            </button>
-          )}
-          <ThemeSelect />
-        </span>
-      </footer>
-    </div>
+            hasRepo={repo !== null}
+            logOpen={logOpen}
+            bottomHeight={bottomHeight}
+            onBottomResize={setBottomHeight}
+            onLogOpenChange={setLogOpen}
+            onAsk={onAsk}
+            focusedFindingId={focusedFindingId}
+            focusSeq={focusSeq}
+            onFocusFinding={onFocusInCurrent}
+            onFocusFindingIn={focusFinding}
+          />
+        </div>
+
+        {sideOpen && (
+          <div className="shell__side">
+            <Splitter
+              orientation="vertical"
+              size={sideWidth}
+              min={320}
+              max={900}
+              inverted
+              edge="start"
+              onResize={setSideWidth}
+              label={t('panel.resizeSide')}
+            />
+            <div className="tab-strip shell__side-modes" role="tablist">
+              {SIDE_MODES.map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  role="tab"
+                  aria-selected={sideMode === mode}
+                  className={`tab tab--caps${sideMode === mode ? ' is-active' : ''}`}
+                  onClick={() => {
+                    setSideMode(mode);
+                  }}
+                >
+                  {t(`side.${mode}`)}
+                </button>
+              ))}
+              <span className="shell__side-spacer" />
+              <button
+                type="button"
+                className="icon-button icon-button--quiet"
+                title={t('panel.hideSide')}
+                aria-label={t('panel.hideSide')}
+                onClick={() => {
+                  setSideOpen(false);
+                }}
+              >
+                <Icon name="close" size="sm" />
+              </button>
+            </div>
+            <div className="shell__side-body">
+              <div className={`shell__side-pane${sideMode === 'agent' ? ' is-active' : ''}`}>
+                <AgentPanel hasRepo={repo !== null} />
+              </div>
+              <div className={`shell__side-pane${sideMode === 'review' ? ' is-active' : ''}`}>
+                <ReviewSidebar onFocus={focusFinding} />
+              </div>
+              <div className={`shell__side-pane${sideMode === 'connect' ? ' is-active' : ''}`}>
+                <ConnectPanel mcp={mcp} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <footer className="shell__footer">
+          <span className="shell__footer-tools">
+            <span className="shell__version">{info ? `v${info.version}` : t('app.starting')}</span>
+            {repo?.isGit && (
+              <span className="shell__current-branch" title={repo.branch ?? t('repo.detachedHead')}>
+                <Icon name="branch" size="sm" />
+                <span>{repo.branch ?? t('repo.detachedHead')}</span>
+              </span>
+            )}
+          </span>
+        </footer>
+      </div>
+    </>
   );
 }

@@ -3,14 +3,17 @@ import { type FlowStep } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { type Playback } from '../hooks/useFlowPlayback';
+import { type FlowHighlight } from '../../model/highlight';
 
 interface Props {
   steps: readonly FlowStep[];
   playback: Playback;
+  highlights: ReadonlyMap<string, FlowHighlight>;
 }
 
-export function PlaybackControls({ steps, playback }: Props): JSX.Element {
+export function PlaybackControls({ steps, playback, highlights }: Props): JSX.Element {
   const step = steps[playback.stepIndex];
+  const highlight = step ? highlights.get(step.edgeId) : undefined;
   const total = steps.length;
 
   return (
@@ -68,10 +71,15 @@ export function PlaybackControls({ steps, playback }: Props): JSX.Element {
         }}
         aria-label={t('playback.step')}
       />
-      <div className="playback__text">
+      <div className={`playback__text${highlight ? ` is-highlight-${highlight}` : ''}`}>
         <span className="playback__counter">
           {playback.stepIndex + 1}/{total}
         </span>
+        {highlight && (
+          <span className={`playback__highlight is-highlight-${highlight}`}>
+            {t(`flow.highlight.${highlight}`)}
+          </span>
+        )}
         <span className="playback__description">{step?.description}</span>
       </div>
     </div>

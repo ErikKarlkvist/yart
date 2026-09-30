@@ -141,6 +141,27 @@ describe('AgentSession med Claude Code', () => {
     session.stop();
   });
 
+  it('startar om den persistenta processen när arbetsbehörigheten ändras', async () => {
+    const c = collect();
+    const launched: string[] = [];
+    const runner: AgentRunner = {
+      ...fake(claudeRunner, claudeScript),
+      launch: (input) => {
+        launched.push(input.accessMode);
+        return fake(claudeRunner, claudeScript).launch(input);
+      },
+    };
+    const session = new AgentSession(tmpdir(), runner, context, c.events);
+    session.ask('read', 'never', 'read-only');
+    await c.until(() => c.states.at(-1) === 'idle');
+    session.ask('edit', 'never', 'workspace-write');
+    await c.until(() =>
+      c.entries.some((entry) => entry.kind === 'assistant' && entry.text === 'Reply to edit'),
+    );
+    expect(launched).toEqual(['read-only', 'workspace-write']);
+    session.stop();
+  });
+
   it('rapporterar när processen dör och startar om vid nästa fråga', async () => {
     const c = collect();
     const session = new AgentSession(tmpdir(), fake(claudeRunner, claudeScript), context, c.events);

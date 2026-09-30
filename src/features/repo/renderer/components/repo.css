@@ -84,34 +84,7 @@
   font-size: 12px;
 }
 
-/* Brancherna under repokortet i sidopanelen */
-.branch-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: var(--fg-muted);
-  font-size: 12px;
-}
-
-.branch-bar__field {
-  display: grid;
-  grid-template-columns: 84px 1fr;
-  align-items: center;
-  gap: 8px;
-}
-
-.branch-bar__run {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 5px 10px;
-  font-size: 12px;
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Mappmenyn i sidfoten */
+/* Mappmenyn i fönsterraden */
 .repo-menu {
   position: relative;
 }
@@ -126,7 +99,7 @@
 .repo-menu__popover {
   position: absolute;
   left: 0;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 6px);
   z-index: 50;
   min-width: 260px;
   padding: 8px;

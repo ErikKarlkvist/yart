@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { t } from '@/common/model/i18n';
+import { titleBarThemeChannel } from '@/application/ipc/channels';
+import { invokeChannel } from '@/common/renderer/ipc';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -35,6 +37,17 @@ export function useTheme(): [ThemePreference, (next: ThemePreference) => void] {
     } catch {
       // localStorage kan vara otillgängligt, temat gäller ändå för sessionen
     }
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const updateTitleBar = (): void => {
+      void invokeChannel(titleBarThemeChannel, {
+        dark: preference === 'dark' || (preference === 'system' && media.matches),
+      }).catch(console.error);
+    };
+    updateTitleBar();
+    media.addEventListener('change', updateTitleBar);
+    return () => {
+      media.removeEventListener('change', updateTitleBar);
+    };
   }, [preference]);
 
   const set = useCallback((next: ThemePreference) => {

@@ -9,7 +9,7 @@ const OPTIONS: readonly CycleOption<ThemePreference>[] = [
   { value: 'dark', icon: 'themeDark', label: THEME_LABELS.dark },
 ];
 
-/** Temaknappen i sidfoten: en ikon som stegar system, ljust, mörkt. */
+/** Temaknappen i fönsterraden: en ikon som stegar system, ljust, mörkt. */
 export function ThemeSelect(): JSX.Element {
   const [preference, setPreference] = useTheme();
   return (

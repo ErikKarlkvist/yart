@@ -6,6 +6,8 @@ const input = {
   skill: 'SKILL',
   prompt: 'hej',
   threadId: null,
+  approvalPolicy: 'never' as const,
+  accessMode: 'read-only' as const,
 };
 
 describe('claudeRunner', () => {
@@ -22,6 +24,13 @@ describe('claudeRunner', () => {
       message: { role: 'user', content: 'hej' },
     });
     expect(claudeRunner.message('igen').endsWith('\n')).toBe(true);
+    expect(launch.args).toContain('dontAsk');
+    expect(launch.args).toContain('Read,Glob,Grep,Bash');
+    const editable = claudeRunner.launch({ ...input, accessMode: 'workspace-write' });
+    expect(editable.args).toContain('acceptEdits');
+    expect(editable.args).not.toContain('--tools');
+    const resumed = claudeRunner.launch({ ...input, threadId: 'session-1' });
+    expect(resumed.args.slice(-2)).toEqual(['--resume', 'session-1']);
   });
 });
 
@@ -31,6 +40,9 @@ describe('codexRunner', () => {
     expect(first.command).toBe('codex');
     expect(first.args.slice(0, 2)).toEqual(['exec', '--json']);
     expect(first.args).toContain('read-only');
+    const editable = codexRunner.launch({ ...input, accessMode: 'workspace-write' });
+    expect(editable.args).toContain('workspace-write');
+    expect(first.args).toContain('approval_policy="never"');
     expect(first.args).toContain('mcp_servers.reverik.url="http://127.0.0.1:7390/mcp"');
     for (const tool of ['save_flow', 'save_document', 'save_review']) {
       expect(first.args).toContain(`mcp_servers.reverik.tools.${tool}.approval_mode="approve"`);
@@ -43,9 +55,18 @@ describe('codexRunner', () => {
     expect(next.args.slice(0, 3)).toEqual(['exec', 'resume', '--json']);
     expect(next.args).not.toContain('--sandbox');
     expect(next.args).toContain('sandbox_mode="read-only"');
+    const editableResume = codexRunner.launch({
+      ...input,
+      threadId: 'abc',
+      accessMode: 'workspace-write',
+    });
+    expect(editableResume.args).toContain('sandbox_mode="workspace-write"');
     expect(next.args).toContain('mcp_servers.reverik.tools.save_flow.approval_mode="approve"');
     expect(next.args.slice(-2)).toEqual(['abc', '-']);
     expect(next.stdin).toBe('mer');
+    const reviewed = codexRunner.launch({ ...input, approvalPolicy: 'on-request' });
+    expect(reviewed.args).toContain('approval_policy="on-request"');
+    expect(reviewed.args).toContain('approvals_reviewer="auto_review"');
   });
 });
 
@@ -83,6 +104,9 @@ describe('parseClaudeLine', () => {
   });
 
   it('ignorerar init, verktygsresultat och skräp', () => {
+    expect(
+      parseClaudeLine(JSON.stringify({ type: 'system', subtype: 'init', session_id: 'session-1' })),
+    ).toEqual([{ type: 'thread', id: 'session-1' }]);
     expect(parseClaudeLine(JSON.stringify({ type: 'system', subtype: 'init' }))).toEqual([]);
     expect(parseClaudeLine(JSON.stringify({ type: 'user', message: { content: [] } }))).toEqual([]);
     expect(parseClaudeLine('not json')).toEqual([]);

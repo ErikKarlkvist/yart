@@ -1,16 +1,7 @@
+@import './palette.css';
+
 /* Ljust tema är standard. Mörkt tas via systemet, eller tvingas med data-theme på <html>. */
 :root {
-  --bg: #f6f7f9;
-  --bg-panel: #ffffff;
-  --border: #dde1e8;
-  --fg: #1c2230;
-  --fg-muted: #667085;
-  --accent: #2f6fe4;
-  --danger: #b42318;
-  --danger-bg: rgb(180 35 24 / 10%);
-  --selection: rgb(47 111 228 / 25%);
-  --ok: #1a7f37;
-  --warn: #9a6700;
   color-scheme: light;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
@@ -20,33 +11,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0f1115;
-    --bg-panel: #161a22;
-    --border: #262c38;
-    --fg: #e6e8ee;
-    --fg-muted: #8b93a5;
-    --accent: #6ea8fe;
-    --danger: #ff8a8a;
-    --danger-bg: rgb(255 92 92 / 12%);
-    --selection: rgb(110 168 254 / 30%);
-    --ok: #57c76f;
-    --warn: #e3b341;
     color-scheme: dark;
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #0f1115;
-  --bg-panel: #161a22;
-  --border: #262c38;
-  --fg: #e6e8ee;
-  --fg-muted: #8b93a5;
-  --accent: #6ea8fe;
-  --danger: #ff8a8a;
-  --danger-bg: rgb(255 92 92 / 12%);
-  --selection: rgb(110 168 254 / 30%);
-  --ok: #57c76f;
-  --warn: #e3b341;
   color-scheme: dark;
 }
 
@@ -156,7 +125,7 @@ select:focus {
 .shell {
   display: grid;
   grid-template-columns: var(--sidebar-width, 300px) 1fr var(--side-width, 460px);
-  grid-template-rows: 1fr 28px;
+  grid-template-rows: 1fr 32px;
   grid-template-areas:
     'sidebar work side'
     'footer footer footer';
@@ -423,22 +392,10 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 0 16px 16px;
+  padding: 16px;
   border-right: 1px solid var(--border);
   background: var(--bg-panel);
   overflow-y: auto;
-}
-
-/* Luft överst i sidopanelen, flikraden ovanför bär trafikljusen */
-.shell__drag {
-  height: 8px;
-  flex-shrink: 0;
-}
-
-.shell__title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
 }
 
 .shell__panel-bar {
@@ -452,6 +409,31 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.shell__version {
+  flex: none;
+  min-width: 52px;
+}
+
+.shell__current-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.shell__current-branch span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell__window-items {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
 }
 
 .shell__tabs {
@@ -509,6 +491,7 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
+  gap: 12px;
   border-top: 1px solid var(--border);
   color: var(--fg-muted);
   font-size: 12px;
@@ -574,6 +557,32 @@ select:focus {
 .app__tabs {
   padding-left: 84px;
   -webkit-app-region: drag;
+  overflow: visible;
+}
+
+.app__tab-list {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-app-region: no-drag;
+}
+
+.app__tab-spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+.app__window-actions {
+  flex: none;
+  align-self: center;
+  -webkit-app-region: no-drag;
+}
+
+:root[data-platform='win32'] .app__tabs {
+  padding-left: 12px;
+  padding-right: 138px;
 }
 
 .tab {

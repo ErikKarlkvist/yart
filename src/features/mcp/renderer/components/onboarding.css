@@ -76,7 +76,7 @@
   border: none;
   border-radius: 8px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -96,7 +96,7 @@
 }
 
 .onboarding__check.is-ok {
-  color: var(--ok, #3aa55d);
+  color: var(--ok);
 }
 
 .onboarding__check.is-bad {

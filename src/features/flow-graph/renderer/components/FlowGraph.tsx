@@ -11,7 +11,7 @@ import {
 } from '@xyflow/react';
 import { type JSX, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { type FlowEdge } from '@/common/model/flow';
-import { type FlowChange, type FlowDiff, type ReviewFinding } from '@/common/model/review';
+import { type FlowDiff, type ReviewFinding } from '@/common/model/review';
 import { type AskTarget } from '../../model/ask';
 import {
   type GraphModel,
@@ -30,6 +30,7 @@ import {
   type Direction,
 } from '../../model/layout';
 import { type StepStatus, stepView } from '../../model/playback';
+import { combinedHighlight, edgeHighlight } from '../../model/highlight';
 import { type EdgeMemberData, FlowEdgeView, type GraphEdge } from './FlowEdgeView';
 import { FlowNodeView, type GraphNode } from './FlowNodeView';
 import { GraphStateContext } from './GraphStateContext';
@@ -238,7 +239,7 @@ export function FlowGraph({
         response: m.response,
         status: view.edges.get(m.id) ?? 'pending',
         steps: stepsByEdge.get(m.id) ?? [],
-        change: diff?.edges.get(m.id),
+        change: diff?.edges.get(m.id) ?? m.highlight,
         findings: findings.filter((f) => f.edgeId === m.id),
       }));
       return {
@@ -261,7 +262,7 @@ export function FlowGraph({
           pinned: pinnedEdge === edge.id,
           onTogglePinned: togglePinned,
           onGoToStep,
-          change: combinedChange(members),
+          highlight: combinedHighlight(members.map((m) => edgeHighlight(m.change, m.findings))),
           focused:
             focusedFindingId !== null &&
             members.some((m) => m.findings.some((f) => f.id === focusedFindingId)),
@@ -399,7 +400,15 @@ export function FlowGraph({
       <GraphStateContext.Provider value={graphState}>
         <svg className="graph__defs">
           <defs>
-            {[...STATUSES, 'relation'].map((status) => (
+            {[
+              ...STATUSES,
+              'relation',
+              'highlight-added',
+              'highlight-changed',
+              'highlight-removed',
+              'highlight-problem',
+              'highlight-warning',
+            ].map((status) => (
               <marker
                 key={status}
                 id={`graph-arrow-${status}`}
@@ -459,13 +468,6 @@ function edgeHandles(direction: Direction): { sourceHandle: string; targetHandle
     case 'forward':
       return { sourceHandle: 'out-right', targetHandle: 'in-left' };
   }
-}
-
-function combinedChange(
-  members: readonly { change: FlowChange | undefined }[],
-): FlowChange | undefined {
-  if (members.every((m) => m.change === 'removed')) return 'removed';
-  return members.find((m) => m.change !== undefined && m.change !== 'removed')?.change;
 }
 
 function combinedStatus(members: readonly { status: StepStatus }[]): StepStatus {
