@@ -281,5 +281,6 @@
   "panel.analyses": "Analyses",
   "repo.dismissError": "Click to dismiss",
   "mcp.named": "Named the conversation \"{title}\".",
-  "repo.reload": "Fetch and reload"
+  "repo.reload": "Fetch and reload",
+  "agent.toolCalls": "{count} tool calls"
 }

@@ -158,7 +158,16 @@ export function installMockBridge(): void {
       entry({ kind: 'user', text: prompt });
       emit('agent:event', { type: 'state', repoPath, conversationId, state: 'busy' });
       setTimeout(() => {
-        entry({ kind: 'tool', name: 'save_flow' });
+        // Som en riktig agent: namnger, läser en del och sparar
+        for (const name of [
+          'name_conversation',
+          'list_analyses',
+          'Read',
+          'Grep',
+          'Read',
+          'save_flow',
+        ])
+          entry({ kind: 'tool', name });
         entry({ kind: 'assistant', text: t('app.mockAgentReply') });
         emit('agent:event', { type: 'state', repoPath, conversationId, state: 'idle' });
       }, 1200);

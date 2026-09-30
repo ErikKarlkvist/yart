@@ -4,6 +4,7 @@ import { Icon } from '@/common/renderer/Icon';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { AGENT_MODELS, AGENT_PERMISSIONS } from '@/common/model/agent';
 import { useAgent } from '../AgentContext';
+import { groupEntries } from '../../model/groupEntries';
 import { useSetup } from '@/features/mcp';
 import { defaultBaseBranch, listBranchesChannel, useRepo } from '@/features/repo';
 import './agent.css';
@@ -280,31 +281,29 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
           </p>
         )}
         <ol className="agent__list">
-          {entries.map((entry, index) => (
-            <li key={`${entry.at}:${index}`} className={`agent__entry agent__entry--${entry.kind}`}>
-              {entry.kind === 'tool' ? (
-                <span className="agent__tool">
-                  <Icon name="link" size="sm" /> {entry.name}
-                </span>
-              ) : (
+          {groupEntries(entries).map((group) =>
+            group.kind === 'tools' ? (
+              <ToolGroup key={group.key} names={group.tools.map((tool) => tool.name)} />
+            ) : (
+              <li key={group.key} className={`agent__entry agent__entry--${group.entry.kind}`}>
                 <>
                   <span className="agent__time">
-                    {new Date(entry.at).toLocaleTimeString(LOCALE, { timeStyle: 'short' })}
+                    {new Date(group.entry.at).toLocaleTimeString(LOCALE, { timeStyle: 'short' })}
                   </span>
-                  <p className="agent__text">{entry.text}</p>
-                  {entry.kind === 'error' && isLoginError(entry.text) && (
+                  <p className="agent__text">{group.entry.text}</p>
+                  {group.entry.kind === 'error' && isLoginError(group.entry.text) && (
                     <p className="agent__hint">{t('agent.loginHint')}</p>
                   )}
-                  {entry.kind === 'error' && lastPrompt && (
+                  {group.entry.kind === 'error' && lastPrompt && (
                     <button type="button" className="text-button" onClick={copyPrompt}>
                       <Icon name="copy" size="sm" />{' '}
                       {copied ? t('side.copied') : t('agent.copyPrompt')}
                     </button>
                   )}
                 </>
-              )}
-            </li>
-          ))}
+              </li>
+            ),
+          )}
           {approvals.map((approval) => (
             <li key={approval.id} className="agent__entry agent__entry--approval">
               <p className="agent__approval-title">
@@ -347,4 +346,39 @@ function modelLabel(model: string): string {
   return model === 'default'
     ? t('agent.modelDefault')
     : `${(model[0] ?? '').toUpperCase()}${model.slice(1)}`;
+}
+
+/**
+ * Verktygsanrop i följd som en rad: det senaste anropet och hur många det
+ * var. Klick fäller ut hela listan.
+ */
+function ToolGroup({ names }: { names: string[] }): JSX.Element {
+  const [open, setOpen] = useState(false);
+  const latest = names.at(-1) ?? '';
+  return (
+    <li className="agent__entry agent__entry--tool">
+      <button
+        type="button"
+        className="agent__tool"
+        aria-expanded={open}
+        disabled={names.length < 2}
+        onClick={() => {
+          setOpen((o) => !o);
+        }}
+      >
+        <Icon name="link" size="sm" /> {latest}
+        {names.length > 1 && (
+          <span className="agent__tool-count">{t('agent.toolCalls', { count: names.length })}</span>
+        )}
+        {names.length > 1 && <Icon name={open ? 'chevronDown' : 'chevronRight'} size="sm" />}
+      </button>
+      {open && (
+        <ol className="agent__tool-list">
+          {names.map((name, i) => (
+            <li key={i}>{name}</li>
+          ))}
+        </ol>
+      )}
+    </li>
+  );
 }
