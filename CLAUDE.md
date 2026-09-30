@@ -11,7 +11,9 @@ Frågor från grafen, reviewuppdrag och panelen Agent går till en headless agen
 som appen kör per repo (`src/features/agent/`). Claude Code körs som en långlivad
 `claude -p` med strömmande JSON på stdin och stdout; Codex som `codex exec --json` per
 fråga som återupptar tråden. Båda får Reveriks MCP-server som enda server och skillen
-som instruktioner, och bara läs- och leveransverktyg är tillåtna. Guiden vid första
+som instruktioner, och har skrivrätt i repot. Läget under textrutan styr godkännanden:
+Auto ändrar filer utan att fråga, Manual frågar först. Claude Code frågar via MCP-verktyget
+`permission_prompt`, som bara finns för appens egna sessioner, och frågan visas i panelen. Guiden vid första
 starten väljer mellan Claude Code, Codex och extern AI, och valet styr vad appen kör. Svaren visas i panelen och
 det agenten sparar landar i listan. Går sessionen inte att starta visas felet med
 prompten att kopiera. Externa agenter kan fortfarande leverera via MCP.

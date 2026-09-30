@@ -161,4 +161,48 @@ describe('startMcpServer', () => {
     const response = await fetch(`http://127.0.0.1:${handle.port}/`);
     expect(response.status).toBe(404);
   });
+
+  it('frågar användaren om lov åt appens egen agent, men visar inte verktyget för andra', async () => {
+    const asked: { conversationId: string; tool: string }[] = [];
+    const approving = await startMcpServer(
+      {
+        ...fakeDeps(activity, delivered),
+        requestApproval: (conversationId, request) => {
+          asked.push({ conversationId, tool: request.tool });
+          return Promise.resolve(
+            request.tool === 'Bash' ? { allow: true } : { allow: false, message: 'No.' },
+          );
+        },
+      },
+      { ports: [0] },
+    );
+    const own = new Client({ name: 'claude-code', version: '1' });
+    await own.connect(
+      new StreamableHTTPClientTransport(new URL(`${approving.url}?conversation=c1`)) as Transport,
+    );
+    try {
+      const allowed = await own.callTool({
+        name: 'permission_prompt',
+        arguments: { tool_name: 'Bash', input: { command: 'npm test' } },
+      });
+      expect(JSON.parse(textOf(allowed))).toEqual({
+        behavior: 'allow',
+        updatedInput: { command: 'npm test' },
+      });
+      const denied = await own.callTool({
+        name: 'permission_prompt',
+        arguments: { tool_name: 'Edit', input: { file_path: 'a.ts' } },
+      });
+      expect(JSON.parse(textOf(denied))).toEqual({ behavior: 'deny', message: 'No.' });
+      expect(asked).toEqual([
+        { conversationId: 'c1', tool: 'Bash' },
+        { conversationId: 'c1', tool: 'Edit' },
+      ]);
+      const { tools } = await client.listTools();
+      expect(tools.map((tool) => tool.name)).not.toContain('permission_prompt');
+    } finally {
+      await own.close();
+      await approving.close();
+    }
+  });
 });

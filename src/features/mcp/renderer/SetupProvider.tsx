@@ -1,44 +1,48 @@
 import { type JSX, type ReactNode, useMemo, useState } from 'react';
 import { readStored, writeStored } from '@/common/renderer/storage';
 import { useStoredChoice } from '@/common/renderer/useStored';
-import { ACCESS_MODES, AGENT_KINDS, APPROVAL_POLICIES } from '@/common/model/agent';
+import {
+  AGENT_KINDS,
+  AGENT_MODELS,
+  AGENT_PERMISSIONS,
+  type AgentPermission,
+  type RunnableAgent,
+} from '@/common/model/agent';
 import { SetupContext } from './SetupContext';
 
 /** Globala för appen, inte per flik: guiden ska bara behöva stängas en gång. */
 const ONBOARDED_KEY = 'reverik.onboarded';
 const AGENT_KEY = 'reverik.agent';
-const APPROVAL_KEY = 'reverik.approvalPolicy';
-const CLAUDE_ACCESS_KEY = 'reverik.claudeAccessMode';
-const CODEX_ACCESS_KEY = 'reverik.codexAccessMode';
+const PERMISSION_KEY = 'reverik.agentPermission';
+const CLAUDE_MODEL_KEY = 'reverik.claudeModel';
+const CODEX_MODEL_KEY = 'reverik.codexModel';
 
 export function SetupProvider({ children }: { children: ReactNode }): JSX.Element {
   const [guideOpen, setGuideOpen] = useState(() => readStored(ONBOARDED_KEY) !== 'true');
   const [agent, setAgent] = useStoredChoice(AGENT_KEY, AGENT_KINDS, 'claude');
-  const [approvalPolicy, setApprovalPolicy] = useStoredChoice(
-    APPROVAL_KEY,
-    APPROVAL_POLICIES,
-    'never',
+  const [permission, setPermission] = useStoredChoice(PERMISSION_KEY, AGENT_PERMISSIONS, 'auto');
+  const [claudeModel, setClaudeModel] = useStoredChoice(
+    CLAUDE_MODEL_KEY,
+    AGENT_MODELS.claude,
+    'default',
   );
-  const [claudeAccess, setClaudeAccess] = useStoredChoice(
-    CLAUDE_ACCESS_KEY,
-    ACCESS_MODES,
-    'read-only',
-  );
-  const [codexAccess, setCodexAccess] = useStoredChoice(
-    CODEX_ACCESS_KEY,
-    ACCESS_MODES,
-    'read-only',
+  const [codexModel, setCodexModel] = useStoredChoice(
+    CODEX_MODEL_KEY,
+    AGENT_MODELS.codex,
+    'default',
   );
   const api = useMemo(
     () => ({
       agent,
       setAgent,
-      approvalPolicy,
-      setApprovalPolicy,
-      accessModes: { claude: claudeAccess, codex: codexAccess },
-      setAccessMode: (target: 'claude' | 'codex', mode: 'read-only' | 'workspace-write') => {
-        if (target === 'claude') setClaudeAccess(mode);
-        else setCodexAccess(mode);
+      permission,
+      setPermission: (next: AgentPermission) => {
+        setPermission(next);
+      },
+      models: { claude: claudeModel, codex: codexModel },
+      setModel: (target: RunnableAgent, model: string) => {
+        if (target === 'claude') setClaudeModel(model);
+        else setCodexModel(model);
       },
       guideOpen,
       showGuide: () => {
@@ -52,12 +56,12 @@ export function SetupProvider({ children }: { children: ReactNode }): JSX.Elemen
     [
       agent,
       setAgent,
-      approvalPolicy,
-      setApprovalPolicy,
-      claudeAccess,
-      codexAccess,
-      setClaudeAccess,
-      setCodexAccess,
+      permission,
+      setPermission,
+      claudeModel,
+      codexModel,
+      setClaudeModel,
+      setCodexModel,
       guideOpen,
     ],
   );

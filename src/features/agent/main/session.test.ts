@@ -141,24 +141,24 @@ describe('AgentSession med Claude Code', () => {
     session.stop();
   });
 
-  it('startar om den persistenta processen när arbetsbehörigheten ändras', async () => {
+  it('startar om den persistenta processen när läget eller modellen ändras', async () => {
     const c = collect();
     const launched: string[] = [];
     const runner: AgentRunner = {
       ...fake(claudeRunner, claudeScript),
       launch: (input) => {
-        launched.push(input.accessMode);
+        launched.push(`${input.permission}/${input.model}`);
         return fake(claudeRunner, claudeScript).launch(input);
       },
     };
     const session = new AgentSession(tmpdir(), runner, context, c.events);
-    session.ask('read', 'never', 'read-only');
+    session.ask('read', { permission: 'manual', model: 'default' });
     await c.until(() => c.states.at(-1) === 'idle');
-    session.ask('edit', 'never', 'workspace-write');
+    session.ask('edit', { permission: 'auto', model: 'opus' });
     await c.until(() =>
       c.entries.some((entry) => entry.kind === 'assistant' && entry.text === 'Reply to edit'),
     );
-    expect(launched).toEqual(['read-only', 'workspace-write']);
+    expect(launched).toEqual(['manual/default', 'auto/opus']);
     session.stop();
   });
 

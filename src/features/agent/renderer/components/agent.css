@@ -25,8 +25,7 @@
 }
 
 .agent__mode-picker {
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
+  padding: 2px 0 12px;
 }
 
 .agent__mode-heading {
@@ -82,8 +81,7 @@
 .agent__review-branches {
   display: grid;
   gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
+  padding: 0 0 12px;
 }
 
 .agent__review-branches label {
@@ -100,59 +98,6 @@
 }
 .agent__review-branches p {
   margin: 0;
-}
-
-.agent__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.agent__approval {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border);
-  color: var(--fg-muted);
-  font-size: 12px;
-}
-
-.agent__approval select {
-  min-width: 0;
-  max-width: 210px;
-  padding: 4px 6px;
-  font-size: 12px;
-}
-
-.agent__state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--fg-muted);
-  font-size: 12px;
-}
-
-.agent__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--fg-muted);
-}
-
-.agent__state.is-busy .agent__dot {
-  background: var(--accent);
-}
-
-.agent__state.is-idle .agent__dot {
-  background: var(--ok);
-}
-
-.agent__state.is-failed .agent__dot {
-  background: var(--danger);
 }
 
 .agent__scroll {
@@ -227,11 +172,6 @@
   border-top: 1px solid var(--border);
 }
 
-.agent__compose--initial {
-  border-top: 0;
-  border-bottom: 1px solid var(--border);
-}
-
 .agent__input {
   width: 100%;
   padding: 8px;
@@ -251,8 +191,72 @@
 .agent__compose-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 4px;
   margin-top: 6px;
+}
+
+/* Läge och modell under textrutan, tysta tills man pekar på dem */
+.agent__setting {
+  max-width: 150px;
+  padding: 3px 6px;
+  border-color: transparent;
+  background: none;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.agent__setting:hover,
+.agent__setting:focus {
+  border-color: var(--border);
+  color: var(--fg);
+}
+
+.agent__spacer {
+  flex: 1;
+}
+
+.agent__stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Något agenten väntar på lov för */
+.agent__entry--approval {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+}
+
+.agent__approval-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.agent__approval-detail {
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: var(--bg-panel);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.agent__approval-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.agent__allow {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .agent__hint {

@@ -32,6 +32,7 @@ import {
   faRotateLeft,
   faRoute,
   faServer,
+  faStop,
   faSun,
   faTableColumns,
   faTriangleExclamation,
@@ -98,6 +99,7 @@ const ICONS = {
   views: faTableColumns,
   user: faUser,
   clock: faClock,
+  stop: faStop,
 } satisfies Record<string, IconDefinition>;
 
 export type IconName = keyof typeof ICONS;

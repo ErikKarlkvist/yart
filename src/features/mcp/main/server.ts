@@ -5,6 +5,11 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { type Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { type CallToolResult, isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import {
+  type ApprovalDecision,
+  type ApprovalRequest,
+  PERMISSION_PROMPT_TOOL,
+} from '@/common/model/agent';
 import { APP_NAME } from '@/common/model/brand';
 import { documentSchema } from '@/common/model/document';
 import { flowSchema } from '@/common/model/flow';
@@ -55,6 +60,8 @@ export interface McpDeps {
     via: { tool: string; client: string },
   ) => Promise<McpDeliverResult>;
   onActivity?: (activity: McpActivity) => void;
+  /** Frågar användaren om lov åt appens egen agent i konversationen */
+  requestApproval?: (conversationId: string, request: ApprovalRequest) => Promise<ApprovalDecision>;
 }
 
 export interface McpServerHandle {
@@ -120,7 +127,8 @@ export async function startMcpServer(
       enableDnsRebindingProtection: true,
       allowedHosts: [`${MCP_HOST}:${port}`, `localhost:${port}`],
     });
-    const server = createSession(deps);
+    // Appens egen agent ansluter med sin konversation i adressen, externa agenter utan
+    const server = createSession(deps, url.searchParams.get('conversation'));
     const session = { server, transport };
     transport.onclose = () => {
       if (transport.sessionId) sessions.delete(transport.sessionId);
@@ -198,7 +206,7 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
 const repoParam = z.string().min(1).describe(REPO_PARAM_DESCRIPTION);
 
 /** En McpServer med Reveriks verktyg och guiden som resurs. */
-function createSession(deps: McpDeps): McpServer {
+function createSession(deps: McpDeps, conversationId: string | null): McpServer {
   const server = new McpServer({ name: 'reverik', version: deps.version });
   const client = (): string => server.server.getClientVersion()?.name ?? t('mcp.unknownClient');
 
@@ -268,6 +276,32 @@ function createSession(deps: McpDeps): McpServer {
       const summary = t(key, { kind, name, title: result.title });
       return { result: text(summary), summary };
     });
+
+  const requestApproval = deps.requestApproval;
+  if (conversationId !== null && requestApproval) {
+    // Claude Code anropar verktyget när något kräver lov och väntar på svaret.
+    server.registerTool(
+      PERMISSION_PROMPT_TOOL,
+      {
+        description: `Asks the user in ${APP_NAME} for permission to use a tool.`,
+        inputSchema: {
+          tool_name: z.string(),
+          input: z.record(z.string(), z.unknown()),
+          tool_use_id: z.string().optional(),
+        },
+      },
+      async ({ tool_name, input }) => {
+        const decision = await requestApproval(conversationId, { tool: tool_name, input });
+        return text(
+          JSON.stringify(
+            decision.allow
+              ? { behavior: 'allow', updatedInput: input }
+              : { behavior: 'deny', message: decision.message },
+          ),
+        );
+      },
+    );
+  }
 
   server.registerResource(
     'guide',

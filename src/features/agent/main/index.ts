@@ -1,9 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import { app } from 'electron';
 import { join } from 'node:path';
 import { emitEvent, handleChannel } from '@/common/main/ipc';
 import { t } from '@/common/model/i18n';
 import {
   agentEvent,
+  answerApprovalChannel,
   askAgentChannel,
   checkAgentChannel,
   createConversationChannel,
@@ -11,7 +13,14 @@ import {
   listConversationsChannel,
   stopAgentChannel,
 } from '../ipc/channels';
-import { ACCESS_MODES, APPROVAL_POLICIES, type RunnableAgent } from '@/common/model/agent';
+import {
+  AGENT_MODELS,
+  AGENT_PERMISSIONS,
+  type ApprovalDecision,
+  type ApprovalRequest,
+  type RunnableAgent,
+} from '@/common/model/agent';
+import { describeApproval } from '../model/approval';
 import { RUNNERS } from '../model/protocol';
 import { checkAgent } from './check';
 import { AgentSession } from './session';
@@ -26,9 +35,44 @@ export interface AgentDeps {
   skill: () => string;
 }
 
-export function registerAgentHandlers(deps: AgentDeps): void {
+export interface AgentHandle {
+  /**
+   * Frågar användaren om lov för det agenten i konversationen vill göra.
+   * Svaret kommer när användaren trycker Allow eller Deny i panelen.
+   */
+  requestApproval: (conversationId: string, request: ApprovalRequest) => Promise<ApprovalDecision>;
+}
+
+interface Waiting {
+  repoPath: string;
+  conversationId: string;
+  resolve: (decision: ApprovalDecision) => void;
+}
+
+export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
   const store = new ConversationStore(join(app.getPath('userData'), 'conversations'));
   const sessions = new Map<string, AgentSession>();
+  const repoOf = new Map<string, string>();
+  const waiting = new Map<string, Waiting>();
+
+  const settle = (id: string, decision: ApprovalDecision): void => {
+    const entry = waiting.get(id);
+    if (!entry) return;
+    waiting.delete(id);
+    entry.resolve(decision);
+    emitEvent(agentEvent, {
+      type: 'approval-done',
+      repoPath: entry.repoPath,
+      conversationId: entry.conversationId,
+      id,
+    });
+  };
+  /** Nekar allt som väntar i konversationen, när den stoppas */
+  const denyWaiting = (conversationId: string): void => {
+    for (const [id, entry] of waiting)
+      if (entry.conversationId === conversationId)
+        settle(id, { allow: false, message: t('agent.approvalStopped') });
+  };
 
   const session = (
     repoPath: string,
@@ -39,13 +83,19 @@ export function registerAgentHandlers(deps: AgentDeps): void {
   ): AgentSession => {
     const existing = sessions.get(conversationId);
     if (existing) return existing;
+    repoOf.set(conversationId, repoPath);
     const created = new AgentSession(
       repoPath,
       RUNNERS[agent],
       () => {
         const mcpUrl = deps.mcpUrl();
         if (mcpUrl === null) throw new Error(t('agent.noServer'));
-        return { mcpUrl, skill: `${deps.skill()}\n\n${instructions}` };
+        // Claude Code frågar om lov via MCP-servern, som behöver veta vilken konversation som frågar
+        const url =
+          agent === 'claude'
+            ? `${mcpUrl}?conversation=${encodeURIComponent(conversationId)}`
+            : mcpUrl;
+        return { mcpUrl: url, skill: `${deps.skill()}\n\n${instructions}` };
       },
       {
         onEntry: (entry) => {
@@ -70,48 +120,69 @@ export function registerAgentHandlers(deps: AgentDeps): void {
   handleChannel(createConversationChannel, ({ repoPath, agent, mode, reviewBranches }) =>
     store.create(repoPath, agent, mode, reviewBranches),
   );
-  handleChannel(
-    askAgentChannel,
-    async ({ repoPath, conversationId, prompt, approvalPolicy, accessMode }) => {
-      if (!(ACCESS_MODES as readonly unknown[]).includes(accessMode))
-        throw new Error('Invalid agent access mode');
-      if (!(APPROVAL_POLICIES as readonly unknown[]).includes(approvalPolicy))
-        throw new Error('Invalid approval policy');
-      const conversation = await store.get(repoPath, conversationId);
-      if (!conversation) throw new Error('Conversation not found');
-      if (conversation.agent === 'manual') {
-        const entry = {
-          at: new Date().toISOString(),
-          kind: 'error' as const,
-          text: t('agent.unsupported'),
-        };
-        const question = { at: entry.at, kind: 'user' as const, text: prompt };
-        await store.append(repoPath, conversationId, question);
-        await store.append(repoPath, conversationId, entry);
-        emitEvent(agentEvent, { type: 'entry', repoPath, conversationId, entry: question });
-        emitEvent(agentEvent, {
-          type: 'entry',
-          repoPath,
-          conversationId,
-          entry,
-        });
-        return;
-      }
-      session(
+  handleChannel(askAgentChannel, async ({ repoPath, conversationId, prompt, settings }) => {
+    if (!(AGENT_PERMISSIONS as readonly unknown[]).includes(settings.permission))
+      throw new Error('Invalid agent permission mode');
+    const conversation = await store.get(repoPath, conversationId);
+    if (!conversation) throw new Error('Conversation not found');
+    if (conversation.agent === 'manual') {
+      const entry = {
+        at: new Date().toISOString(),
+        kind: 'error' as const,
+        text: t('agent.unsupported'),
+      };
+      const question = { at: entry.at, kind: 'user' as const, text: prompt };
+      await store.append(repoPath, conversationId, question);
+      await store.append(repoPath, conversationId, entry);
+      emitEvent(agentEvent, { type: 'entry', repoPath, conversationId, entry: question });
+      emitEvent(agentEvent, {
+        type: 'entry',
         repoPath,
         conversationId,
-        conversation.agent,
-        conversation.threadId,
-        conversationInstructions(conversation.mode, conversation.reviewBranches),
-      ).ask(prompt, approvalPolicy, accessMode);
-    },
-  );
+        entry,
+      });
+      return;
+    }
+    session(
+      repoPath,
+      conversationId,
+      conversation.agent,
+      conversation.threadId,
+      conversationInstructions(conversation.mode, conversation.reviewBranches),
+    ).ask(prompt, {
+      permission: settings.permission,
+      // En modell agenten inte känner till faller tillbaka på standard
+      model: AGENT_MODELS[conversation.agent].includes(settings.model) ? settings.model : 'default',
+    });
+  });
   handleChannel(stopAgentChannel, ({ conversationId }) => {
+    denyWaiting(conversationId);
     sessions.get(conversationId)?.stop();
+  });
+  handleChannel(answerApprovalChannel, ({ id, allow }) => {
+    settle(id, allow ? { allow: true } : { allow: false, message: t('agent.approvalDenied') });
   });
   handleChannel(checkAgentChannel, ({ agent }) => checkAgent(agent));
 
   app.on('before-quit', () => {
     for (const running of sessions.values()) running.stop();
   });
+
+  return {
+    requestApproval: (conversationId, request) => {
+      const repoPath = repoOf.get(conversationId);
+      if (repoPath === undefined)
+        return Promise.resolve({ allow: false, message: t('agent.approvalUnknown') });
+      const id = randomUUID();
+      return new Promise((resolve) => {
+        waiting.set(id, { repoPath, conversationId, resolve });
+        emitEvent(agentEvent, {
+          type: 'approval',
+          repoPath,
+          conversationId,
+          approval: { id, tool: request.tool, detail: describeApproval(request.input) },
+        });
+      });
+    },
+  };
 }

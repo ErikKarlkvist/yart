@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import { type PendingApproval } from '../ipc/channels';
 import { type AgentEntry, type AgentState } from '../model/protocol';
 import {
   type ConversationMode,
@@ -9,7 +10,7 @@ import {
 export interface AgentApi {
   conversations: ConversationSummary[];
   activeId: string | null;
-  mode: ConversationMode | null;
+  mode: ConversationMode;
   entries: AgentEntry[];
   state: AgentState;
   /** Senaste frågan, att kopiera när agenten inte gick att nå */
@@ -18,6 +19,9 @@ export interface AgentApi {
   /** Startar en ny konversation i läget och skickar frågan där */
   askNew: (prompt: string, mode: ConversationMode) => void;
   stop: () => void;
+  /** Det agenten i den öppna konversationen väntar på lov för */
+  approvals: PendingApproval[];
+  answer: (id: string, allow: boolean) => void;
   choose: (id: string) => void;
   startNew: () => void;
   selectMode: (mode: ConversationMode) => void;

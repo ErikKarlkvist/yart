@@ -174,14 +174,14 @@ function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
 /** Providers som beror på valt repo. */
 function Providers({ children }: { children: JSX.Element }): JSX.Element {
   const { repo } = useRepo();
-  const { agent, approvalPolicy, accessModes } = useSetup();
+  const { agent, permission, models } = useSetup();
   return (
     <AnalysisProvider repoPath={repo?.path ?? null}>
       <AgentProvider
         repoPath={repo?.path ?? null}
         agent={agent}
-        approvalPolicy={approvalPolicy}
-        accessModes={accessModes}
+        permission={permission}
+        models={models}
       >
         {children}
       </AgentProvider>

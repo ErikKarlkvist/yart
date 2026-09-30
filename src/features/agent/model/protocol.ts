@@ -4,7 +4,11 @@
  * tolkningen av raderna processerna skriver.
  */
 
-import { type AccessMode, type ApprovalPolicy, type RunnableAgent } from '@/common/model/agent';
+import {
+  type AgentPermission,
+  PERMISSION_PROMPT_TOOL,
+  type RunnableAgent,
+} from '@/common/model/agent';
 
 export type AgentState =
   /** Ingen process, eller processen väntar på nästa fråga */
@@ -52,11 +56,19 @@ const ALLOWED_TOOLS: readonly string[] = [
   'mcp__reverik__save_review',
 ];
 
+/**
+ * Hur länge Claude Code väntar på ett MCP-verktyg. Godkännanden väntar på
+ * användaren, så gränsen är en timme i stället för standardens.
+ */
+const MCP_TOOL_TIMEOUT_MS = String(60 * 60 * 1000);
+
 interface AgentLaunch {
   command: string;
   args: string[];
   /** Skrivs på stdin direkt efter start, för processer som tar frågan där */
   stdin?: string;
+  /** Extra miljövariabler för processen */
+  env?: Record<string, string>;
 }
 
 /** Det en runner behöver veta för att starta eller fortsätta. */
@@ -67,8 +79,9 @@ export interface LaunchInput {
   prompt: string;
   /** Tråden att fortsätta, null vid första frågan */
   threadId: string | null;
-  approvalPolicy: ApprovalPolicy;
-  accessMode: AccessMode;
+  permission: AgentPermission;
+  /** Modellen att köra, `default` låter agenten välja */
+  model: string;
 }
 
 /** Det som en rad från processen betyder för panelen. */
@@ -98,7 +111,7 @@ export interface AgentRunner {
 export const claudeRunner: AgentRunner = {
   kind: 'claude',
   persistent: true,
-  launch: ({ mcpUrl, skill, prompt, threadId, accessMode }) => ({
+  launch: ({ mcpUrl, skill, prompt, threadId, permission, model }) => ({
     command: 'claude',
     args: [
       '-p',
@@ -112,35 +125,41 @@ export const claudeRunner: AgentRunner = {
       JSON.stringify({ mcpServers: { reverik: { type: 'http', url: mcpUrl } } }),
       '--allowedTools',
       ...ALLOWED_TOOLS,
+      // Auto godkänner filändringar själv, Manual frågar. Allt som kräver lov går till panelen.
       '--permission-mode',
-      accessMode === 'workspace-write' ? 'acceptEdits' : 'dontAsk',
-      ...(accessMode === 'read-only' ? ['--tools', 'Read,Glob,Grep,Bash'] : []),
+      permission === 'auto' ? 'acceptEdits' : 'default',
+      '--permission-prompt-tool',
+      `mcp__reverik__${PERMISSION_PROMPT_TOOL}`,
+      ...(model === 'default' ? [] : ['--model', model]),
       '--append-system-prompt',
       skill,
       ...(threadId ? ['--resume', threadId] : []),
     ],
     stdin: claudeMessage(prompt),
+    env: { MCP_TOOL_TIMEOUT: MCP_TOOL_TIMEOUT_MS },
   }),
   message: claudeMessage,
   parse: parseClaudeLine,
 };
 
 /**
- * Codex: `codex exec --json` per fråga, i skrivskyddad sandlåda utan
- * godkännanden, med Reveriks MCP-server som konfiguration. Följdfrågor
+ * Codex: `codex exec --json` per fråga, med skrivrätt i repot och Reveriks
+ * MCP-server som konfiguration. exec kan inte fråga användaren, så Manual
+ * låter Codex automatiska granskare godkänna i stället. Följdfrågor
  * återupptar tråden. Skillen inleder första frågan eftersom exec saknar
  * systemprompt.
  */
 export const codexRunner: AgentRunner = {
   kind: 'codex',
   persistent: false,
-  launch: ({ mcpUrl, skill, prompt, threadId, approvalPolicy, accessMode }) => {
+  launch: ({ mcpUrl, skill, prompt, threadId, permission, model }) => {
     const shared = [
       '--json',
       '--skip-git-repo-check',
+      ...(model === 'default' ? [] : ['-m', model]),
       '-c',
-      `approval_policy="${approvalPolicy}"`,
-      ...(approvalPolicy === 'on-request' ? ['-c', 'approvals_reviewer="auto_review"'] : []),
+      `approval_policy="${permission === 'auto' ? 'never' : 'on-request'}"`,
+      ...(permission === 'manual' ? ['-c', 'approvals_reviewer="auto_review"'] : []),
       '-c',
       `mcp_servers.reverik.url=${JSON.stringify(mcpUrl)}`,
       ...(['save_flow', 'save_document', 'save_review'] as const).flatMap((tool) => [
@@ -153,8 +172,8 @@ export const codexRunner: AgentRunner = {
       command: 'codex',
       args:
         threadId === null
-          ? ['exec', ...shared, '--sandbox', accessMode, '-']
-          : ['exec', 'resume', ...shared, '-c', `sandbox_mode="${accessMode}"`, threadId, '-'],
+          ? ['exec', ...shared, '--sandbox', 'workspace-write', '-']
+          : ['exec', 'resume', ...shared, '-c', 'sandbox_mode="workspace-write"', threadId, '-'],
       stdin: text,
     };
   },

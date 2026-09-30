@@ -1,19 +1,15 @@
 import { createContext, useContext } from 'react';
-import {
-  type AccessMode,
-  type AgentKind,
-  type ApprovalPolicy,
-  type RunnableAgent,
-} from '@/common/model/agent';
+import { type AgentKind, type AgentPermission, type RunnableAgent } from '@/common/model/agent';
 
-/** Delat mellan guiden och Anslut-panelen: vald agent och om guiden är öppen. */
+/** Delat mellan guiden, Anslut-panelen och agentpanelen: vald agent, läge och modell. */
 export interface SetupApi {
   agent: AgentKind;
   setAgent: (agent: AgentKind) => void;
-  approvalPolicy: ApprovalPolicy;
-  setApprovalPolicy: (policy: ApprovalPolicy) => void;
-  accessModes: Readonly<Record<RunnableAgent, AccessMode>>;
-  setAccessMode: (agent: RunnableAgent, mode: AccessMode) => void;
+  /** Auto eller Manual, gemensamt för agenterna */
+  permission: AgentPermission;
+  setPermission: (permission: AgentPermission) => void;
+  models: Readonly<Record<RunnableAgent, string>>;
+  setModel: (agent: RunnableAgent, model: string) => void;
   /** Guiden visas tills användaren stängt den, och igen på begäran */
   guideOpen: boolean;
   showGuide: () => void;
@@ -25,10 +21,10 @@ const noop = (): void => undefined;
 export const SetupContext = createContext<SetupApi>({
   agent: 'claude',
   setAgent: noop,
-  approvalPolicy: 'never',
-  setApprovalPolicy: noop,
-  accessModes: { claude: 'read-only', codex: 'read-only' },
-  setAccessMode: noop,
+  permission: 'auto',
+  setPermission: noop,
+  models: { claude: 'default', codex: 'default' },
+  setModel: noop,
   guideOpen: false,
   showGuide: noop,
   dismissGuide: noop,

@@ -1,7 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { t } from '@/common/model/i18n';
-import { type AccessMode, type ApprovalPolicy } from '@/common/model/agent';
+import { type AgentSettings } from '@/common/model/agent';
 import {
   type AgentEntry,
   type AgentRunner,
@@ -10,6 +10,12 @@ import {
 } from '../model/protocol';
 import { agentEnv } from './env';
 import { agentExecutable } from './executable';
+
+const DEFAULT_SETTINGS: AgentSettings = { permission: 'auto', model: 'default' };
+
+function key(settings: AgentSettings): string {
+  return `${settings.permission}|${settings.model}`;
+}
 
 export interface SessionEvents {
   onEntry: (entry: AgentEntry) => void;
@@ -31,7 +37,8 @@ export class AgentSession {
   private state: AgentState = 'idle';
   private stderr = '';
   private threadId: string | null;
-  private activeAccessMode: AccessMode | null = null;
+  /** Inställningarna processen startades med. Ändras de startas processen om. */
+  private activeSettings: string | null = null;
   /** Om ett avslut redan rapporterats för pågående process, så exit inte dubblar */
   private finished = false;
 
@@ -45,19 +52,15 @@ export class AgentSession {
     this.threadId = threadId;
   }
 
-  ask(
-    prompt: string,
-    approvalPolicy: ApprovalPolicy = 'never',
-    accessMode: AccessMode = 'read-only',
-  ): void {
+  ask(prompt: string, settings: AgentSettings = DEFAULT_SETTINGS): void {
     this.emit({ at: now(), kind: 'user', text: prompt });
-    if (this.runner.persistent && this.child && this.activeAccessMode === accessMode) {
+    if (this.runner.persistent && this.child && this.activeSettings === key(settings)) {
       this.setState('busy');
       this.child.stdin?.write(this.runner.message(prompt));
       return;
     }
     if (this.child) this.stop();
-    this.start(prompt, approvalPolicy, accessMode);
+    this.start(prompt, settings);
   }
 
   stop(): void {
@@ -69,15 +72,14 @@ export class AgentSession {
     this.setState('stopped');
   }
 
-  private start(prompt: string, approvalPolicy: ApprovalPolicy, accessMode: AccessMode): void {
+  private start(prompt: string, settings: AgentSettings): void {
     let launch;
     try {
       launch = this.runner.launch({
         ...this.context(),
         prompt,
         threadId: this.threadId,
-        approvalPolicy,
-        accessMode,
+        ...settings,
       });
     } catch (error) {
       this.fail(error);
@@ -85,7 +87,7 @@ export class AgentSession {
     }
     let child: ChildProcess;
     try {
-      const env = agentEnv();
+      const env = { ...agentEnv(), ...launch.env };
       child = spawn(agentExecutable(launch.command, env), launch.args, {
         cwd: this.repoPath,
         env,
@@ -96,7 +98,7 @@ export class AgentSession {
       return;
     }
     this.child = child;
-    this.activeAccessMode = accessMode;
+    this.activeSettings = key(settings);
     this.stderr = '';
     this.finished = false;
     this.setState('busy');

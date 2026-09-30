@@ -2,6 +2,7 @@ import { type JSX, useEffect, useId, useRef, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { invokeChannel } from '@/common/renderer/ipc';
+import { AGENT_MODELS, AGENT_PERMISSIONS } from '@/common/model/agent';
 import { useAgent } from '../AgentContext';
 import { useSetup } from '@/features/mcp';
 import { defaultBaseBranch, listBranchesChannel, useRepo } from '@/features/repo';
@@ -31,9 +32,11 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
     choose,
     startNew,
     selectMode,
+    approvals,
+    answer,
   } = useAgent();
   const { repo } = useRepo();
-  const { agent, approvalPolicy, setApprovalPolicy, accessModes, setAccessMode } = useSetup();
+  const { agent, permission, setPermission, models, setModel } = useSetup();
   const currentAgent = conversations.find((item) => item.id === activeId)?.agent ?? agent;
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
@@ -65,7 +68,7 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
   useEffect(() => {
     const element = scroller.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [entries, state]);
+  }, [entries, state, approvals]);
 
   useEffect(() => {
     if (!copied) return;
@@ -83,7 +86,6 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
         ? t('agent.reviewDefaultPrompt', { head, base })
         : draft.trim();
     if (!prompt || !hasRepo || state === 'busy') return;
-    if (!activeId && !mode) return;
     if (
       !activeId &&
       mode === 'review' &&
@@ -103,16 +105,17 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
       .catch(console.error);
   };
 
-  const running = state === 'busy' || state === 'idle';
+  const busy = state === 'busy';
+  const modelOptions = currentAgent === 'manual' ? [] : AGENT_MODELS[currentAgent];
 
   const composer = (
-    <div className={`agent__compose${activeId ? '' : ' agent__compose--initial'}`}>
+    <div className="agent__compose">
       <textarea
         className="agent__input"
         rows={3}
         value={draft}
         disabled={!hasRepo}
-        placeholder={t(`agent.placeholder.${mode ?? 'general'}`)}
+        placeholder={t(`agent.placeholder.${mode}`)}
         onChange={(event) => {
           setDraft(event.target.value);
         }}
@@ -124,13 +127,52 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
         }}
       />
       <div className="agent__compose-actions">
-        <span className="agent__hint">{t('agent.sendHint')}</span>
+        {currentAgent !== 'manual' && (
+          <select
+            className="agent__setting"
+            value={permission}
+            title={t('agent.permissionHint')}
+            aria-label={t('agent.permissionLabel')}
+            onChange={(event) => {
+              const next = AGENT_PERMISSIONS.find((option) => option === event.target.value);
+              if (next) setPermission(next);
+            }}
+          >
+            {AGENT_PERMISSIONS.map((option) => (
+              <option key={option} value={option}>
+                {t(`agent.permission.${option}`)}
+              </option>
+            ))}
+          </select>
+        )}
+        {currentAgent !== 'manual' && modelOptions.length > 1 && (
+          <select
+            className="agent__setting"
+            value={models[currentAgent]}
+            aria-label={t('agent.modelLabel')}
+            onChange={(event) => {
+              setModel(currentAgent, event.target.value);
+            }}
+          >
+            {modelOptions.map((option) => (
+              <option key={option} value={option}>
+                {modelLabel(option)}
+              </option>
+            ))}
+          </select>
+        )}
+        <span className="agent__spacer" />
+        {busy && (
+          <button type="button" className="agent__stop" onClick={stop}>
+            <Icon name="stop" size="sm" /> {t('agent.stop')}
+          </button>
+        )}
         <button
           type="button"
           className="agent__send"
           disabled={
             !hasRepo ||
-            state === 'busy' ||
+            busy ||
             (!activeId && mode === 'review'
               ? !branches.includes(head) || !branches.includes(base) || head === base
               : draft.trim() === '')
@@ -183,113 +225,71 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
           ))}
         </select>
       </div>
-      {!activeId && (
-        <div className="agent__mode-picker">
-          <span className="agent__mode-heading">{t('agent.chooseMode')}</span>
-          <div className="agent__mode-buttons">
-            {(['analyse', 'review', 'plan'] as const).map((choice) => (
-              <button
-                key={choice}
-                type="button"
-                className={`agent__mode-button agent__mode-button--${choice}${mode === choice ? ' is-selected' : ''}`}
-                aria-pressed={mode === choice}
-                disabled={!hasRepo}
-                onClick={() => {
-                  selectMode(choice);
-                  setDraft('');
+      <div className="agent__scroll" ref={scroller}>
+        {!activeId && (
+          <div className="agent__mode-picker">
+            <span className="agent__mode-heading">{t('agent.chooseMode')}</span>
+            <div className="agent__mode-buttons">
+              {(['analyse', 'review', 'plan'] as const).map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  className={`agent__mode-button agent__mode-button--${choice}${mode === choice ? ' is-selected' : ''}`}
+                  aria-pressed={mode === choice}
+                  disabled={!hasRepo}
+                  onClick={() => {
+                    selectMode(choice);
+                    setDraft('');
+                  }}
+                >
+                  {t(`agent.mode.${choice}`)}
+                </button>
+              ))}
+            </div>
+            <p className="agent__mode-description">{t(`agent.modeDescription.${mode}`)}</p>
+          </div>
+        )}
+        {!activeId && mode === 'review' && (
+          <div className="agent__review-branches">
+            <label>
+              <span>{t('agent.reviewHead')}</span>
+              <select
+                value={head}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setHead(next);
+                  if (base === next) setBase(defaultBaseBranch(branches, next, null) ?? '');
                 }}
               >
-                {t(`agent.mode.${choice}`)}
-              </button>
-            ))}
-          </div>
-          {mode && <p className="agent__mode-description">{t(`agent.modeDescription.${mode}`)}</p>}
-        </div>
-      )}
-      {!activeId && mode === 'review' && (
-        <div className="agent__review-branches">
-          <label>
-            <span>{t('agent.reviewHead')}</span>
-            <select
-              value={head}
-              onChange={(event) => {
-                const next = event.target.value;
-                setHead(next);
-                if (base === next) setBase(defaultBaseBranch(branches, next, null) ?? '');
-              }}
-            >
-              {branches.map((branch) => (
-                <option key={branch} value={branch}>
-                  {branch}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>{t('agent.reviewBase')}</span>
-            <select
-              value={base}
-              onChange={(event) => {
-                setBase(event.target.value);
-              }}
-            >
-              {branches
-                .filter((branch) => branch !== head)
-                .map((branch) => (
+                {branches.map((branch) => (
                   <option key={branch} value={branch}>
                     {branch}
                   </option>
                 ))}
-            </select>
-          </label>
-          {(!repo?.isGit || branches.length < 2) && (
-            <p className="agent__hint">{t('agent.reviewNeedsBranches')}</p>
-          )}
-        </div>
-      )}
-      {!activeId && mode && composer}
-      <div className="agent__bar">
-        <span className={`agent__state is-${state}`}>
-          <span className="agent__dot" /> {t(`agent.state.${state}`)}
-        </span>
-        {running && (
-          <button type="button" className="text-button" onClick={stop}>
-            {t('agent.stop')}
-          </button>
+              </select>
+            </label>
+            <label>
+              <span>{t('agent.reviewBase')}</span>
+              <select
+                value={base}
+                onChange={(event) => {
+                  setBase(event.target.value);
+                }}
+              >
+                {branches
+                  .filter((branch) => branch !== head)
+                  .map((branch) => (
+                    <option key={branch} value={branch}>
+                      {branch}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            {(!repo?.isGit || branches.length < 2) && (
+              <p className="agent__hint">{t('agent.reviewNeedsBranches')}</p>
+            )}
+          </div>
         )}
-      </div>
-      {currentAgent !== 'manual' && (
-        <label className="agent__approval">
-          <span>{t('agent.accessMode')}</span>
-          <select
-            value={accessModes[currentAgent]}
-            onChange={(event) => {
-              setAccessMode(
-                currentAgent,
-                event.target.value === 'workspace-write' ? 'workspace-write' : 'read-only',
-              );
-            }}
-          >
-            <option value="read-only">{t('agent.accessReadOnly')}</option>
-            <option value="workspace-write">{t('agent.accessEditRepo')}</option>
-          </select>
-        </label>
-      )}
-      {currentAgent === 'codex' && (
-        <label className="agent__approval">
-          <span>{t('agent.approvalPolicy')}</span>
-          <select
-            value={approvalPolicy}
-            onChange={(event) => {
-              setApprovalPolicy(event.target.value === 'on-request' ? 'on-request' : 'never');
-            }}
-          >
-            <option value="never">{t('agent.approvalNever')}</option>
-            <option value="on-request">{t('agent.approvalReview')}</option>
-          </select>
-        </label>
-      )}
-      <div className="agent__scroll" ref={scroller}>
         {entries.length === 0 && activeId && (
           <p className="shell__empty shell__empty--padded">
             {hasRepo ? t('agent.empty') : t('app.chooseRepo')}
@@ -321,12 +321,46 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
               )}
             </li>
           ))}
-          {state === 'busy' && (
+          {approvals.map((approval) => (
+            <li key={approval.id} className="agent__entry agent__entry--approval">
+              <p className="agent__approval-title">
+                {t('agent.approvalAsk', { tool: approval.tool })}
+              </p>
+              <code className="agent__approval-detail">{approval.detail}</code>
+              <div className="agent__approval-actions">
+                <button
+                  type="button"
+                  className="agent__allow"
+                  onClick={() => {
+                    answer(approval.id, true);
+                  }}
+                >
+                  {t('agent.allow')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    answer(approval.id, false);
+                  }}
+                >
+                  {t('agent.deny')}
+                </button>
+              </div>
+            </li>
+          ))}
+          {busy && approvals.length === 0 && (
             <li className="agent__entry agent__entry--busy">{t('agent.working')}</li>
           )}
         </ol>
       </div>
-      {activeId && composer}
+      {composer}
     </div>
   );
+}
+
+/** Modellnamnen är produktnamn och översätts inte, bara standardvalet har en text. */
+function modelLabel(model: string): string {
+  return model === 'default'
+    ? t('agent.modelDefault')
+    : `${(model[0] ?? '').toUpperCase()}${model.slice(1)}`;
 }

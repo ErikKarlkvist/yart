@@ -6,12 +6,12 @@ const input = {
   skill: 'SKILL',
   prompt: 'hej',
   threadId: null,
-  approvalPolicy: 'never' as const,
-  accessMode: 'read-only' as const,
+  permission: 'auto' as const,
+  model: 'default',
 };
 
 describe('claudeRunner', () => {
-  it('kör headless med strömmande JSON, bara Reveriks MCP-server och läsverktyg', () => {
+  it('kör headless med strömmande JSON och bara Reveriks MCP-server', () => {
     const launch = claudeRunner.launch(input);
     expect(launch.command).toBe('claude');
     expect(launch.args).toContain('--strict-mcp-config');
@@ -24,11 +24,15 @@ describe('claudeRunner', () => {
       message: { role: 'user', content: 'hej' },
     });
     expect(claudeRunner.message('igen').endsWith('\n')).toBe(true);
-    expect(launch.args).toContain('dontAsk');
-    expect(launch.args).toContain('Read,Glob,Grep,Bash');
-    const editable = claudeRunner.launch({ ...input, accessMode: 'workspace-write' });
-    expect(editable.args).toContain('acceptEdits');
-    expect(editable.args).not.toContain('--tools');
+    expect(launch.args).toContain('acceptEdits');
+    expect(launch.args).not.toContain('--tools');
+    expect(launch.args).not.toContain('--model');
+    expect(launch.args).toContain('mcp__reverik__permission_prompt');
+    expect(launch.env?.MCP_TOOL_TIMEOUT).toBeDefined();
+    const manual = claudeRunner.launch({ ...input, permission: 'manual', model: 'opus' });
+    expect(manual.args).toContain('default');
+    expect(manual.args).not.toContain('acceptEdits');
+    expect(manual.args.join(' ')).toContain('--model opus');
     const resumed = claudeRunner.launch({ ...input, threadId: 'session-1' });
     expect(resumed.args.slice(-2)).toEqual(['--resume', 'session-1']);
   });
@@ -39,9 +43,8 @@ describe('codexRunner', () => {
     const first = codexRunner.launch(input);
     expect(first.command).toBe('codex');
     expect(first.args.slice(0, 2)).toEqual(['exec', '--json']);
-    expect(first.args).toContain('read-only');
-    const editable = codexRunner.launch({ ...input, accessMode: 'workspace-write' });
-    expect(editable.args).toContain('workspace-write');
+    expect(first.args).toContain('workspace-write');
+    expect(first.args).not.toContain('-m');
     expect(first.args).toContain('approval_policy="never"');
     expect(first.args).toContain('mcp_servers.reverik.url="http://127.0.0.1:7390/mcp"');
     for (const tool of ['save_flow', 'save_document', 'save_review']) {
@@ -54,17 +57,11 @@ describe('codexRunner', () => {
     const next = codexRunner.launch({ ...input, prompt: 'mer', threadId: 'abc' });
     expect(next.args.slice(0, 3)).toEqual(['exec', 'resume', '--json']);
     expect(next.args).not.toContain('--sandbox');
-    expect(next.args).toContain('sandbox_mode="read-only"');
-    const editableResume = codexRunner.launch({
-      ...input,
-      threadId: 'abc',
-      accessMode: 'workspace-write',
-    });
-    expect(editableResume.args).toContain('sandbox_mode="workspace-write"');
+    expect(next.args).toContain('sandbox_mode="workspace-write"');
     expect(next.args).toContain('mcp_servers.reverik.tools.save_flow.approval_mode="approve"');
     expect(next.args.slice(-2)).toEqual(['abc', '-']);
     expect(next.stdin).toBe('mer');
-    const reviewed = codexRunner.launch({ ...input, approvalPolicy: 'on-request' });
+    const reviewed = codexRunner.launch({ ...input, permission: 'manual' });
     expect(reviewed.args).toContain('approval_policy="on-request"');
     expect(reviewed.args).toContain('approvals_reviewer="auto_review"');
   });

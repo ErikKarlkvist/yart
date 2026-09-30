@@ -3,9 +3,9 @@ import { invokeChannel } from '@/common/renderer/ipc';
 import { useIpcEvent } from '@/common/renderer/useIpcEvent';
 import { readStored, useScopedKey, writeStored } from '@/common/renderer/storage';
 import {
-  type AccessMode,
   type AgentKind,
-  type ApprovalPolicy,
+  type AgentPermission,
+  type AgentSettings,
   type RunnableAgent,
 } from '@/common/model/agent';
 import { type AgentEntry, type AgentState } from '../model/protocol';
@@ -17,20 +17,22 @@ import {
 } from '../model/conversation';
 import {
   agentEvent,
+  answerApprovalChannel,
   askAgentChannel,
   createConversationChannel,
   getConversationChannel,
   listConversationsChannel,
   stopAgentChannel,
   type AgentEvent,
+  type PendingApproval,
 } from '../ipc/channels';
 import { AgentContext } from './AgentContext';
 
 interface Props {
   repoPath: string | null;
   agent: AgentKind;
-  approvalPolicy: ApprovalPolicy;
-  accessModes: Readonly<Record<RunnableAgent, AccessMode>>;
+  permission: AgentPermission;
+  models: Readonly<Record<RunnableAgent, string>>;
   children: ReactNode;
 }
 interface Tagged<T> {
@@ -47,16 +49,28 @@ interface OpenConversation {
 export function AgentProvider({
   repoPath,
   agent,
-  approvalPolicy,
-  accessModes,
+  permission,
+  models,
   children,
 }: Props): JSX.Element {
+  // En extern AI körs inte av appen; frågan avvisas i main, inställningarna spelar ingen roll.
+  const settingsFor = useCallback(
+    (kind: AgentKind): AgentSettings => ({
+      permission,
+      model: kind === 'manual' ? 'default' : models[kind],
+    }),
+    [permission, models],
+  );
   const selectionKey = useScopedKey('reverik.conversation');
   const [conversations, setConversations] = useState<Tagged<ConversationSummary[]> | null>(null);
   const [selected, setSelected] = useState<Tagged<string> | null>(null);
   const [opened, setOpened] = useState<Tagged<OpenConversation> | null>(null);
   const [states, setStates] = useState<Tagged<Record<string, AgentState>> | null>(null);
   const [draftMode, setDraftMode] = useState<Tagged<ConversationMode | null> | null>(null);
+  // Det agenten väntar på lov för, per konversation
+  const [approvals, setApprovals] = useState<Tagged<Record<string, PendingApproval[]>> | null>(
+    null,
+  );
   const selectedRef = useRef<{ repoPath: string; id: string } | null>(null);
   const newDraftRepoRef = useRef<string | null>(null);
   const creatingRef = useRef(false);
@@ -169,6 +183,18 @@ export function AgentProvider({
   const onEvent = useCallback(
     (event: AgentEvent) => {
       if (event.repoPath !== repoPath) return;
+      if (event.type === 'approval' || event.type === 'approval-done') {
+        setApprovals((current) => {
+          const all = current?.repoPath === repoPath ? current.value : {};
+          const list = all[event.conversationId] ?? [];
+          const next =
+            event.type === 'approval'
+              ? [...list, event.approval]
+              : list.filter((item) => item.id !== event.id);
+          return { repoPath, value: { ...all, [event.conversationId]: next } };
+        });
+        return;
+      }
       if (event.type === 'entry') {
         setConversations((current) => {
           if (current?.repoPath !== repoPath) return current;
@@ -273,8 +299,7 @@ export function AgentProvider({
             await invokeChannel(askAgentChannel, {
               repoPath,
               agent: currentAgent,
-              approvalPolicy,
-              accessMode: currentAgent === 'manual' ? 'read-only' : accessModes[currentAgent],
+              settings: settingsFor(currentAgent),
               prompt,
               conversationId,
             });
@@ -283,7 +308,7 @@ export function AgentProvider({
         }
       })().catch(console.error);
     },
-    [repoPath, agent, approvalPolicy, accessModes, conversations, create, draftMode],
+    [repoPath, agent, settingsFor, conversations, create, draftMode],
   );
   // En ny konversation i läget, med frågan som första meddelande. För planer som skickas från ett dokument.
   const askNew = useCallback(
@@ -297,8 +322,7 @@ export function AgentProvider({
             await invokeChannel(askAgentChannel, {
               repoPath,
               agent,
-              approvalPolicy,
-              accessMode: agent === 'manual' ? 'read-only' : accessModes[agent],
+              settings: settingsFor(agent),
               prompt,
               conversationId: conversation.id,
             });
@@ -307,7 +331,7 @@ export function AgentProvider({
         }
       })().catch(console.error);
     },
-    [repoPath, agent, approvalPolicy, accessModes, create],
+    [repoPath, agent, settingsFor, create],
   );
   const stop = useCallback(() => {
     if (repoPath && activeId)
@@ -317,11 +341,12 @@ export function AgentProvider({
   }, [repoPath, activeId]);
 
   const list = conversations?.repoPath === repoPath ? conversations.value : [];
-  const mode = activeId
+  // En ny konversation börjar i Analyse tills användaren väljer annat
+  const mode: ConversationMode = activeId
     ? (list.find((item) => item.id === activeId)?.mode ?? 'general')
     : draftMode?.repoPath === repoPath
-      ? draftMode.value
-      : null;
+      ? (draftMode.value ?? 'analyse')
+      : 'analyse';
   const entries =
     opened?.repoPath === repoPath && opened.value.id === activeId ? opened.value.entries : [];
   const currentState =
@@ -340,6 +365,11 @@ export function AgentProvider({
     ask,
     askNew,
     stop,
+    approvals:
+      activeId && approvals?.repoPath === repoPath ? (approvals.value[activeId] ?? []) : [],
+    answer: (id: string, allow: boolean) => {
+      void invokeChannel(answerApprovalChannel, { id, allow }).catch(console.error);
+    },
   };
   return <AgentContext.Provider value={api}>{children}</AgentContext.Provider>;
 }

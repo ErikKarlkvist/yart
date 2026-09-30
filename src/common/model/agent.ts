@@ -8,9 +8,36 @@ export type AgentKind = (typeof AGENT_KINDS)[number];
 /** Agenterna appen kan köra själv. */
 export type RunnableAgent = Exclude<AgentKind, 'manual'>;
 
-/** Background Codex cannot display an interactive approval prompt. */
-export const APPROVAL_POLICIES = ['never', 'on-request'] as const;
-export type ApprovalPolicy = (typeof APPROVAL_POLICIES)[number];
+/**
+ * Hur mycket agenten får göra utan att fråga. Den har alltid skrivrätt i repot.
+ * auto: ändrar filer utan att fråga och frågar bara för annat, som kommandon.
+ * manual: frågar innan den ändrar något.
+ */
+export const AGENT_PERMISSIONS = ['auto', 'manual'] as const;
+export type AgentPermission = (typeof AGENT_PERMISSIONS)[number];
 
-export const ACCESS_MODES = ['read-only', 'workspace-write'] as const;
-export type AccessMode = (typeof ACCESS_MODES)[number];
+/** Det användaren valt under textrutan och som gäller när agenten startas. */
+export interface AgentSettings {
+  permission: AgentPermission;
+  model: string;
+}
+
+/** Modellerna som går att välja per agent. `default` låter agenten välja själv. */
+export const AGENT_MODELS: Readonly<Record<RunnableAgent, readonly string[]>> = {
+  claude: ['default', 'opus', 'sonnet', 'haiku'],
+  codex: ['default'],
+};
+
+/**
+ * MCP-verktyget appens Claude Code-session frågar när något kräver lov, så
+ * frågan visas i agentpanelen. Finns bara för sessioner appen själv startat.
+ */
+export const PERMISSION_PROMPT_TOOL = 'permission_prompt';
+
+/** Det agenten vill göra och behöver lov för, t.ex. ett kommando eller en filändring. */
+export interface ApprovalRequest {
+  tool: string;
+  input: unknown;
+}
+
+export type ApprovalDecision = { allow: true } | { allow: false; message: string };
