@@ -11,6 +11,7 @@ interface Delivered {
   name: string;
   content: unknown;
   client: string;
+  conversationId?: string | undefined;
 }
 
 /** Texten i ett verktygssvar. */
@@ -30,7 +31,13 @@ function fakeDeps(activity: McpActivity[], delivered: Delivered[]): McpDeps {
     getAnalysis: (_repo, kind, name) =>
       Promise.resolve(kind === 'flow' && name === 'add-todo' ? { flow: addTodoFlow } : null),
     deliver: (_repo, kind, name, content, via) => {
-      delivered.push({ kind, name, content, client: via.client });
+      delivered.push({
+        kind,
+        name,
+        content,
+        client: via.client,
+        conversationId: via.conversationId,
+      });
       if (name === 'bad') return Promise.resolve({ ok: false, errors: ['nope.ts does not exist'] });
       return Promise.resolve({ ok: true, title: 'Add todo', changed: name !== 'same' });
     },
@@ -206,6 +213,11 @@ describe('startMcpServer', () => {
         { conversationId: 'c1', tool: 'Edit' },
       ]);
       await own.callTool({ name: 'name_conversation', arguments: { title: 'Plan due dates' } });
+      await own.callTool({
+        name: 'save_flow',
+        arguments: { repo: '/repo', name: 'add-todo', flow: addTodoFlow },
+      });
+      expect(delivered.at(-1)?.conversationId).toBe('c1');
       expect(named).toEqual([{ conversationId: 'c1', title: 'Plan due dates' }]);
       const { tools } = await client.listTools();
       expect(tools.map((tool) => tool.name)).not.toContain('permission_prompt');

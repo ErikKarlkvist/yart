@@ -48,10 +48,16 @@
 .analyses__group-label {
   flex: 1;
   min-width: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Branch och commit, för analyser som inte kommer från en konversation */
+.analyses__group-label--ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
 }
 
 .analyses__list {

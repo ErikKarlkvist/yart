@@ -41,6 +41,8 @@ export function installMockBridge(): void {
       ...(demo.compare ? { compare: demo.compare } : {}),
     };
   });
+  // Det mock-agenten sparat, med konversationen som sparade det
+  let saved: Record<string, unknown>[] = [];
   let recent: (typeof demoRepo)[] = [];
   const conversations: Conversation[] = [];
   const listeners = new Map<string, Set<(payload: unknown) => void>>();
@@ -78,8 +80,12 @@ export function installMockBridge(): void {
       return recent;
     },
     'analysis:list': (payload) =>
-      (payload as { repoPath: string }).repoPath === demoPath ? builtin : [],
-    'analysis:delete': () => builtin,
+      (payload as { repoPath: string }).repoPath === demoPath ? [...saved, ...builtin] : [],
+    'analysis:delete': (payload) => {
+      const { id } = payload as { id: string };
+      saved = saved.filter((analysis) => analysis.id !== id);
+      return [...saved, ...builtin];
+    },
     'mcp:status': () => mockMcpStatus,
     'mcp:install-skill': (payload) => {
       const { target } = payload as { target: 'claude' | 'codex' };
@@ -168,6 +174,31 @@ export function installMockBridge(): void {
           'save_flow',
         ])
           entry({ kind: 'tool', name });
+        // Namnger konversationen och sparar en kopia av ett demoflöde, taggad med den
+        const title = `Analyse: ${prompt.slice(0, 40)}`;
+        if (conversation) conversation.title = title;
+        emit('agent:event', { type: 'title', repoPath, conversationId, title });
+        const flow = demoAnalyses.find((demo) => demo.kind === 'flow');
+        if (flow?.kind === 'flow') {
+          const analysis = {
+            id: crypto.randomUUID(),
+            repoPath,
+            origin: 'ai',
+            createdAt: new Date().toISOString(),
+            name: `mock-${String(saved.length + 1)}`,
+            conversationId,
+            kind: 'flow',
+            flow: { ...flow.flow, title: `${flow.flow.title} (mock)` },
+          };
+          saved = [analysis, ...saved];
+          emit('analysis:delivery', {
+            type: 'imported',
+            repoPath,
+            via: { tool: 'save_flow', client: 'mock', conversationId },
+            analysis,
+            list: [...saved, ...builtin],
+          });
+        }
         entry({ kind: 'assistant', text: t('app.mockAgentReply') });
         emit('agent:event', { type: 'state', repoPath, conversationId, state: 'idle' });
       }, 1200);

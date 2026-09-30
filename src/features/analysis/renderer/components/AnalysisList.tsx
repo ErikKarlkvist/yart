@@ -6,7 +6,12 @@ import { analysisTitle, refLabel, type SavedAnalysis } from '../../model/analysi
 import { useAnalyses } from '../AnalysisContext';
 import './analysis.css';
 
-export function AnalysisList(): JSX.Element {
+interface Props {
+  /** Namnet på konversationen i appen som sparade analyser, null om den inte finns */
+  conversationTitle?: (conversationId: string) => string | null;
+}
+
+export function AnalysisList({ conversationTitle }: Props): JSX.Element {
   const { analyses, current, error, rejection, select, remove, dismissRejection } = useAnalyses();
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const toggle = (key: string): void => {
@@ -44,7 +49,7 @@ export function AnalysisList(): JSX.Element {
         </div>
       )}
       {analyses.length === 0 && !error && <p className="analyses__muted">{t('analyses.empty')}</p>}
-      {groupAnalyses(analyses).map((group) => (
+      {groupAnalyses(analyses, conversationTitle).map((group) => (
         <div key={group.key} className="analyses__group">
           <h3 className="analyses__group-heading">
             <button
@@ -57,7 +62,11 @@ export function AnalysisList(): JSX.Element {
               }}
             >
               <Icon name={collapsed.has(group.key) ? 'chevronRight' : 'chevronDown'} size="sm" />
-              <span className="analyses__group-label">{group.label}</span>
+              <span
+                className={`analyses__group-label${group.isRef ? ' analyses__group-label--ref' : ''}`}
+              >
+                {group.label}
+              </span>
               <span className="count-badge">{group.items.length}</span>
             </button>
           </h3>
@@ -145,28 +154,41 @@ export function AnalysisList(): JSX.Element {
 interface Group {
   key: string;
   label: string;
+  /** Rubriken är branch och commit, inte ett namn */
+  isRef: boolean;
   title: string;
   items: SavedAnalysis[];
 }
 
 /**
- * Grupperar på branch och commit, eftersom ett flöde bara gäller en version
- * av koden. Inbyggda först, sedan grupperna i ordning efter nyaste analys,
- * sist sådant utan git.
+ * Grupperar på konversationen som skapade analyserna, med dess namn som
+ * rubrik, så det man bad om hålls ihop. Analyser utan konversation, från
+ * externa agenter, grupperas på branch och commit eftersom ett flöde bara
+ * gäller en version av koden. Inbyggda först, sedan grupperna i ordning
+ * efter nyaste analys, sist sådant utan git.
  */
-function groupAnalyses(analyses: readonly SavedAnalysis[]): Group[] {
+function groupAnalyses(
+  analyses: readonly SavedAnalysis[],
+  conversationTitle: Props['conversationTitle'],
+): Group[] {
   const groups = new Map<string, Group>();
   for (const analysis of analyses) {
-    const key = analysis.origin === 'builtin' ? 'builtin' : (analysis.ref?.commit ?? 'worktree');
+    const conversation =
+      analysis.conversationId !== undefined
+        ? (conversationTitle?.(analysis.conversationId) ?? null)
+        : null;
+    const key =
+      analysis.origin === 'builtin'
+        ? 'builtin'
+        : conversation !== null
+          ? `conversation:${analysis.conversationId ?? ''}`
+          : (analysis.ref?.commit ?? 'worktree');
+    const ref = analysis.ref ? refLabel(analysis.ref) : t('analyses.workingTree');
     const group = groups.get(key) ?? {
       key,
-      label:
-        analysis.origin === 'builtin'
-          ? t('analyses.builtin')
-          : analysis.ref
-            ? refLabel(analysis.ref)
-            : t('analyses.workingTree'),
-      title: analysis.ref?.commit ?? '',
+      label: analysis.origin === 'builtin' ? t('analyses.builtin') : (conversation ?? ref),
+      isRef: analysis.origin !== 'builtin' && conversation === null,
+      title: conversation !== null ? ref : (analysis.ref?.commit ?? ''),
       items: [],
     };
     group.items.push(analysis);

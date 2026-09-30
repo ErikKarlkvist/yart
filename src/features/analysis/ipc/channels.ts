@@ -15,6 +15,8 @@ export const deleteAnalysisChannel = defineChannel<
 export interface DeliveredVia {
   tool: string;
   client: string;
+  /** Konversationen i appen, när det är appens egen agent som levererar */
+  conversationId?: string | undefined;
 }
 
 /** En agent har levererat en analys, eller fått den avvisad. */

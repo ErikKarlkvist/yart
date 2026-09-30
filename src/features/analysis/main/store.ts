@@ -15,6 +15,8 @@ import {
 export type NewAnalysis = {
   name: string;
   ref?: AnalysisRef | null;
+  /** Konversationen i appen som levererade, om någon */
+  conversationId?: string | undefined;
 } & (
   | { kind: 'flow'; flow: Flow; compare?: FlowCompare }
   | { kind: 'document'; document: ReverikDocument }
@@ -59,6 +61,10 @@ export class AnalysisStore {
         createdAt: new Date().toISOString(),
         name: input.name,
         ...(input.ref ? { ref: input.ref } : {}),
+        // En uppdatering utifrån behåller konversationen som skapade analysen
+        ...((input.conversationId ?? existing?.conversationId)
+          ? { conversationId: input.conversationId ?? existing?.conversationId }
+          : {}),
       };
       const analysis: SavedAnalysis =
         input.kind === 'document'

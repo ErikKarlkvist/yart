@@ -27,6 +27,8 @@ const savedAnalysisBaseSchema = z.object({
   name: analysisNameSchema,
   /** Branch och commit flödet beskriver. Saknas för inbyggda och repon utan git. */
   ref: analysisRefSchema.optional(),
+  /** Konversationen i appen som sparade analysen. Saknas för externa agenter. */
+  conversationId: z.string().min(1).optional(),
 });
 
 const savedFlowAnalysisSchema = savedAnalysisBaseSchema.extend({

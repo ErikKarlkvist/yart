@@ -58,7 +58,7 @@ export interface McpDeps {
     kind: 'flow' | 'review' | 'document',
     name: string,
     content: unknown,
-    via: { tool: string; client: string },
+    via: { tool: string; client: string; conversationId?: string | undefined },
   ) => Promise<McpDeliverResult>;
   onActivity?: (activity: McpActivity) => void;
   /** Frågar användaren om lov åt appens egen agent i konversationen */
@@ -276,6 +276,7 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
       const result = await deps.deliver(repoPath ?? repo, kind, name, content, {
         tool,
         client: client(),
+        ...(conversationId !== null ? { conversationId } : {}),
       });
       if (!result.ok) {
         const errors = result.errors.map((e) => `- ${e}`).join('\n');

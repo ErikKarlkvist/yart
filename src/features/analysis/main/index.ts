@@ -48,7 +48,7 @@ export function registerAnalysisHandlers(): AnalysisApi {
     get: async (repoPath, kind, name) =>
       (await listAll(repoPath)).find((a) => a.kind === kind && a.name === name) ?? null,
     deliver: async (repoPath, kind, name, json, via) => {
-      const result = await intakeAnalysis(store, repoPath, kind, name, json);
+      const result = await intakeAnalysis(store, repoPath, kind, name, json, via.conversationId);
       if (result.type === 'imported') {
         emitEvent(deliveryEvent, {
           type: 'imported',
