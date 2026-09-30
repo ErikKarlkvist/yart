@@ -47,6 +47,7 @@ describe('buildSkill', () => {
     expect(skill).toContain('interface Trigger {');
     for (const kind of triggerKindSchema.options) expect(skill).toContain(`'${kind}'`);
     expect(skill).toContain('Write for people, keep the detail for AI');
+    expect(skill).toContain('The answer lives in');
     expect(skill).toContain('plan?: string;');
     expect(skill).toContain('fix?: string;');
     const example = JSON.parse(/```json\n([\s\S]*?)\n```/.exec(skill)?.[1] ?? '{}') as {

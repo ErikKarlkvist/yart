@@ -236,7 +236,7 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 `;
 
 /** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 7;
+export const SKILL_VERSION = 8;
 
 export function buildSkill(): string {
   return `---
@@ -253,6 +253,13 @@ It is running on the user's machine and you reach it through the MCP server
 \`save_flow\`, \`save_document\` and \`save_review\`. The user sees what you save
 as soon as the tool returns. If the tools are missing, ask the user to start
 {appName} and connect it with the command shown in its Connect panel.
+
+**The answer lives in {appName}, not in the chat.** When the user asks how something
+works, what a change does or how to build something, save flows, documents or reviews
+with the tools; the user reads them in the app. The chat reply is one or two sentences
+saying what you saved, or a short question when you need an answer first. Never answer
+with a report, call-chain summary, code listing or file list in the chat: put that
+detail into the saved flow (sources, descriptions, payloads) and the document.
 
 **Write for people, keep the detail for AI.** Everything a person reads (\`content\`
 on documents and reviews, finding descriptions) is short and easy to skim: Markdown with

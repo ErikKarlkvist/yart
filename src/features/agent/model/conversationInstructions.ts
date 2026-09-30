@@ -13,7 +13,36 @@ export function conversationInstructions(
   mode: ConversationMode,
   branches?: ReviewBranches,
 ): string {
-  return `${modeInstructions(mode, branches)} ${naming(mode)}`;
+  return `${modeInstructions(mode, branches)} ${mode === 'general' ? '' : `${DELIVER} `}${naming(mode)}`;
+}
+
+/**
+ * Lägena som levererar till Reverik. Svaret hör hemma i appen, inte i chatten:
+ * utan det här skriver agenten gärna en lång rapport i stället för att spara.
+ */
+const DELIVER =
+  'Deliver the answer in Reverik, not in the chat: the user reads flows, documents and reviews in the app, and the chat is only for a one or two sentence confirmation of what you saved, or a short question when you need an answer before you can continue. Never write reports, call-chain summaries, code listings or file lists in the chat; put that detail into the saved flow (sources, descriptions, payloads) and the document instead. If the Reverik tools are not available, say so in one sentence instead of answering in the chat.';
+
+/** Verktygen som sparar något i Reverik, med eller utan MCP-prefix */
+export function isDeliveryTool(name: string): boolean {
+  return /(^|[_.])save_(flow|document|review)$/.test(name);
+}
+
+/**
+ * Påminnelsen appen skickar när agenten avslutat en tur utan att spara något,
+ * i lägen där svaret ska levereras i Reverik. null när chatten räcker.
+ */
+export function deliveryReminder(mode: ConversationMode): string | null {
+  switch (mode) {
+    case 'analyse':
+      return 'Nothing was saved in Reverik this turn. Save what you found: the flow with save_flow, including its trigger, and a short document with save_document that links it. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+    case 'review':
+      return 'Nothing was saved in Reverik this turn. Save the affected flows with save_flow, each with a compare, and then the review with save_review. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+    case 'plan':
+      return 'Nothing was saved in Reverik this turn. Save the planning document with save_document, with short content for people and the detailed plan for an AI agent in plan, and any proposed flows with save_flow. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
+    case 'general':
+      return null;
+  }
 }
 
 function naming(mode: ConversationMode): string {

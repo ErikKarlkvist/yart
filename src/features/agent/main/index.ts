@@ -17,6 +17,7 @@ import {
   AGENT_MODELS,
   AGENT_PERMISSIONS,
   type ApprovalDecision,
+  type AgentSettings,
   type ApprovalRequest,
   type RunnableAgent,
 } from '@/common/model/agent';
@@ -25,7 +26,12 @@ import { RUNNERS } from '../model/protocol';
 import { checkAgent } from './check';
 import { AgentSession } from './session';
 import { ConversationStore } from './conversations';
-import { conversationInstructions } from '../model/conversationInstructions';
+import {
+  conversationInstructions,
+  deliveryReminder,
+  isDeliveryTool,
+} from '../model/conversationInstructions';
+import { type ConversationMode } from '../model/conversation';
 
 /** Vad sessionerna behöver från resten av appen. */
 export interface AgentDeps {
@@ -55,6 +61,11 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
   const store = new ConversationStore(join(app.getPath('userData'), 'conversations'));
   const sessions = new Map<string, AgentSession>();
   const repoOf = new Map<string, string>();
+  // Per konversation: sparade turen något, har appen redan påmint, och med vilka inställningar
+  const turns = new Map<
+    string,
+    { saved: boolean; failed: boolean; reminded: boolean; settings: AgentSettings }
+  >();
   const waiting = new Map<string, Waiting>();
 
   const settle = (id: string, decision: ApprovalDecision): void => {
@@ -81,6 +92,7 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
     conversationId: string,
     agent: RunnableAgent,
     threadId: string | null,
+    mode: ConversationMode,
     instructions: string,
   ): AgentSession => {
     const existing = sessions.get(conversationId);
@@ -101,11 +113,21 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
       },
       {
         onEntry: (entry) => {
+          const turn = turns.get(conversationId);
+          if (turn && entry.kind === 'tool' && isDeliveryTool(entry.name)) turn.saved = true;
+          if (turn && entry.kind === 'error') turn.failed = true;
           void store.append(repoPath, conversationId, entry).catch(console.error);
           emitEvent(agentEvent, { type: 'entry', repoPath, conversationId, entry });
         },
         onState: (state) => {
           emitEvent(agentEvent, { type: 'state', repoPath, conversationId, state });
+          // En tur utan leverans i ett läge som ska leverera får en påminnelse, en gång per fråga
+          const turn = turns.get(conversationId);
+          const reminder = deliveryReminder(mode);
+          if (state !== 'idle' || !turn || reminder === null) return;
+          if (turn.saved || turn.failed || turn.reminded) return;
+          turn.reminded = true;
+          created.ask(reminder, turn.settings);
         },
         onThread: (id) => {
           void store.setThread(repoPath, conversationId, id).catch(console.error);
@@ -145,17 +167,21 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
       });
       return;
     }
-    session(
+    const running = session(
       repoPath,
       conversationId,
       conversation.agent,
       conversation.threadId,
+      conversation.mode,
       conversationInstructions(conversation.mode, conversation.reviewBranches),
-    ).ask(prompt, {
+    );
+    const checked: AgentSettings = {
       permission: settings.permission,
       // En modell agenten inte känner till faller tillbaka på standard
       model: AGENT_MODELS[conversation.agent].includes(settings.model) ? settings.model : 'default',
-    });
+    };
+    turns.set(conversationId, { saved: false, failed: false, reminded: false, settings: checked });
+    running.ask(prompt, checked);
   });
   handleChannel(stopAgentChannel, ({ conversationId }) => {
     denyWaiting(conversationId);
