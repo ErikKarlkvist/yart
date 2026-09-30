@@ -58,11 +58,14 @@
   pointer-events: none;
 }
 
-.dock__tabs {
+/* Dubbla klasser, så de vinner över .tab-strip och .tab i styles.css som laddas efter */
+.tab-strip.dock__tabs {
   flex: none;
   height: auto;
   padding: 6px 8px 0;
   overflow: visible;
+  /* Raden är grå och den valda fliken har innehållets färg, så de sitter ihop */
+  background: var(--bg);
 }
 
 .dock__tab-list {
@@ -71,6 +74,8 @@
   gap: 2px;
   min-width: 0;
   overflow-x: auto;
+  /* Listan ligger över radens underkant, så den valda fliken kan täcka den */
+  margin-bottom: -1px;
 }
 
 .dock__spacer {
@@ -95,9 +100,12 @@
   letter-spacing: inherit;
 }
 
-.dock__tab.is-active {
-  margin-bottom: -1px;
-  padding-bottom: 1px;
+.tab.dock__tab.is-active {
+  position: relative;
+  z-index: 1;
+  border-color: var(--border);
+  border-bottom-color: transparent;
+  background: var(--bg-panel);
 }
 
 /* Stängknappen syns på vald flik och vid hover, platsen hålls så flikarna inte hoppar */
