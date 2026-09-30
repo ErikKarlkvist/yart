@@ -183,16 +183,28 @@ export const FlowEdgeView = memo(function FlowEdgeView({
                 {open && (member.payload ?? member.response) && (
                   <div className="graph-edge-label__details">
                     {member.payload && (
-                      <div className="graph-edge-label__row">
-                        <span className="graph-edge-label__key">{t('graph.sends')}</span>
+                      <div className="graph-edge-label__row is-sends">
+                        <span
+                          className="graph-edge-label__arrow"
+                          title={t('graph.sends')}
+                          aria-label={t('graph.sends')}
+                        >
+                          →
+                        </span>
                         <pre className="graph-edge-label__value">
                           {formatPayload(member.payload)}
                         </pre>
                       </div>
                     )}
                     {member.response && (
-                      <div className="graph-edge-label__row">
-                        <span className="graph-edge-label__key">{t('graph.response')}</span>
+                      <div className="graph-edge-label__row is-response">
+                        <span
+                          className="graph-edge-label__arrow"
+                          title={t('graph.response')}
+                          aria-label={t('graph.response')}
+                        >
+                          ←
+                        </span>
                         <pre className="graph-edge-label__value">
                           {formatPayload(member.response)}
                         </pre>

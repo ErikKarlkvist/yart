@@ -1083,10 +1083,10 @@ button.crumb:hover:not(:disabled) {
   color: var(--accent);
 }
 
-/* Flera anrop på samma linje listas när linjen är öppen */
+/* Flera anrop på samma linje listas när linjen är öppen, ett block per anrop */
 .graph-edge-label__member + .graph-edge-label__member {
-  margin-top: 4px;
-  padding-top: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
 }
 
@@ -1104,29 +1104,32 @@ button.crumb:hover:not(:disabled) {
 }
 
 .graph-edge-label__details {
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border);
+  /* Det som skickas och svaret hör till anropet ovanför, en linje binder ihop dem */
+  margin: 4px 0 0 10px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
   color: var(--fg);
   font-size: 11px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .graph-edge-label__row {
   display: grid;
-  grid-template-columns: 52px 1fr;
-  gap: 8px;
+  grid-template-columns: 14px 1fr;
+  gap: 6px;
   align-items: start;
 }
 
-.graph-edge-label__key {
+.graph-edge-label__arrow {
   color: var(--fg-muted);
-  text-transform: uppercase;
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  padding-top: 2px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.graph-edge-label__row.is-response .graph-edge-label__value {
+  color: var(--fg-muted);
 }
 
 .graph-edge-label__value {
