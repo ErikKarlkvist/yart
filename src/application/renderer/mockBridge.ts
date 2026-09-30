@@ -173,6 +173,25 @@ export function installMockBridge(): void {
       }, 1200);
     },
     'agent:stop': () => undefined,
+    // Samma form som Claude Code svarar med på initialize
+    'agent:list-models': (payload) =>
+      (payload as { agent: string }).agent === 'claude'
+        ? [
+            {
+              value: 'default',
+              label: 'Default (recommended)',
+              description: 'Opus 5 with 1M context',
+              effortLevels: ['low', 'medium', 'high', 'xhigh', 'max'],
+            },
+            {
+              value: 'sonnet',
+              label: 'Sonnet',
+              description: 'Sonnet 5 · Efficient for routine tasks',
+              effortLevels: ['low', 'medium', 'high'],
+            },
+            { value: 'haiku', label: 'Haiku', description: 'Haiku 4.5', effortLevels: [] },
+          ]
+        : [],
     'agent:check': (payload) =>
       (payload as { agent: string }).agent === 'claude'
         ? { installed: true, version: '2.1.274', loggedIn: false }

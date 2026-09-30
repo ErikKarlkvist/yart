@@ -2,8 +2,9 @@ import { type JSX, useEffect, useId, useRef, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { invokeChannel } from '@/common/renderer/ipc';
-import { AGENT_MODELS, AGENT_PERMISSIONS } from '@/common/model/agent';
+import { AGENT_PERMISSIONS, DEFAULT_CHOICE } from '@/common/model/agent';
 import { useAgent } from '../AgentContext';
+import { useAgentModels } from '../useAgentModels';
 import { groupEntries } from '../../model/groupEntries';
 import { useSetup } from '@/features/mcp';
 import { defaultBaseBranch, listBranchesChannel, useRepo } from '@/features/repo';
@@ -40,7 +41,7 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
     answer,
   } = useAgent();
   const { repo } = useRepo();
-  const { agent, permission, setPermission, models, setModel } = useSetup();
+  const { agent, permission, setPermission, models, setModel, efforts, setEffort } = useSetup();
   const currentAgent = conversations.find((item) => item.id === activeId)?.agent ?? agent;
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
@@ -110,7 +111,30 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
   };
 
   const busy = state === 'busy';
-  const modelOptions = currentAgent === 'manual' ? [] : AGENT_MODELS[currentAgent];
+  const agentModels = useAgentModels(currentAgent === 'manual' ? null : currentAgent);
+  // Utan svar från agenten finns bara standardvalet, och ett sparat val som försvunnit visas som det
+  const modelOptions = agentModels.some((m) => m.value === DEFAULT_CHOICE)
+    ? agentModels
+    : [
+        {
+          value: DEFAULT_CHOICE,
+          label: t('agent.modelDefault'),
+          description: '',
+          effortLevels: [],
+        },
+        ...agentModels,
+      ];
+  const chosenModel =
+    currentAgent === 'manual'
+      ? DEFAULT_CHOICE
+      : modelOptions.some((m) => m.value === models[currentAgent])
+        ? models[currentAgent]
+        : DEFAULT_CHOICE;
+  const effortLevels = modelOptions.find((m) => m.value === chosenModel)?.effortLevels ?? [];
+  const chosenEffort =
+    currentAgent !== 'manual' && effortLevels.includes(efforts[currentAgent])
+      ? efforts[currentAgent]
+      : DEFAULT_CHOICE;
 
   const composer = (
     <div className="agent__compose">
@@ -235,15 +259,37 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
         {currentAgent !== 'manual' && modelOptions.length > 1 && (
           <select
             className="agent__setting"
-            value={models[currentAgent]}
+            value={chosenModel}
+            title={modelOptions.find((m) => m.value === chosenModel)?.description}
             aria-label={t('agent.modelLabel')}
             onChange={(event) => {
+              const next = modelOptions.find((m) => m.value === event.target.value);
               setModel(currentAgent, event.target.value);
+              // En effort den nya modellen saknar gäller inte längre
+              if (next && !next.effortLevels.includes(efforts[currentAgent]))
+                setEffort(currentAgent, DEFAULT_CHOICE);
             }}
           >
             {modelOptions.map((option) => (
-              <option key={option} value={option}>
-                {modelLabel(option)}
+              <option key={option.value} value={option.value} title={option.description}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        )}
+        {currentAgent !== 'manual' && effortLevels.length > 0 && (
+          <select
+            className="agent__setting"
+            value={chosenEffort}
+            aria-label={t('agent.effortLabel')}
+            onChange={(event) => {
+              setEffort(currentAgent, event.target.value);
+            }}
+          >
+            <option value={DEFAULT_CHOICE}>{t('agent.effortDefault')}</option>
+            {effortLevels.map((level) => (
+              <option key={level} value={level}>
+                {capitalise(level)}
               </option>
             ))}
           </select>
@@ -341,11 +387,9 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
   );
 }
 
-/** Modellnamnen är produktnamn och översätts inte, bara standardvalet har en text. */
-function modelLabel(model: string): string {
-  return model === 'default'
-    ? t('agent.modelDefault')
-    : `${(model[0] ?? '').toUpperCase()}${model.slice(1)}`;
+/** Effort-nivåerna kommer från agenten som gemener, t.ex. `high` */
+function capitalise(text: string): string {
+  return `${(text[0] ?? '').toUpperCase()}${text.slice(1)}`;
 }
 
 /**

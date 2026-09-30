@@ -1,11 +1,12 @@
 import { type JSX, type ReactNode, useMemo, useState } from 'react';
 import { readStored, writeStored } from '@/common/renderer/storage';
-import { useStoredChoice } from '@/common/renderer/useStored';
+import { useStoredChoice, useStoredString } from '@/common/renderer/useStored';
 import {
   AGENT_KINDS,
-  AGENT_MODELS,
   AGENT_PERMISSIONS,
   type AgentPermission,
+  DEFAULT_CHOICE,
+  isSafeChoice,
   type RunnableAgent,
 } from '@/common/model/agent';
 import { SetupContext } from './SetupContext';
@@ -16,20 +17,33 @@ const AGENT_KEY = 'reverik.agent';
 const PERMISSION_KEY = 'reverik.agentPermission';
 const CLAUDE_MODEL_KEY = 'reverik.claudeModel';
 const CODEX_MODEL_KEY = 'reverik.codexModel';
+const CLAUDE_EFFORT_KEY = 'reverik.claudeEffort';
+const CODEX_EFFORT_KEY = 'reverik.codexEffort';
 
 export function SetupProvider({ children }: { children: ReactNode }): JSX.Element {
   const [guideOpen, setGuideOpen] = useState(() => readStored(ONBOARDED_KEY) !== 'true');
   const [agent, setAgent] = useStoredChoice(AGENT_KEY, AGENT_KINDS, 'claude');
   const [permission, setPermission] = useStoredChoice(PERMISSION_KEY, AGENT_PERMISSIONS, 'auto');
-  const [claudeModel, setClaudeModel] = useStoredChoice(
+  // Modellerna kommer från agenten själv, så lagringen tar vilket säkert värde som helst
+  const [claudeModel, setClaudeModel] = useStoredString(
     CLAUDE_MODEL_KEY,
-    AGENT_MODELS.claude,
-    'default',
+    DEFAULT_CHOICE,
+    isSafeChoice,
   );
-  const [codexModel, setCodexModel] = useStoredChoice(
+  const [codexModel, setCodexModel] = useStoredString(
     CODEX_MODEL_KEY,
-    AGENT_MODELS.codex,
-    'default',
+    DEFAULT_CHOICE,
+    isSafeChoice,
+  );
+  const [claudeEffort, setClaudeEffort] = useStoredString(
+    CLAUDE_EFFORT_KEY,
+    DEFAULT_CHOICE,
+    isSafeChoice,
+  );
+  const [codexEffort, setCodexEffort] = useStoredString(
+    CODEX_EFFORT_KEY,
+    DEFAULT_CHOICE,
+    isSafeChoice,
   );
   const api = useMemo(
     () => ({
@@ -43,6 +57,11 @@ export function SetupProvider({ children }: { children: ReactNode }): JSX.Elemen
       setModel: (target: RunnableAgent, model: string) => {
         if (target === 'claude') setClaudeModel(model);
         else setCodexModel(model);
+      },
+      efforts: { claude: claudeEffort, codex: codexEffort },
+      setEffort: (target: RunnableAgent, effort: string) => {
+        if (target === 'claude') setClaudeEffort(effort);
+        else setCodexEffort(effort);
       },
       guideOpen,
       showGuide: () => {
@@ -62,6 +81,10 @@ export function SetupProvider({ children }: { children: ReactNode }): JSX.Elemen
       codexModel,
       setClaudeModel,
       setCodexModel,
+      claudeEffort,
+      codexEffort,
+      setClaudeEffort,
+      setCodexEffort,
       guideOpen,
     ],
   );

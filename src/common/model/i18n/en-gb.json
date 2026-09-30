@@ -282,5 +282,7 @@
   "repo.dismissError": "Click to dismiss",
   "mcp.named": "Named the conversation \"{title}\".",
   "repo.reload": "Fetch and reload",
-  "agent.toolCalls": "{count} tool calls"
+  "agent.toolCalls": "{count} tool calls",
+  "agent.effortLabel": "Effort",
+  "agent.effortDefault": "Default effort"
 }

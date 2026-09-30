@@ -8,6 +8,7 @@ const input = {
   threadId: null,
   permission: 'auto' as const,
   model: 'default',
+  effort: 'default',
 };
 
 describe('claudeRunner', () => {
@@ -29,10 +30,17 @@ describe('claudeRunner', () => {
     expect(launch.args).not.toContain('--model');
     expect(launch.args).toContain('mcp__reverik__permission_prompt');
     expect(launch.env?.MCP_TOOL_TIMEOUT).toBeDefined();
-    const manual = claudeRunner.launch({ ...input, permission: 'manual', model: 'opus' });
+    const manual = claudeRunner.launch({
+      ...input,
+      permission: 'manual',
+      model: 'opus',
+      effort: 'high',
+    });
     expect(manual.args).toContain('default');
     expect(manual.args).not.toContain('acceptEdits');
     expect(manual.args.join(' ')).toContain('--model opus');
+    expect(manual.args.join(' ')).toContain('--effort high');
+    expect(launch.args).not.toContain('--effort');
     const resumed = claudeRunner.launch({ ...input, threadId: 'session-1' });
     expect(resumed.args.slice(-2)).toEqual(['--resume', 'session-1']);
   });

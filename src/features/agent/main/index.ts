@@ -10,12 +10,14 @@ import {
   checkAgentChannel,
   createConversationChannel,
   getConversationChannel,
+  listModelsChannel,
   listConversationsChannel,
   stopAgentChannel,
 } from '../ipc/channels';
 import {
-  AGENT_MODELS,
   AGENT_PERMISSIONS,
+  DEFAULT_CHOICE,
+  isSafeChoice,
   type ApprovalDecision,
   type AgentSettings,
   type ApprovalRequest,
@@ -24,6 +26,7 @@ import {
 import { describeApproval } from '../model/approval';
 import { RUNNERS } from '../model/protocol';
 import { checkAgent } from './check';
+import { listModels } from './models';
 import { AgentSession } from './session';
 import { ConversationStore } from './conversations';
 import {
@@ -177,8 +180,9 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
     );
     const checked: AgentSettings = {
       permission: settings.permission,
-      // En modell agenten inte känner till faller tillbaka på standard
-      model: AGENT_MODELS[conversation.agent].includes(settings.model) ? settings.model : 'default',
+      // Värdena blir argument till agenten; något oväntat faller tillbaka på agentens standard
+      model: isSafeChoice(settings.model) ? settings.model : DEFAULT_CHOICE,
+      effort: isSafeChoice(settings.effort) ? settings.effort : DEFAULT_CHOICE,
     };
     turns.set(conversationId, { saved: false, failed: false, reminded: false, settings: checked });
     running.ask(prompt, checked);
@@ -191,6 +195,7 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
     settle(id, allow ? { allow: true } : { allow: false, message: t('agent.approvalDenied') });
   });
   handleChannel(checkAgentChannel, ({ agent }) => checkAgent(agent));
+  handleChannel(listModelsChannel, ({ agent }) => listModels(agent));
 
   app.on('before-quit', () => {
     for (const running of sessions.values()) running.stop();

@@ -33,6 +33,7 @@ interface Props {
   agent: AgentKind;
   permission: AgentPermission;
   models: Readonly<Record<RunnableAgent, string>>;
+  efforts: Readonly<Record<RunnableAgent, string>>;
   children: ReactNode;
 }
 interface Tagged<T> {
@@ -51,6 +52,7 @@ export function AgentProvider({
   agent,
   permission,
   models,
+  efforts,
   children,
 }: Props): JSX.Element {
   // En extern AI körs inte av appen; frågan avvisas i main, inställningarna spelar ingen roll.
@@ -58,8 +60,9 @@ export function AgentProvider({
     (kind: AgentKind): AgentSettings => ({
       permission,
       model: kind === 'manual' ? 'default' : models[kind],
+      effort: kind === 'manual' ? 'default' : efforts[kind],
     }),
-    [permission, models],
+    [permission, models, efforts],
   );
   const selectionKey = useScopedKey('reverik.conversation');
   const [conversations, setConversations] = useState<Tagged<ConversationSummary[]> | null>(null);

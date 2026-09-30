@@ -1,5 +1,10 @@
 import { defineChannel, defineEvent } from '@/common/ipc/channel';
-import { type AgentKind, type AgentSettings, type RunnableAgent } from '@/common/model/agent';
+import {
+  type AgentKind,
+  type AgentModel,
+  type AgentSettings,
+  type RunnableAgent,
+} from '@/common/model/agent';
 import { type AgentCheck, type AgentEntry, type AgentState } from '../model/protocol';
 import {
   type Conversation,
@@ -35,6 +40,11 @@ export const askAgentChannel = defineChannel<{
 
 export const stopAgentChannel = defineChannel<{ repoPath: string; conversationId: string }>(
   'agent:stop',
+);
+
+/** Modellerna den installerade agenten har. Tom lista om den inte kan svara. */
+export const listModelsChannel = defineChannel<{ agent: RunnableAgent }, AgentModel[]>(
+  'agent:list-models',
 );
 
 /** Frågar Claude Code om den finns och är inloggad. Tar en sekund eller två. */

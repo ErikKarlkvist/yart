@@ -8,8 +8,12 @@ export interface SetupApi {
   /** Auto eller Manual, gemensamt för agenterna */
   permission: AgentPermission;
   setPermission: (permission: AgentPermission) => void;
+  /** Vald modell per agent, `default` låter agenten välja */
   models: Readonly<Record<RunnableAgent, string>>;
   setModel: (agent: RunnableAgent, model: string) => void;
+  /** Vald effort per agent, `default` låter agenten välja */
+  efforts: Readonly<Record<RunnableAgent, string>>;
+  setEffort: (agent: RunnableAgent, effort: string) => void;
   /** Guiden visas tills användaren stängt den, och igen på begäran */
   guideOpen: boolean;
   showGuide: () => void;
@@ -25,6 +29,8 @@ export const SetupContext = createContext<SetupApi>({
   setPermission: noop,
   models: { claude: 'default', codex: 'default' },
   setModel: noop,
+  efforts: { claude: 'default', codex: 'default' },
+  setEffort: noop,
   guideOpen: false,
   showGuide: noop,
   dismissGuide: noop,

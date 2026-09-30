@@ -83,6 +83,8 @@ export interface LaunchInput {
   permission: AgentPermission;
   /** Modellen att köra, `default` låter agenten välja */
   model: string;
+  /** Effort-nivån, `default` låter agenten välja */
+  effort: string;
 }
 
 /** Det som en rad från processen betyder för panelen. */
@@ -112,7 +114,7 @@ export interface AgentRunner {
 export const claudeRunner: AgentRunner = {
   kind: 'claude',
   persistent: true,
-  launch: ({ mcpUrl, skill, prompt, threadId, permission, model }) => ({
+  launch: ({ mcpUrl, skill, prompt, threadId, permission, model, effort }) => ({
     command: 'claude',
     args: [
       '-p',
@@ -132,6 +134,7 @@ export const claudeRunner: AgentRunner = {
       '--permission-prompt-tool',
       `mcp__reverik__${PERMISSION_PROMPT_TOOL}`,
       ...(model === 'default' ? [] : ['--model', model]),
+      ...(effort === 'default' ? [] : ['--effort', effort]),
       '--append-system-prompt',
       skill,
       ...(threadId ? ['--resume', threadId] : []),

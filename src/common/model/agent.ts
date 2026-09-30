@@ -19,14 +19,31 @@ export type AgentPermission = (typeof AGENT_PERMISSIONS)[number];
 /** Det användaren valt under textrutan och som gäller när agenten startas. */
 export interface AgentSettings {
   permission: AgentPermission;
+  /** Modellens värde som agenten tar emot, `default` låter agenten välja */
   model: string;
+  /** Hur mycket agenten tänker, `default` låter agenten välja */
+  effort: string;
 }
 
-/** Modellerna som går att välja per agent. `default` låter agenten välja själv. */
-export const AGENT_MODELS: Readonly<Record<RunnableAgent, readonly string[]>> = {
-  claude: ['default', 'opus', 'sonnet', 'haiku'],
-  codex: ['default'],
-};
+/** Värdet för "låt agenten välja", för både modell och effort */
+export const DEFAULT_CHOICE = 'default';
+
+/** En modell som den installerade agenten själv säger att den har. */
+export interface AgentModel {
+  value: string;
+  label: string;
+  description: string;
+  /** Effort-nivåerna modellen stöder, tom om den saknar effort */
+  effortLevels: string[];
+}
+
+/**
+ * Ett modell- eller effortvärde som går att skicka som argument. Värdena
+ * kommer från agenten själv men lagras i renderern, så de kontrolleras.
+ */
+export function isSafeChoice(value: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9._:[\]-]{0,79}$/.test(value);
+}
 
 /**
  * MCP-verktyget appens Claude Code-session frågar när något kräver lov, så
