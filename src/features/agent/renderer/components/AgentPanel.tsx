@@ -113,28 +113,7 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
 
   const composer = (
     <div className="agent__compose">
-      {!activeId && (
-        <div className="agent__mode-picker">
-          <div className="agent__mode-buttons">
-            {(['analyse', 'review', 'plan'] as const).map((choice) => (
-              <button
-                key={choice}
-                type="button"
-                className={`agent__mode-button agent__mode-button--${choice}${mode === choice ? ' is-selected' : ''}`}
-                aria-pressed={mode === choice}
-                disabled={!hasRepo}
-                onClick={() => {
-                  selectMode(choice);
-                  setDraft('');
-                }}
-              >
-                {t(`agent.mode.${choice}`)}
-              </button>
-            ))}
-          </div>
-          <p className="agent__mode-description">{t(`agent.modeDescription.${mode}`)}</p>
-        </div>
-      )}
+      {!activeId && <p className="agent__mode-description">{t(`agent.modeDescription.${mode}`)}</p>}
       {!activeId && mode === 'review' && (
         <div className="agent__review-branches">
           <label>
@@ -174,6 +153,27 @@ export function AgentPanel({ hasRepo }: { hasRepo: boolean }): JSX.Element {
           {(!repo?.isGit || branches.length < 2) && (
             <p className="agent__hint">{t('agent.reviewNeedsBranches')}</p>
           )}
+        </div>
+      )}
+      {!activeId && (
+        <div className="agent__mode-picker">
+          <div className="agent__mode-buttons">
+            {(['analyse', 'review', 'plan'] as const).map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                className={`agent__mode-button agent__mode-button--${choice}${mode === choice ? ' is-selected' : ''}`}
+                aria-pressed={mode === choice}
+                disabled={!hasRepo}
+                onClick={() => {
+                  selectMode(choice);
+                  setDraft('');
+                }}
+              >
+                {t(`agent.mode.${choice}`)}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <select

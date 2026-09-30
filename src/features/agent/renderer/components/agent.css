@@ -54,7 +54,7 @@
 }
 
 .agent__mode-description {
-  margin: 6px 0 0;
+  margin: 0 0 8px;
   color: var(--fg-muted);
   font-size: 12px;
 }
