@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { readStored, useScopedKey, writeStored } from '@/common/renderer/storage';
 import {
+  currentBranchChannel,
   fetchRepoChannel,
   forgetRepoChannel,
   listRecentReposChannel,
@@ -11,6 +12,8 @@ import {
 } from '../../ipc/channels';
 import { type RepoInfo } from '../../model/repo';
 import { errorMessage } from '@/common/model/json';
+
+const BRANCH_CHECK_INTERVAL_MS = 30_000;
 
 export interface RepoState {
   repo: RepoInfo | null;
@@ -77,6 +80,63 @@ export function useRepoState(): RepoState {
     [run],
   );
   const repoPath = repo?.path ?? null;
+
+  // Git kan byta branch i terminalen medan appen är öppen. Läs bara HEAD tills
+  // något ändras; då läses hela repot och listan över senaste om.
+  useEffect(() => {
+    if (!repoPath || !repo?.isGit) return;
+    const controller = new AbortController();
+    const isActive = (): boolean => !controller.signal.aborted;
+    const isForeground = (): boolean =>
+      document.visibilityState === 'visible' && document.hasFocus();
+    let checking = false;
+    const refreshBranch = async (): Promise<void> => {
+      if (!isActive() || checking || !isForeground()) return;
+      checking = true;
+      try {
+        const branch = await invokeChannel(currentBranchChannel, { repoPath });
+        if (!isActive() || branch === repo.branch) return;
+        const refreshed = await invokeChannel(openRepoChannel, { path: repoPath });
+        const list = await invokeChannel(listRecentReposChannel, undefined);
+        if (!isActive()) return;
+        setRecent(list);
+        setRepo((current) => (current?.path === repoPath ? refreshed : current));
+      } catch {
+        // Ett pågående checkout-byte kan tillfälligt göra HEAD oläsbart.
+      } finally {
+        checking = false;
+      }
+    };
+    const checkBranch = (): void => {
+      void refreshBranch();
+    };
+    let foreground = isForeground();
+    let timer: number | undefined;
+    const startPolling = (): void => {
+      timer = window.setInterval(checkBranch, BRANCH_CHECK_INTERVAL_MS);
+    };
+    const syncFocus = (): void => {
+      const focused = isForeground();
+      if (focused === foreground) return;
+      foreground = focused;
+      if (timer !== undefined) window.clearInterval(timer);
+      if (focused) {
+        checkBranch();
+        startPolling();
+      }
+    };
+    if (foreground) startPolling();
+    window.addEventListener('focus', syncFocus);
+    window.addEventListener('blur', syncFocus);
+    document.addEventListener('visibilitychange', syncFocus);
+    return () => {
+      controller.abort();
+      if (timer !== undefined) window.clearInterval(timer);
+      window.removeEventListener('focus', syncFocus);
+      window.removeEventListener('blur', syncFocus);
+      document.removeEventListener('visibilitychange', syncFocus);
+    };
+  }, [repoPath, repo?.branch, repo?.isGit]);
 
   const fetch = useCallback(() => {
     if (!repoPath) return Promise.resolve();

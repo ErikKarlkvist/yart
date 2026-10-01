@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  conversationInstructions,
-  deliveryHint,
-  deliveryReminder,
-  isDeliveryTool,
-} from './conversationInstructions';
+import { conversationInstructions, responseHint } from './conversationInstructions';
 
 describe('conversation instructions', () => {
   it('keeps review branches and required outputs in the background context', () => {
@@ -14,15 +9,23 @@ describe('conversation instructions', () => {
     expect(instructions).toContain('save_review');
   });
 
-  it('tells planning conversations to update a document and challenge assumptions', () => {
+  it('lets planning conversations discuss before saving a requested document', () => {
     const instructions = conversationInstructions('plan');
     expect(instructions).toContain('critical questions');
     expect(instructions).toContain('save_document');
+    expect(instructions).toContain('without automatically updating saved artifacts');
   });
 
   it('asks every flow-producing mode for the trigger', () => {
     for (const mode of ['analyse', 'review', 'plan'] as const)
       expect(conversationInstructions(mode, { head: 'a', base: 'b' })).toContain('trigger');
+  });
+
+  it('kopplar ihop uttryckligen skapade flows i ett dokument', () => {
+    const instructions = conversationInstructions('analyse');
+    expect(instructions).toContain('one companion document');
+    expect(instructions).toContain('links the new flows by name');
+    expect(instructions).toContain('Answer discussion and follow-up questions in chat');
   });
 
   it('ber agenten namnge konversationen med lägets verb', () => {
@@ -31,30 +34,12 @@ describe('conversation instructions', () => {
     expect(conversationInstructions('general')).toContain('name_conversation');
   });
 
-  it('säger att svaret ska sparas i appen och inte skrivas i chatten', () => {
+  it('låter alla lägen svara i chatten utan att kräva sparning', () => {
     for (const mode of ['analyse', 'review', 'plan'] as const)
       expect(conversationInstructions(mode, { head: 'a', base: 'b' })).toContain(
-        'Deliver the answer in yart',
+        'do not save or update a flow, document or review just because of the conversation mode',
       );
-    expect(conversationInstructions('general')).not.toContain('Deliver the answer in');
-  });
-});
-
-describe('deliveryReminder', () => {
-  it('påminner i lägen som levererar, inte i Chat', () => {
-    expect(deliveryReminder('analyse')).toContain('save_flow');
-    expect(deliveryReminder('general')).toBeNull();
-  });
-
-  it('känner igen sparverktygen med och utan prefix', () => {
-    expect(isDeliveryTool('save_flow')).toBe(true);
-    expect(isDeliveryTool('yart.save_review')).toBe(true);
-    expect(isDeliveryTool('list_analyses')).toBe(false);
-    expect(isDeliveryTool('name_conversation')).toBe(false);
-  });
-
-  it('ger en leveranshint bara i lägen som sparar', () => {
-    expect(deliveryHint('analyse')).toContain('save_flow');
-    expect(deliveryHint('general')).toBeNull();
+    expect(responseHint()).toContain('answer ordinary questions and discussion in chat');
+    expect(responseHint()).not.toContain('one or two sentences');
   });
 });

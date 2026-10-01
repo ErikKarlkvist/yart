@@ -397,6 +397,7 @@ textarea:focus {
   border-bottom: 1px solid var(--border);
   background: var(--bg-panel);
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .tab-strip button {
@@ -416,6 +417,7 @@ textarea:focus {
   gap: 2px;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-app-region: no-drag;
 }
 

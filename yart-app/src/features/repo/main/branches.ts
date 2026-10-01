@@ -1,6 +1,16 @@
 import { simpleGit } from 'simple-git';
 import { type BranchList } from '../ipc/channels';
 
+/** Snabb avläsning av HEAD, även för Git-worktrees och detached HEAD. */
+export async function currentBranch(path: string): Promise<string | null> {
+  const branch = await simpleGit(path)
+    .raw(['symbolic-ref', '--quiet', '--short', 'HEAD'])
+    .catch(() => null);
+  if (branch === null) return null;
+  const name = branch.trim();
+  return name.length > 0 ? name : null;
+}
+
 /**
  * Lokala brancher och den utcheckade, samt fjärrbrancher som inte finns
  * lokalt (som origin/x). Tomt för mappar utan git.

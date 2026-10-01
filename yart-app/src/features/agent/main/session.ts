@@ -58,7 +58,7 @@ export class AgentSession {
 
   /**
    * Skickar frågan. `hint` följer med till agenten men visas inte i panelen,
-   * t.ex. en påminnelse om att leverera i appen.
+   * t.ex. en kort instruktion om när ett svar ska sparas i appen.
    */
   ask(prompt: string, settings: AgentSettings = DEFAULT_SETTINGS, hint?: string): void {
     this.emit({ at: now(), kind: 'user', text: prompt });

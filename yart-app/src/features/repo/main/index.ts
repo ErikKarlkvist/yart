@@ -3,6 +3,7 @@ import { demoRepoPath } from '@/common/main/demo';
 import { handleChannel } from '@/common/main/ipc';
 import { t } from '@/common/model/i18n';
 import {
+  currentBranchChannel,
   fetchRepoChannel,
   forgetRepoChannel,
   listBranchesChannel,
@@ -13,7 +14,7 @@ import {
   readSourceChannel,
 } from '../ipc/channels';
 import { type RepoInfo } from '../model/repo';
-import { fetchRepo, listBranches } from './branches';
+import { currentBranch, fetchRepo, listBranches } from './branches';
 import { inspectRepo } from './inspect';
 import { forgetRepo, readRecent, rememberRepo } from './recent';
 
@@ -45,6 +46,7 @@ export function registerRepoHandlers(): void {
   );
 
   handleChannel(listBranchesChannel, ({ repoPath }) => listBranches(repoPath));
+  handleChannel(currentBranchChannel, ({ repoPath }) => currentBranch(repoPath));
 
   handleChannel(fetchRepoChannel, async ({ repoPath }) => {
     await fetchRepo(repoPath);

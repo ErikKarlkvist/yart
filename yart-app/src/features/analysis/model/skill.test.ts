@@ -39,12 +39,13 @@ describe('buildSkill', () => {
   });
 
   it('chooses between documents, flows and reviews', () => {
-    expect(skill).toContain('Choose the deliverable that matches the question');
+    expect(skill).toContain('Choose the requested deliverable');
     expect(skill).toContain('Do not create Mermaid');
-    expect(skill).toContain('clear, human sentences in active voice');
+    expect(skill).toContain('two or three clear, explanatory sentences in active voice');
     expect(skill).toContain('for someone who has not read the code');
     expect(skill).toContain('Do not turn playback steps into suggestions');
-    expect(skill).toContain('save a companion');
+    expect(skill).toContain('one companion document with all');
+    expect(skill).toContain('two or three clear, explanatory sentences');
     expect(skill).toContain('before/after differences');
     expect(skill).toContain('interface Review {');
     expect(skill).toContain('interface FlowCompare {');
@@ -55,7 +56,7 @@ describe('buildSkill', () => {
     expect(skill).toContain('interface Trigger {');
     for (const kind of triggerKindSchema.options) expect(skill).toContain(`'${kind}'`);
     expect(skill).toContain('Write for people, keep the detail for AI');
-    expect(skill).toContain('the answer lives in yart, not in the chat');
+    expect(skill).toContain('answer directly in chat');
     expect(skill).toContain('plan?: string;');
     expect(skill).toContain('fix?: string;');
     const example = JSON.parse(/```json\n([\s\S]*?)\n```/.exec(skill)?.[1] ?? '{}') as {

@@ -29,8 +29,9 @@ som enda server, skillen och lägets instruktioner
   sparas i en konversation får dess id, och analyslistan grupperar på det.
 - Modellerna och effort-nivåerna hämtas från den installerade Claude Code via
   `initialize` i stream-json (`src/features/agent/main/models.ts`).
-- I Analyse, Review och Plan ska svaret sparas i appen, inte skrivas i chatten. Varje
-  fråga får en dold påminnelse, och sparas inget under en tur skickar appen en påminnelse.
+- I Analyse, Review och Plan kan agenten svara på frågor och diskutera direkt i chatten.
+  Flöden, dokument och reviewer sparas när användaren ber om dem eller när en separat
+  artefakt behövs för uppgiften. Varje fråga får en dold instruktion att välja rätt form.
 
 Guiden vid första starten väljer mellan Claude Code, Codex och extern AI. Externa agenter
 levererar via MCP som vanligt.

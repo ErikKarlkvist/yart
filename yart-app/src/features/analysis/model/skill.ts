@@ -31,10 +31,11 @@ const HOW_TO_BUILD = `## How to build a good flow
 5. Order \`steps\` the way the flow actually runs. Responses are edges of their own going
    back to the caller, e.g. "200 OK with the todo". Every step references an edge id.
 6. Keep labels short and use the code's own names (component, function, route, table).
-   Write step descriptions as clear, human sentences in active voice, in the
+   Write each step description in two or three clear, explanatory sentences in active voice, in the
    language the user chose (or the language of their request if none was chosen),
    for someone who has not read the code. Explain what happens to the
-   user or data and why it matters. Avoid method and variable names, request IDs,
+   user or data, why it happens, and why this step matters to the flow. Avoid filler,
+   repetition, method and variable names, request IDs,
    unexplained acronyms and implementation order unless essential to the outcome.
    Do not turn playback steps into suggestions or hypothetical failure analysis:
    describe the behavior that actually occurs, and put findings in the review.
@@ -47,7 +48,7 @@ const HOW_TO_BUILD = `## How to build a good flow
    fails, what catches it, what is rolled back or retried, and what the caller sees.
 8. Use \`role\` to name a handler more specifically when useful, such as \`Hook\`, \`Action\` or
    \`Event\`. Use node kind \`queue\` for a queue, topic or event bus.
-9. In a proposed plan, save a document with a short human \`content\` and a detailed
+9. When the user asks to save a proposed plan, use a document with a short human \`content\` and a detailed
    \`plan\` for an AI agent: ordered steps with files, functions, data changes, edge cases
    and how to verify each step. In the proposed flows, put \`highlight: 'added'\` on new nodes and calls and
    \`highlight: 'changed'\` on existing ones that need updating. These colours
@@ -151,7 +152,7 @@ interface Edge {
 
 interface Step {
   edgeId: string;     // Edge.id
-  description: string; // plain-language sentence about what happens, without code identifiers
+  description: string; // two or three explanatory sentences, without code identifiers
 }
 
 interface Source {
@@ -169,19 +170,19 @@ const REVIEW_RULES = `## Reviews
 
 A review asked for without mentioning {appName} is answered the usual way and not saved
 here. When the user asks for a review in {appName} of a change (a branch against another
-branch, a commit, a diff), deliver the flows the change touches and then one review
-document:
+branch, a commit, a diff), save a review. Add compared flows when they make affected
+data paths clearer:
 
 1. Read the diff first (\`git diff <base>...<head>\` and the changed files), then follow
    the data flows the change touches. Ignore flows the change does not affect.
-2. Save each affected flow as it works on head, with a \`compare\` that holds the same
+2. If a flow helps explain the change, save it as it works on head, with a \`compare\` that holds the same
    flow as it works on base. Keep the same node and edge ids in base and head for
    things that are the same, so {appName} can show what was added, removed and changed.
    Give new things new ids.
 3. Save the review: a title, a summary with the verdict, short Markdown \`content\` with
    headings and bullets about what the change does and how it affects the data flows
    (do not repeat the findings, {appName} lists them below the text), the names of the
-   flows in \`flows\`, and the findings.
+   saved flows in \`flows\` when present, and the findings.
 
 \`\`\`ts
 interface Review {
@@ -190,7 +191,7 @@ interface Review {
   content: string;      // short Markdown for people: ## headings and - bullets
   baseLabel: string;    // what the change is compared against, e.g. "main"
   headLabel: string;    // the change itself, e.g. "feature/todo-lists"
-  flows: string[];      // names of the saved flows the change touches
+  flows: string[];      // names of saved flows, or [] when none are needed
   findings: Finding[];  // what looks wrong or risky, may be empty
 }
 
@@ -215,9 +216,9 @@ Rules for reviews:
   when it resolves in this repository (run \`git fetch\` first), so the branch does not
   need to be checked out. If it does not resolve, the working tree is used. \`base\` is
   not checked.
-- Point every finding at a flow by name and at a node or a call in it, and at a file and
-  line where possible. {appName} rejects the review if a flow is not saved or a target does
-  not exist. Look for: cache invalidation that disappeared, calls that are now awaited or
+- Point findings at a file and line where possible. When a finding concerns a saved
+  flow, name that flow and its node or call. {appName} rejects references to flows or
+  targets that do not exist. Look for: cache invalidation that disappeared, calls that are now awaited or
   reordered, work moved inside or outside a transaction, missing error handling or
   validation, N+1 queries, secrets or data leaving the system, retries and timeouts.
 - Point to \`edgeId\` when a specific call has the problem. {appName} highlights that
@@ -238,12 +239,12 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 `;
 
 /** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 10;
+export const SKILL_VERSION = 12;
 
 export function buildSkill(): string {
   return `---
 name: yart
-description: Deliver data-flow diagrams, architecture documents and change reviews to {appName}, the desktop app that shows them. Use only when the user asks for something in {appName} (a flow, sequence diagram, document or review to show there), or when {appName} itself started the session. Do not use it just because the {appName} tools are available or because the task is a code review or a question about how the code works.
+description: Deliver data-flow diagrams, architecture documents and change reviews to {appName}, the desktop app that shows them. Use only when the user asks for something in {appName} (a flow, sequence diagram, document or review to show there). An in-app chat does not itself require saving. Do not use it just because the {appName} tools are available or because the task is a code review or a question about how the code works.
 ---
 <!-- yart-skill v${SKILL_VERSION}, generated by {appName}, do not edit -->
 # {appName}
@@ -259,16 +260,15 @@ as soon as the tool returns. If the tools are missing, ask the user to start
 **Only when the user asks for {appName}.** Use the tools when the user asks for
 something in {appName}: a flow, a diagram, a document or a review to show there, or an
 update to something already saved. A session that {appName} started from its own panel
-counts as asking. Everything else is not a reason to save: an ordinary code review, a
-question about how the code works or a plan in the chat is answered the usual way, and
-nothing is saved in {appName}. If you think a flow in {appName} would help, offer it in
-one sentence and wait for a yes.
+does not mean every message asks for a saved artifact. Ordinary discussion, a question
+about how the code works, or exploratory planning is answered in chat without saving.
+If a flow in {appName} would help, offer it and wait for the user to ask for it.
 
-**When asked, the answer lives in {appName}, not in the chat.** Save flows, documents
-or reviews with the tools; the user reads them in the app. The chat reply is one or two sentences
-saying what you saved, or a short question when you need an answer first. Never answer
-with a report, call-chain summary, code listing or file list in the chat: put that
-detail into the saved flow (sources, descriptions, payloads) and the document.
+**Match the answer to the request.** When the user asks to create or update a flow,
+document or review, save it with the corresponding tool and briefly explain what was
+saved. When the user is discussing or asking a question, answer directly in chat with
+enough detail to be useful. Do not save or change an artifact merely because the
+conversation takes place in {appName}.
 
 **Write for people, keep the detail for AI.** Everything a person reads (\`content\`
 on documents and reviews, finding descriptions) is short and easy to skim: Markdown with
@@ -279,19 +279,16 @@ finding, and \`description\`, \`payload\`, \`response\` and \`source\` on nodes 
 {appName} combines them into an implementation plan or a fix plan the user copies or
 sends to their agent.
 
-**Choose the deliverable that matches the question.** Use a document for a
-short, high-level explanation of how the codebase or a major feature works. Use
-flows for a specific request, operation or failure path. Do not create Mermaid,
+**Choose the requested deliverable.** When the user asks to save a high-level
+explanation of the codebase or a major feature, use a document. For a saved
+request, operation or failure path, use a flow. Do not create Mermaid,
 ASCII diagrams, HTML pages, separate notes or files in the repository.
 
-When the user asks for a new flow, save the flow first, then save a companion
-document with that flow's name in \`flows\`. In two or three short paragraphs,
-explain it with a few headings and bullets in the user's chosen language, or the
-language of the request if none was chosen. Say what starts the flow. If the flow has \`compare\`,
-explain the important before/after differences and their practical effect. If
-there is no comparison, explain the purpose and main path without inventing
-differences. Avoid repeating every step. Flows created only to support a review
-do not need separate documents unless the user asks for them.
+When the user asks for new flows, save the flows and one companion document with all
+their names in \`flows\`. Explain how they fit together, what starts them, and their
+purpose and main paths. For compared flows, explain the important
+before/after differences and practical effect. Avoid repeating every step. A saved planning
+document can be this companion; flows made only to support a review do not need one.
 
 ## Workflow
 
@@ -305,11 +302,13 @@ do not need separate documents unless the user asks for them.
    name such as \`add-todo\`. {appName} validates the content and checks that every
    file and line exists. If the tool returns an error, fix the content and call
    it again with the same name.
-5. Reply in one or two sentences: what you saved and what it shows.
+5. Tell the user what you saved and what it shows. For an ordinary chat question,
+   answer in chat without calling a save tool.
 
 ## Scope
 
-Analysing, reviewing and planning only read the code and deliver through the tools:
+For discussion, analysis, reviews and plans, read the code and answer in chat or save
+the artifact the user requested:
 
 - Do not commit, stage, stash, branch, check out, fetch or push. Do not change git state.
 - Do not modify, create or delete files in the repository for an analysis, review or
@@ -326,9 +325,9 @@ ${SCHEMA}
 
 ${REVIEW_RULES}
 
-- For a warning about the current code without a change, save the flow with the same
-  current flow in \`compare.base\` and the same commit for both labels, then a review that
-  says in its summary that this is a current-state analysis.
+- For a warning about current code without a change, discuss it in chat unless the user
+  asks to save it. A saved current-state review may stand alone; if you also save a flow,
+  use the current flow in \`compare.base\` and the same commit for both labels.
 
 ${EXAMPLE}`.replaceAll('{appName}', APP_NAME);
 }

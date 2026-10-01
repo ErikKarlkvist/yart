@@ -201,7 +201,7 @@
   "agent.reviewHead": "Branch to review",
   "agent.reviewBase": "Compare against",
   "agent.reviewNeedsBranches": "Review needs a Git repository with at least two branches.",
-  "agent.reviewDefaultPrompt": "Review branch {head} against {base}.",
+  "agent.reviewDefaultPrompt": "Review branch {head} against {base} and save the review in {appName}.",
   "agent.untitled": "New conversation",
   "agent.empty": "Ask about this repository, or click a node or call in a flow. Answers appear here and saved analyses appear on the left.",
   "agent.working": "The agent is working…",

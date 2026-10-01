@@ -231,12 +231,15 @@
   display: block;
   width: 100%;
   min-height: 64px;
+  max-height: calc(10lh + 18px);
   padding: 8px 10px;
   border: 1px solid var(--border-strong);
   background: var(--bg);
   color: var(--fg);
   font: inherit;
-  resize: vertical;
+  field-sizing: content;
+  overflow-y: auto;
+  resize: none;
 }
 
 .agent__input::placeholder {

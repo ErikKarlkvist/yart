@@ -168,7 +168,7 @@ const flowStepSchema = z
       .string()
       .min(1)
       .describe(
-        'One plain-language sentence in the language the user chose, or the language of their request if none was chosen, about what happens to the user or data. Avoid method names, variable names, request IDs and unexplained acronyms; put those details on nodes and edges. Describe actual behavior, not suggestions or hypothetical failures.',
+        'Two or three explanatory, plain-language sentences in the language the user chose, or the language of their request if none was chosen. Explain what happens to the user or data, why it happens, and why this step matters to the flow. Avoid filler, repetition, method names, variable names, request IDs and unexplained acronyms; put technical details on nodes and edges. Describe actual behavior, not suggestions or hypothetical failures.',
       ),
   })
   .describe('One step of the playback, in the order the flow actually runs');

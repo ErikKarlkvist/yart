@@ -75,6 +75,7 @@
   gap: 0;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   /* Listan ligger över radens underkant, så den valda fliken kan täcka den */
   margin-bottom: -1px;
 }

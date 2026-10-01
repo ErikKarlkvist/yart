@@ -14,67 +14,20 @@ export function conversationInstructions(
   mode: ConversationMode,
   branches?: ReviewBranches,
 ): string {
+  return brandText(`${modeInstructions(mode, branches)} ${RESPONSE} ${naming(mode)}`);
+}
+
+const RESPONSE =
+  "Decide from the user's current request whether to answer in chat or save something in {appName}. Discussion, clarification, questions about code, and exploratory planning can be answered directly in chat with enough detail to be useful; do not save or update a flow, document or review just because of the conversation mode. When the user asks to create or update an artifact in {appName}, use the matching save tool and briefly explain what was saved. Never modify repository files unless the user asks for implementation.";
+
+/**
+ * En kort påminnelse om valet mellan chatt och sparning. Följer med frågan men
+ * visas inte i panelen.
+ */
+export function responseHint(): string {
   return brandText(
-    `${modeInstructions(mode, branches)} ${mode === 'general' ? '' : `${DELIVER} `}${naming(mode)}`,
+    '[{appName}: answer ordinary questions and discussion in chat. Save or update a flow, document or review only when this request calls for that artifact. A chat reply may be as detailed as the question needs.]',
   );
-}
-
-/**
- * Lägena som levererar till appen. Svaret hör hemma i appen, inte i chatten:
- * utan det här skriver agenten gärna en lång rapport i stället för att spara.
- */
-const DELIVER =
-  'Deliver the answer in {appName} (its tools are on the MCP server called yart), not in the chat: the user reads flows, documents and reviews in the app, and the chat is only for a one or two sentence confirmation of what you saved, or a short question when you need an answer before you can continue. Never write reports, call-chain summaries, code listings or file lists in the chat; put that detail into the saved flow (sources, descriptions, payloads) and the document instead. If the {appName} tools are not available, say so in one sentence instead of answering in the chat.';
-
-/** Verktygen som sparar något i appen, med eller utan MCP-prefix */
-export function isDeliveryTool(name: string): boolean {
-  return /(^|[_.])save_(flow|document|review)$/.test(name);
-}
-
-/**
- * Påminnelsen appen skickar när agenten avslutat en tur utan att spara något,
- * i lägen där svaret ska levereras i appen. null när chatten räcker.
- */
-export function deliveryReminder(mode: ConversationMode): string | null {
-  const text = reminderText(mode);
-  return text === null ? null : brandText(text);
-}
-
-/**
- * En rad som följer med varje fråga i lägen som levererar, men inte visas i
- * panelen. Instruktionerna i systemprompten räcker inte alltid; agenten svarar
- * gärna i chatten när frågan låter som en fråga.
- */
-export function deliveryHint(mode: ConversationMode): string | null {
-  switch (mode) {
-    case 'analyse':
-      return brandText(
-        '[{appName}: answer by saving the flow with save_flow, including its trigger, and a short document with save_document. Keep the chat reply to one or two sentences.]',
-      );
-    case 'review':
-      return brandText(
-        '[{appName}: answer by saving the affected flows with save_flow and the review with save_review. Keep the chat reply to one or two sentences.]',
-      );
-    case 'plan':
-      return brandText(
-        '[{appName}: keep the planning document up to date with save_document, and proposed flows with save_flow. Keep the chat reply short.]',
-      );
-    case 'general':
-      return null;
-  }
-}
-
-function reminderText(mode: ConversationMode): string | null {
-  switch (mode) {
-    case 'analyse':
-      return 'Nothing was saved in {appName} this turn. Save what you found: the flow with save_flow, including its trigger, and a short document with save_document that links it. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
-    case 'review':
-      return 'Nothing was saved in {appName} this turn. Save the affected flows with save_flow, each with a compare, and then the review with save_review. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
-    case 'plan':
-      return 'Nothing was saved in {appName} this turn. Save the planning document with save_document, with short content for people and the detailed plan for an AI agent in plan, and any proposed flows with save_flow. Then reply in one or two sentences. If you are waiting for an answer from the user, say so in one sentence instead.';
-    case 'general':
-      return null;
-  }
 }
 
 function naming(mode: ConversationMode): string {
@@ -84,11 +37,11 @@ function naming(mode: ConversationMode): string {
 function modeInstructions(mode: ConversationMode, branches?: ReviewBranches): string {
   switch (mode) {
     case 'analyse':
-      return `Conversation mode: Analyse. Help the user understand existing flows in this repository. Trace the requested paths through real code and save each useful flow with save_flow. Start every flow from what sets it off and record it as trigger (for example a user clicking a button, a webhook arriving, a scheduled job) on the node where the first step begins. Use save_document when the flow needs a written explanation. Write content for people: short Markdown with headings and bullets; put detail for AI in the dedicated fields. Ask a focused question if the requested flow is ambiguous. Ground source references in files that exist; do not invent implementation details.`;
+      return `Conversation mode: Analyse. Help the user understand existing flows in this repository. Answer discussion and follow-up questions in chat. When the user asks for new flows in {appName}, trace the requested paths through real code and save them with save_flow. Then save one companion document with save_document that links the new flows by name and explains how they fit together. Start each saved flow from what sets it off and record it as trigger (for example a user clicking a button, a webhook arriving, a scheduled job) on the node where the first step begins. Ask a focused question if the requested path is ambiguous. Ground source references in files that exist; do not invent implementation details.`;
     case 'review':
-      return `Conversation mode: Review. Review branch ${JSON.stringify(branches?.head ?? '')} against ${JSON.stringify(branches?.base ?? '')}. Read the actual diff before forming conclusions. Save affected flows with before/after compares, each with its trigger, then save_review with actionable findings grounded in the code. Keep finding descriptions short for people and give each error and warning a fix with the concrete change and how to verify it for an AI agent. Point to edgeId for problems with a specific call so the arrow and playback text are highlighted. If there are no findings, say so clearly. Do not switch or modify branches merely to inspect them.`;
+      return `Conversation mode: Review. Discuss branch ${JSON.stringify(branches?.head ?? '')} against ${JSON.stringify(branches?.base ?? '')}. Read the actual diff before forming conclusions. Answer questions and discuss findings in chat without changing saved artifacts. When the user asks for a saved review, use save_review with actionable findings grounded in the code; save affected flows with before/after compares and a trigger when they help explain the change. Keep finding descriptions short for people and give each error and warning a fix with the concrete change and how to verify it for an AI agent. Point to edgeId for problems with a specific call when a saved flow exists. If there are no findings, say so clearly. Do not switch or modify branches merely to inspect them.`;
     case 'plan':
-      return `Conversation mode: Plan. Collaborate on a plan for a new feature or flow. Ask reasonable critical questions about requirements, edge cases, constraints, and tradeoffs; keep them focused and do not block useful progress. Trace and save current or older flows when they help explain the design. Save proposed flows with their trigger and with highlight added on new nodes and calls, and highlight changed on existing ones to update; update these flows as the plan evolves. A new proposed node or call may omit source when code does not exist; never invent references. Mark proposed behavior clearly in titles and playback descriptions. Maintain a planning document with save_document and update it as decisions change during the conversation: short human content, and the detailed step-by-step implementation plan for an AI agent in plan. Clearly separate observed implementation from proposed behavior. Implement changes only when the user asks.`;
+      return `Conversation mode: Plan. Collaborate on a plan for a new feature or flow. Discuss ideas and answer follow-up questions in chat without automatically updating saved artifacts. Ask reasonable critical questions about requirements, edge cases, constraints, and tradeoffs; keep them focused and do not block useful progress. When the user asks to save a plan, use save_document with short human content and a detailed step-by-step implementation plan for an AI agent in plan. Save current or proposed flows only when requested or useful to explain a saved plan. When creating new saved flows, use one companion document that links them by name and explains how they fit together; the saved plan document can serve this purpose. Give proposed flows a trigger, highlight added on new nodes and calls, and highlight changed on existing ones to update. A new proposed node or call may omit source when code does not exist; never invent references. Mark proposed behavior clearly in titles and playback descriptions. Clearly separate observed implementation from proposed behavior. Implement changes only when the user asks.`;
     case 'general':
       return 'Conversation mode: General. Respond to the user and use the repository and {appName} tools when useful.';
   }
