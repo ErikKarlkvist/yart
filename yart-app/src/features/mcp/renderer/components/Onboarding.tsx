@@ -54,6 +54,7 @@ export function Onboarding(): JSX.Element | null {
         <h2 id="onboarding-title" className="onboarding__title">
           {t('onboarding.title')}
         </h2>
+        <p className="onboarding__tagline">{t('onboarding.tagline')}</p>
         <p className="onboarding__intro">{t('onboarding.intro')}</p>
 
         <h3 className="onboarding__section-title">{t('onboarding.gettingStarted')}</h3>

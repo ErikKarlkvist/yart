@@ -29,6 +29,12 @@
   line-height: 1.2;
 }
 
+.onboarding__tagline {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .onboarding__intro {
   margin: 0 0 20px;
   color: var(--fg-muted);

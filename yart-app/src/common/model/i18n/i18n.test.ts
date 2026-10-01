@@ -13,7 +13,7 @@ describe('t', () => {
   });
 
   it('uses the shared app name in visible copy', () => {
-    expect(t('onboarding.title')).toContain(APP_NAME);
+    expect(t('onboarding.externalText')).toContain(APP_NAME);
     expect(t('onboarding.path.codex')).toBe('Codex');
     expect(t('onboarding.done')).toBe('Start');
   });
