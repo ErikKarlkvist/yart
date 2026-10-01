@@ -48,7 +48,7 @@ const NODE_CORE = { module: { origin: 'core' } };
 const REACT = { module: { source: 'react|react-dom|react-dom/*' } };
 
 export default tseslint.config(
-  { ignores: ['out/**', 'dist/**', 'node_modules/**', '.husky/**', 'demo/**'] },
+  { ignores: ['out/**', 'dist/**', 'node_modules/**', '.husky/**', 'demo/**', 'docs/**'] },
 
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

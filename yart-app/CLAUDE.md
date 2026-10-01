@@ -41,6 +41,14 @@ Dokument och reviewer skrivs som kort markdown med rubriker och punktlistor
 fix-planen som kopieras eller skickas till agenten (`src/features/analysis/model/plan.ts`).
 Flöden har en `trigger`, det som startar dem, som ritas på startnoden.
 
+## Design
+
+Appen har ett enda, mörkt tema: Ink. Läs `docs/design/STYLEGUIDE.md` innan du ändrar eller
+lägger till UI. Där står reglerna (raka hörn, hårda skuggor, mono-etiketter, färgernas
+roller), vilka knapp- och listklasser som redan finns och var appen medvetet avviker från
+ritningen. Värdena finns bara i `src/application/renderer/palette.css`; hårdkoda inga färger.
+Ritningen av huvudfönstret ligger i `docs/design/reference/main-window.dc.html`.
+
 ## Kommandon
 
 - `npm run dev` startar appen med hot reload

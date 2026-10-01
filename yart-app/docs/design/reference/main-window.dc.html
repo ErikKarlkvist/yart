@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>body{margin:0;background:#050505;font-family:'IBM Plex Sans',sans-serif;color:#f2f2f2}*{box-sizing:border-box}a{color:oklch(0.79 0.24 135.61)}a:hover{color:#f2f2f2}button{font:inherit;color:inherit;cursor:pointer}</style>
+</helmet>
+<div data-screen-label="Main window" style="width:1600px;height:960px;display:flex;flex-direction:column;background:#0a0a0a;font-size:14px;overflow:hidden">
+
+<div style="flex:none;height:38px;display:flex;align-items:flex-end;gap:2px;padding:0 8px 0 84px;background:#121212;border-bottom:1px solid #262626;position:relative">
+<div style="position:absolute;left:14px;top:13px;display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#383838"></span><span style="width:12px;height:12px;border-radius:50%;background:#383838"></span><span style="width:12px;height:12px;border-radius:50%;background:#383838"></span></div>
+<div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 6px 0 12px;background:#0a0a0a;border:1px solid #262626;border-bottom:none;margin-bottom:-1px;font-family:'JetBrains Mono',monospace;font-size:11px"><span style="color:oklch(0.79 0.24 135.61)">›</span>todo-app · Add todo<i class="fa-solid fa-xmark" style="font-size:10px;color:#8f8f8f;padding:4px"></i></div>
+<div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 6px 0 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#8f8f8f">yart · Review<i class="fa-solid fa-xmark" style="font-size:10px;padding:4px;opacity:0"></i></div>
+<button style="width:24px;height:24px;margin-bottom:4px;padding:0;border:none;background:none;color:#8f8f8f"><i class="fa-solid fa-plus" style="font-size:11px"></i></button>
+<span style="flex:1"></span>
+<div style="align-self:center;display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:11px">
+<button style="height:26px;padding:0 10px;border:1px solid #383838;border-radius:0;background:none;color:#f2f2f2;display:inline-flex;gap:6px;align-items:center;text-transform:uppercase;letter-spacing:.04em"><i class="fa-solid fa-table-columns" style="font-size:10px"></i>Views</button>
+<button style="height:26px;padding:0 10px;border:1px solid #383838;border-radius:0;background:none;color:#f2f2f2;display:inline-flex;gap:6px;align-items:center"><i class="fa-solid fa-folder-open" style="font-size:10px;color:oklch(0.79 0.24 135.61)"></i>todo-app<i class="fa-solid fa-chevron-down" style="font-size:8px;color:#8f8f8f"></i></button>
+<span style="width:1px;height:16px;background:#262626;margin:0 4px"></span>
+<button style="width:28px;height:26px;padding:0;border:none;background:none;color:#f2f2f2;display:grid;place-items:center"><svg width="14" height="14" viewBox="0 0 512 512"><path fill="currentColor" fill-rule="evenodd" d="M32 64H480V448H32ZM200 104V408H440V104Z"></path></svg></button>
+<button style="width:28px;height:26px;padding:0;border:none;background:none;color:#f2f2f2;display:grid;place-items:center"><svg width="14" height="14" viewBox="0 0 512 512"><path fill="currentColor" fill-rule="evenodd" d="M32 64H480V448H32ZM72 104V296H440V104Z"></path></svg></button>
+<button style="width:28px;height:26px;padding:0;border:none;background:none;color:#f2f2f2;display:grid;place-items:center"><svg width="14" height="14" viewBox="0 0 512 512"><path fill="currentColor" fill-rule="evenodd" d="M32 64H480V448H32ZM72 104V408H312V104Z"></path></svg></button>
+</div></div>
+
+<div style="flex:1;min-height:0;display:flex">
+
+<section style="flex:none;width:300px;display:flex;flex-direction:column;background:#121212;border-right:1px solid #262626">
+<div style="flex:none;display:flex;align-items:stretch;border-bottom:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+<div style="display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;height:34px;background:#0a0a0a;color:oklch(0.79 0.24 135.61);border-right:1px solid #262626;margin-bottom:-1px;border-bottom:1px solid #0a0a0a">[ Analyses ]<i class="fa-solid fa-xmark" style="font-size:9px;color:#8f8f8f"></i></div>
+<span style="flex:1"></span>
+<button style="width:34px;padding:0;border:none;background:none;color:#8f8f8f"><i class="fa-solid fa-chevron-left" style="font-size:10px"></i></button>
+</div>
+<div style="flex:1;min-height:0;overflow:auto;background:#0a0a0a;padding:12px 0;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:8px;padding:2px 14px 6px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8f8f8f"><i class="fa-solid fa-chevron-down" style="font-size:8px"></i><span style="flex:1">Built-in</span><span style="padding:0 5px;border:1px solid #383838;color:#8f8f8f">3</span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:#1b1b1b;box-shadow:inset 2px 0 0 oklch(0.79 0.24 135.61)"><span style="font-family:'JetBrains Mono',monospace;color:oklch(0.79 0.24 135.61)">›</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="display:flex;gap:8px;align-items:center;font-weight:600"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:1px 4px;border:1px solid #383838;color:#8f8f8f;letter-spacing:.06em">FLOW</span>Add todo</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8f8f8f">built-in · 10 steps</span></span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:1px 5px;border:1px solid oklch(0.68 0.21 25);color:oklch(0.68 0.21 25)">E1</span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 14px"><span style="font-family:'JetBrains Mono',monospace;color:transparent">›</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="display:flex;gap:8px;align-items:center;font-weight:600"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:1px 4px;border:1px solid #383838;color:#8f8f8f;letter-spacing:.06em">FLOW</span>List todos</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8f8f8f">built-in · 6 steps</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 14px"><span style="font-family:'JetBrains Mono',monospace;color:transparent">›</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="display:flex;gap:8px;align-items:center;font-weight:600"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:1px 4px;background:oklch(0.86 0.16 90);color:#0a0a0a;letter-spacing:.06em">REVIEW</span>Add todo review</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8f8f8f">main → feature/add-todo · 3 findings</span></span></div>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:8px;padding:2px 14px 6px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8f8f8f"><i class="fa-solid fa-chevron-down" style="font-size:8px"></i><span style="flex:1">Due dates</span><span style="padding:0 5px;border:1px solid #383838">1</span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 14px"><span style="font-family:'JetBrains Mono',monospace;color:transparent">›</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="display:flex;gap:8px;align-items:center;font-weight:600"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:1px 4px;border:1px solid oklch(0.76 0.16 320);color:oklch(0.76 0.16 320);letter-spacing:.06em">DOC</span>Due dates plan</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8f8f8f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">2 linked flows</span></span></div>
+</div>
+</div>
+</section>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<main style="flex:1;min-height:0;display:grid;grid-template-rows:auto 1fr auto">
+<header style="display:flex;flex-direction:column;gap:10px;padding:16px 20px 10px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+<h2 style="margin:0;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700">Add todo</h2>
+<span style="font-size:12px;color:#8f8f8f">Starts when <strong style="color:#f2f2f2;font-weight:600">User clicks Add</strong></span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:11px;padding:1px 6px;border:1px solid oklch(0.68 0.21 25);color:oklch(0.68 0.21 25)">1 finding</span>
+</div>
+<nav style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.04em">
+<button style="height:24px;padding:0 8px;border:1px solid #383838;border-radius:0;background:#1b1b1b;color:#f2f2f2">All systems</button>
+<i class="fa-solid fa-chevron-right" style="font-size:8px;color:#383838"></i>
+<button style="height:24px;padding:0 8px;border:1px solid transparent;border-radius:0;background:none;color:#8f8f8f">Todo API</button>
+<span style="flex:1"></span>
+<button style="height:24px;padding:0 8px;border:1px solid #383838;border-radius:0;background:none;color:#8f8f8f">All details</button>
+</nav>
+</header>
+
+<div style="position:relative;min-height:0;background-image:linear-gradient(#161616 1px,transparent 1px),linear-gradient(90deg,#161616 1px,transparent 1px);background-size:24px 24px;border-top:1px solid #1b1b1b">
+<div style="position:absolute;left:50%;top:50%;width:900px;height:440px;transform:translate(-50%,-50%)">
+<svg width="900" height="440" viewBox="0 0 900 440" style="position:absolute;inset:0;overflow:visible">
+<defs>
+<marker id="a-on" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="oklch(0.79 0.24 135.61)"></path></marker>
+<marker id="a-off" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#8f8f8f"></path></marker>
+</defs>
+<path d="M220 205 H340" stroke="oklch(0.79 0.24 135.61)" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#a-on)"></path>
+<path d="M340 235 H220" stroke="#8f8f8f" stroke-width="1.5" fill="none" opacity=".35" marker-end="url(#a-off)"></path>
+<path d="M530 210 C610 210 610 95 690 95" stroke="#8f8f8f" stroke-width="1.5" fill="none" opacity=".35" marker-end="url(#a-off)"></path>
+<path d="M530 220 H690" stroke="#8f8f8f" stroke-width="1.5" fill="none" opacity=".35" marker-end="url(#a-off)"></path>
+<path d="M530 230 C610 230 610 345 690 345" stroke="#8f8f8f" stroke-width="1.5" fill="none" opacity=".35" marker-end="url(#a-off)"></path>
+<circle cx="300" cy="205" r="4" fill="oklch(0.79 0.24 135.61)"></circle>
+</svg>
+
+<span style="position:absolute;left:280px;top:178px;transform:translateX(-50%);padding:2px 6px;background:#0a0a0a;border:1px solid oklch(0.79 0.24 135.61);font-family:'JetBrains Mono',monospace;font-size:10px;color:oklch(0.79 0.24 135.61);white-space:nowrap">03 POST /api/todos</span>
+<span style="position:absolute;left:280px;top:244px;transform:translateX(-50%);padding:2px 6px;background:#0a0a0a;border:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:10px;color:#8f8f8f;white-space:nowrap;opacity:.6">09 201 Created</span>
+<span style="position:absolute;left:610px;top:140px;transform:translateX(-50%);padding:2px 6px;background:#0a0a0a;border:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:10px;color:#8f8f8f;white-space:nowrap;opacity:.6">06 INSERT INTO todos</span>
+<span style="position:absolute;left:610px;top:210px;transform:translateX(-50%);padding:2px 6px;background:#0a0a0a;border:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:10px;color:#8f8f8f;white-space:nowrap;opacity:.6">07 DEL todos:all</span>
+<span style="position:absolute;left:610px;top:282px;transform:translateX(-50%);padding:2px 6px;background:#0a0a0a;border:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:10px;color:#8f8f8f;white-space:nowrap;opacity:.6">08 POST webhook</span>
+
+<div style="position:absolute;left:20px;top:180px;width:200px;border:1px solid oklch(0.7 0.2 290);background:#121212">
+<span style="position:absolute;bottom:calc(100% + 6px);left:-1px;font-family:'JetBrains Mono',monospace;font-size:10px;color:oklch(0.79 0.24 135.61);white-space:nowrap">▶ user: clicks Add</span>
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:oklch(0.7 0.2 290);color:#0a0a0a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em"><i class="fa-solid fa-desktop" style="font-size:9px"></i>app<span style="flex:1"></span><span style="font-weight:500;opacity:.7">3 nodes</span></div>
+<div style="padding:10px 8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500">Todo frontend</div></div>
+
+<div style="position:absolute;left:340px;top:180px;width:190px;border:1px solid oklch(0.7 0.18 255);background:#121212;box-shadow:4px 4px 0 color-mix(in oklch,oklch(0.7 0.18 255) 30%,transparent)">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:oklch(0.7 0.18 255);color:#0a0a0a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em"><i class="fa-solid fa-server" style="font-size:9px"></i>api<span style="flex:1"></span><span style="font-weight:500;opacity:.7">3 nodes</span></div>
+<div style="padding:10px 8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500">Todo API</div>
+<span style="position:absolute;top:-9px;right:-9px;padding:1px 5px;background:oklch(0.68 0.21 25);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#0a0a0a">E1</span></div>
+
+<div style="position:absolute;left:690px;top:60px;width:190px;border:1px solid #383838;background:#121212;opacity:.55">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #383838;color:oklch(0.82 0.17 75);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em"><i class="fa-solid fa-database" style="font-size:9px"></i>db</div>
+<div style="padding:10px 8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500">Postgres</div></div>
+
+<div style="position:absolute;left:690px;top:185px;width:190px;border:1px solid #383838;background:#121212;opacity:.55">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #383838;color:oklch(0.75 0.17 50);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em"><i class="fa-solid fa-bolt" style="font-size:9px"></i>cache</div>
+<div style="padding:10px 8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500">Redis</div></div>
+
+<div style="position:absolute;left:690px;top:310px;width:190px;border:1px solid #383838;background:#121212;opacity:.55">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #383838;color:#8f8f8f;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em"><i class="fa-solid fa-cloud" style="font-size:9px"></i>external</div>
+<div style="padding:10px 8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500">Webhook</div></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px;padding:12px 20px 14px;border-top:1px solid #262626;background:#121212">
+<div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px">
+<div style="display:flex;border:1px solid #383838"><button style="width:32px;height:28px;padding:0;border:none;border-radius:0;background:none;color:#8f8f8f"><i class="fa-solid fa-rotate-left" style="font-size:11px"></i></button><button style="width:32px;height:28px;padding:0;border:none;border-left:1px solid #383838;border-radius:0;background:none;color:#8f8f8f"><i class="fa-solid fa-backward-step" style="font-size:11px"></i></button><button style="width:32px;height:28px;padding:0;border:none;border-radius:0;background:oklch(0.79 0.24 135.61);color:#0a0a0a"><i class="fa-solid fa-pause" style="font-size:11px"></i></button><button style="width:32px;height:28px;padding:0;border:none;border-radius:0;background:none;color:#8f8f8f"><i class="fa-solid fa-forward-step" style="font-size:11px"></i></button></div>
+<div style="flex:1;display:grid;grid-template-columns:repeat(10,1fr);gap:3px"><span style="height:8px;background:oklch(0.79 0.24 135.61)"></span><span style="height:8px;background:oklch(0.79 0.24 135.61)"></span><span style="height:8px;background:oklch(0.79 0.24 135.61)"></span><span style="height:8px;background:#262626"></span><span style="height:8px;background:#262626"></span><span style="height:8px;background:#262626"></span><span style="height:8px;background:#262626"></span><span style="height:8px;background:#262626"></span><span style="height:8px;background:#262626"></span><span style="height:8px;background:#262626"></span></div>
+<span style="color:#8f8f8f">03/10</span></div>
+<div style="font-size:13px"><span style="font-family:'JetBrains Mono',monospace;color:#8f8f8f">$ </span>The client sends a POST with the title as JSON.</div>
+</div>
+</main>
+
+<section style="flex:none;height:220px;display:flex;flex-direction:column;background:#121212;border-top:1px solid #262626">
+<div style="flex:none;display:flex;align-items:stretch;border-bottom:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+<div style="display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;height:34px;background:#0a0a0a;color:oklch(0.79 0.24 135.61);border-right:1px solid #262626;margin-bottom:-1px;border-bottom:1px solid #0a0a0a">[ Code ]<i class="fa-solid fa-xmark" style="font-size:9px;color:#8f8f8f"></i></div>
+<div style="display:flex;align-items:center;gap:8px;padding:0 12px;color:#8f8f8f;border-right:1px solid #262626">Review<span style="padding:0 4px;background:oklch(0.68 0.21 25);color:#0a0a0a;font-weight:700;font-size:9px">1</span></div>
+<div style="display:flex;align-items:center;padding:0 12px;color:#8f8f8f;border-right:1px solid #262626">Log</div>
+<span style="flex:1"></span>
+<button style="width:34px;padding:0;border:none;background:none;color:#8f8f8f"><i class="fa-solid fa-chevron-down" style="font-size:10px"></i></button>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;background:#0a0a0a;padding:10px 14px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#8f8f8f">frontend/src/api/todosApi.ts<span style="color:oklch(0.79 0.24 135.61)">:12</span><span style="flex:1"></span><button style="height:22px;padding:0 8px;border:1px solid #383838;border-radius:0;background:none;color:#8f8f8f;font-family:inherit;font-size:10px;text-transform:uppercase;letter-spacing:.04em">Copy</button></div>
+<pre style="margin:0;padding:6px 0;border:1px solid #262626;background:#121212;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.55;overflow:hidden">
+<div style="display:flex;padding:0 10px"><span style="width:3.5em;flex-shrink:0;text-align:right;padding-right:14px;color:#6b6b6b">11</span><span style="white-space:pre;color:#cbcbcb">export async function createTodo(title: string): Promise&lt;Todo&gt; {</span></div>
+<div style="display:flex;padding:0 10px;background:color-mix(in oklch,oklch(0.79 0.24 135.61) 14%,transparent);box-shadow:inset 2px 0 0 oklch(0.79 0.24 135.61)"><span style="width:3.5em;flex-shrink:0;text-align:right;padding-right:14px;color:oklch(0.79 0.24 135.61)">12</span><span style="white-space:pre;color:#f2f2f2">  const res = await fetch(BASE, {</span></div>
+<div style="display:flex;padding:0 10px"><span style="width:3.5em;flex-shrink:0;text-align:right;padding-right:14px;color:#6b6b6b">13</span><span style="white-space:pre;color:#cbcbcb">    method: 'POST',</span></div>
+<div style="display:flex;padding:0 10px"><span style="width:3.5em;flex-shrink:0;text-align:right;padding-right:14px;color:#6b6b6b">14</span><span style="white-space:pre;color:#cbcbcb">    headers: { 'content-type': 'application/json' },</span></div>
+<div style="display:flex;padding:0 10px"><span style="width:3.5em;flex-shrink:0;text-align:right;padding-right:14px;color:#6b6b6b">15</span><span style="white-space:pre;color:#cbcbcb">    body: JSON.stringify({ title }),</span></div>
+<div style="display:flex;padding:0 10px"><span style="width:3.5em;flex-shrink:0;text-align:right;padding-right:14px;color:#6b6b6b">16</span><span style="white-space:pre;color:#cbcbcb">  });</span></div>
+</pre>
+</div>
+</section>
+</div>
+
+<section style="flex:none;width:400px;display:flex;flex-direction:column;background:#121212;border-left:1px solid #262626">
+<div style="flex:none;display:flex;align-items:stretch;border-bottom:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+<div style="display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;height:34px;background:#0a0a0a;color:oklch(0.79 0.24 135.61);border-right:1px solid #262626;margin-bottom:-1px;border-bottom:1px solid #0a0a0a">[ Agent ]<i class="fa-solid fa-xmark" style="font-size:9px;color:#8f8f8f"></i></div>
+<div style="display:flex;align-items:center;padding:0 12px;color:#8f8f8f;border-right:1px solid #262626">Connect</div>
+<span style="flex:1"></span>
+<button style="width:34px;padding:0;border:none;background:none;color:#8f8f8f"><i class="fa-solid fa-chevron-right" style="font-size:10px"></i></button>
+</div>
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;background:#0a0a0a">
+<div style="padding:12px 14px 0;display:flex;flex-direction:column;gap:10px">
+<button style="height:30px;padding:0 10px;border:1px solid #383838;border-radius:0;background:none;color:#f2f2f2;display:flex;align-items:center;gap:8px;font-size:12px;text-align:left"><i class="fa-solid fa-comment-dots" style="font-size:11px;color:#8f8f8f"></i><span style="flex:1">What happens when a todo is added?</span><i class="fa-solid fa-chevron-down" style="font-size:9px;color:#8f8f8f"></i></button>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid #262626;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+<div style="padding:9px 4px;text-align:center;background:oklch(0.79 0.24 135.61);color:#0a0a0a;font-weight:700">Analyse</div>
+<div style="padding:9px 4px;text-align:center;border-left:1px solid #262626;color:oklch(0.86 0.16 90)">Review</div>
+<div style="padding:9px 4px;text-align:center;border-left:1px solid #262626;color:oklch(0.76 0.16 320)">Plan</div></div>
+<p style="margin:0;font-size:12px;color:#8f8f8f">Understand an existing flow in the repository.</p>
+</div>
+<div style="flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="margin-left:32px;padding:8px 10px;border:1px solid #262626;background:#121212"><span style="display:block;margin-bottom:2px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#8f8f8f">09:41</span><p style="margin:0;line-height:1.5">What happens when a todo is added?</p></div>
+<button style="align-self:flex-start;padding:0 2px;border:none;background:none;color:#8f8f8f;font-family:'JetBrains Mono',monospace;font-size:11px;display:inline-flex;gap:6px;align-items:center"><i class="fa-solid fa-chevron-right" style="font-size:8px"></i>read_file · grep · save_flow<span style="color:#6b6b6b">(7 tool calls)</span></button>
+<div style="padding:8px 10px;background:#121212;border-left:2px solid oklch(0.79 0.24 135.61)"><span style="display:block;margin-bottom:2px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#8f8f8f">09:42</span><p style="margin:0 0 6px;line-height:1.5;color:#cbcbcb">Saved the flow <strong style="color:#f2f2f2">Add todo</strong> with 10 steps across five systems. The service writes to Postgres, clears the cached list in Redis and pings the webhook without awaiting it.</p><p style="margin:0;line-height:1.5;color:#cbcbcb">The route validates the title with zod, but the client never trims it.</p></div>
+<div style="padding:8px 10px;border:1px solid oklch(0.79 0.24 135.61);background:color-mix(in oklch,oklch(0.79 0.24 135.61) 6%,#0a0a0a);display:flex;flex-direction:column;gap:8px"><p style="margin:0;font-weight:600">The agent wants to use Edit</p><div style="padding:4px 6px;background:#121212;font-family:'JetBrains Mono',monospace;font-size:11px;color:#cbcbcb">frontend/src/components/AddTodoForm.tsx</div><div style="display:flex;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px"><button style="height:26px;padding:0 10px;border:none;border-radius:0;background:oklch(0.79 0.24 135.61);color:#0a0a0a;font-family:inherit;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Allow</button><button style="height:26px;padding:0 10px;border:1px solid #383838;border-radius:0;background:none;color:#f2f2f2;font-family:inherit;text-transform:uppercase;letter-spacing:.04em">Deny</button></div></div>
+</div>
+<div style="padding:10px 14px 12px;border-top:1px solid #262626;background:#121212">
+<div style="min-height:64px;padding:8px 10px;border:1px solid #383838;background:#0a0a0a;font-size:13px;color:#6b6b6b">Which existing flow would you like to understand?</div>
+<div style="display:flex;align-items:center;gap:2px;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#8f8f8f">
+<button style="height:26px;padding:0 6px;border:none;background:none;color:inherit;font-family:inherit;display:inline-flex;gap:5px;align-items:center">Auto<i class="fa-solid fa-chevron-down" style="font-size:7px"></i></button>
+<button style="height:26px;padding:0 6px;border:none;background:none;color:inherit;font-family:inherit;display:inline-flex;gap:5px;align-items:center">Opus<i class="fa-solid fa-chevron-down" style="font-size:7px"></i></button>
+<button style="height:26px;padding:0 6px;border:none;background:none;color:inherit;font-family:inherit;display:inline-flex;gap:5px;align-items:center">Effort<i class="fa-solid fa-chevron-down" style="font-size:7px"></i></button>
+<span style="flex:1"></span>
+<button style="height:30px;padding:0 12px;border:none;border-radius:0;background:oklch(0.79 0.24 135.61);color:#0a0a0a;font-family:inherit;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Send ↵</button>
+</div></div>
+</div>
+</section>
+</div>
+
+<footer style="flex:none;height:32px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 12px;border-top:1px solid #262626;background:#0a0a0a;color:#8f8f8f;font-family:'JetBrains Mono',monospace;font-size:11px">
+<span style="display:flex;align-items:center;gap:14px"><span>v0.1.0</span><span style="display:inline-flex;gap:6px;align-items:center"><i class="fa-solid fa-code-branch" style="font-size:10px"></i>main</span><span style="display:inline-flex;gap:6px;align-items:center"><span style="width:6px;height:6px;background:oklch(0.79 0.24 135.61)"></span>MCP :7390</span></span>
+<button style="height:22px;padding:0 6px;border:none;background:none;color:#8f8f8f;font-family:inherit;font-size:11px;text-decoration:underline;text-underline-offset:3px">guide</button>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:960}}"></script>
+</body>
+</html>
