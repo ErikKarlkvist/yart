@@ -11,8 +11,12 @@ från den gamla datamappen vid start (`src/application/main/index.ts`).
 Appen har ingen egen AI. Agenter levererar flöden, dokument och reviewer via MCP-servern
 som appen startar på `http://127.0.0.1:7390/mcp` (`src/features/mcp/`). Verktygens
 JSON-scheman kommer från zod-schemana i `src/common/model/`, så beskrivningar där är
-dokumentation för modellen. Skillen byggs i `src/features/analysis/model/skill.ts`,
-serveras som MCP-resurs och installeras från panelen Connect.
+dokumentation för modellen. Skillen och guiden byggs i `src/features/analysis/model/skill.ts`.
+Skillen är kort och stabil: när appen ska användas och att guiden ska läsas. Den installeras
+från panelen Connect och behöver bara installeras om när den själv ändras. Reglerna, schemat
+och exemplet ligger i guiden, som MCP-servern ger via verktyget `get_guide`, resursen
+`yart://guide` och serverns instruktioner, och som appens egna agentsessioner får direkt.
+Nya regler läggs alltså i guiden, inte i skillen.
 
 Panelen Agent kör en headless agentsession per konversation (`src/features/agent/`).
 Claude Code körs som en långlivad `claude -p` med strömmande JSON på stdin och stdout;

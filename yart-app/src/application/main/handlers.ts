@@ -4,7 +4,7 @@ import { handleChannel } from '@/common/main/ipc';
 import { t } from '@/common/model/i18n';
 import { type AgentHandle, registerAgentHandlers } from '@/features/agent/main';
 import { registerAnalysisHandlers } from '@/features/analysis/main';
-import { buildSkill } from '@/features/analysis/model/skill';
+import { buildGuide } from '@/features/analysis/model/skill';
 import { registerMcpHandlers } from '@/features/mcp/main';
 import { registerRepoHandlers } from '@/features/repo/main';
 import { mcpDeps } from './mcp';
@@ -30,5 +30,5 @@ export function registerApplicationHandlers(): void {
       await agent?.nameConversation(conversationId, title);
     },
   });
-  agent = registerAgentHandlers({ mcpUrl: mcp.url, skill: buildSkill });
+  agent = registerAgentHandlers({ mcpUrl: mcp.url, skill: buildGuide });
 }
