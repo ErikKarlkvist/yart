@@ -1,5 +1,4 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignore": ["demo/**", "docs/**"],
-  "ignoreBinaries": ["plutil"]
+  "ignore": ["demo/**", "docs/**"]
 }
