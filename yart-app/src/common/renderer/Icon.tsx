@@ -73,6 +73,8 @@ const ICONS = {
   service: faGears,
   db: faDatabase,
   cache: faBolt,
+  // Det som startar ett flöde
+  trigger: faBolt,
   external: faCloud,
   queue: faLayerGroup,
   key: faKey,

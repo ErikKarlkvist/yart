@@ -84,7 +84,14 @@ export const FlowNodeView = memo(function FlowNodeView({
           className={`graph-node__trigger is-${data.trigger.kind}`}
           title={t('graph.triggerHint', { label: data.trigger.label })}
         >
-          {t('graph.trigger', { kind: data.trigger.kind, label: data.trigger.label })}
+          <span className="graph-node__trigger-text">
+            <span className="graph-node__trigger-kind">{data.trigger.kind}</span>
+            <span className="graph-node__trigger-label">{data.trigger.label}</span>
+          </span>
+          <span className="graph-node__trigger-icon">
+            <Icon name="trigger" size="sm" />
+          </span>
+          <span className="graph-node__trigger-arrow" />
         </span>
       )}
       <FindingFlag findings={data.findings} className="graph-node__flag" />

@@ -398,6 +398,13 @@ export function FlowGraph({
     ],
   );
 
+  // Startpunkten ritas till vänster om sin nod, utanför nodens ram, så den behöver egen plats.
+  const hasTrigger = model.nodes.some((node) => node.trigger !== undefined);
+  const fitViewOptions = useMemo(
+    () => ({ padding: hasTrigger ? { x: 0.15, y: 0.15, left: '250px' as const } : 0.15 }),
+    [hasTrigger],
+  );
+
   return (
     <div className="graph">
       <GraphStateContext.Provider value={graphState}>
@@ -434,7 +441,7 @@ export function FlowGraph({
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
-          fitViewOptions={{ padding: 0.15 }}
+          fitViewOptions={fitViewOptions}
           minZoom={0.3}
           maxZoom={2}
           nodesConnectable={false}

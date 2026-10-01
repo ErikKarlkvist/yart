@@ -109,6 +109,10 @@ på fält: accentkant, ingen outline.
 - Kantetiketter: `--bg`, `1px solid var(--border)`, mono 10, nollutfyllt stegnummer före.
 - Fyndflaggan sitter i nodens övre högra hörn; hoverknapparna (18×18 fyrkanter) flyttas åt
   vänster när en flagga finns.
+- Startpunkten (`.graph-node__trigger`) sitter till vänster om noden där flödet börjar:
+  typ i muted versaler och etikett på högst två rader, högerställda, sedan en blixt
+  (`trigger`-ikonen) i en ruta med `--fg`-kant och en pil in i noden. Grafens `fitView`
+  lämnar plats för den till vänster.
 - Uppspelning: knappgrupp, ett segment per steg (spelade i accent), räknare `03/10`.
 
 ## Avvikelser från ritningen
@@ -117,4 +121,6 @@ Medvetna skillnader mellan `reference/main-window.dc.html` och appen:
 
 - Agentpanelens konversationsval och lägesknappar ligger nedtill vid textrutan, inte överst.
 - Dockflikar visar ingen räknare (t.ex. antal fynd på Review); paneltitlar är bara text.
-- Startpunkten ritas som `▶ {kind}: {label}` med flödets egen etikett.
+- Startpunkten står till vänster om startnoden, inte ovanför den: typ och etikett i vitt
+  (`--fg`), en blixt i en ruta och en pil in i noden. Ritningen har den grön ovanför noden,
+  men där skymde den kanter och etiketter.

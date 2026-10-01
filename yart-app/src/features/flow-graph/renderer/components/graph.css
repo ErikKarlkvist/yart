@@ -210,19 +210,75 @@ button.crumb:hover:not(:disabled) {
   box-shadow: 3px 3px 0 color-mix(in oklch, var(--fg) 35%, transparent);
 }
 
-/* Startpunkten: vad som sätter igång flödet, som text ovanför noden där det börjar */
+/* Startpunkten: vad som sätter igång flödet, till vänster om noden med en pil in i den */
 .graph-node__trigger {
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: -1px;
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--accent);
+  top: 50%;
+  right: calc(100% + 1px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(-50%);
+  color: var(--fg);
   font-family: var(--font-mono);
-  font-size: 10px;
-  white-space: nowrap;
   pointer-events: none;
+}
+
+.graph-node__trigger-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  width: max-content;
+  max-width: 170px;
+  text-align: right;
+}
+
+.graph-node__trigger-kind {
+  color: var(--fg-muted);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Etiketten får två rader, sedan klipps den. Hela texten finns i tooltipen. */
+.graph-node__trigger-label {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.graph-node__trigger-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--fg);
+  background: var(--bg);
+}
+
+/* Pilen från blixten in i noden */
+.graph-node__trigger-arrow {
+  position: relative;
+  flex: none;
+  width: 22px;
+  height: 1px;
+  background: var(--fg);
+}
+
+.graph-node__trigger-arrow::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: 0;
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+  border-left: 7px solid var(--fg);
 }
 
 .graph-flag.graph-node__flag {

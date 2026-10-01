@@ -270,7 +270,6 @@
   "plan.implementationHint": "A plan for your AI with the steps, files and flows behind this document.",
   "graph.triggerHint": "The flow starts here: {label}",
   "graph.startsWhen": "Starts when",
-  "graph.trigger": "▶ {kind}: {label}",
   "graph.nodeCount": "{count} nodes",
   "agent.approvalDenied": "The user denied this. Ask what they want instead, or continue without it.",
   "agent.approvalStopped": "The user stopped the conversation.",
