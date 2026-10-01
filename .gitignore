@@ -1,14 +1,1 @@
-node_modules/
-dist/
-dist-electron/
-out/
-release/
-.env
-.env.local
-*.log
 .DS_Store
-.vite/
-*.tsbuildinfo
-
-# Genereras av appen i varje öppnat repo
-.reverik/
