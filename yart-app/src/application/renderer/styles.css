@@ -45,6 +45,13 @@ select {
   background: var(--bg-panel);
 }
 
+/* Menyn behöver egna färger även när operativsystemet ritar select-kontrollen. */
+select option,
+select optgroup {
+  color: var(--fg);
+  background: var(--bg-panel);
+}
+
 button:hover:not(:disabled) {
   border-color: var(--accent);
 }

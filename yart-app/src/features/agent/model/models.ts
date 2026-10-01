@@ -38,3 +38,35 @@ export function parseClaudeModels(line: string): AgentModel[] | null {
     ];
   });
 }
+
+export interface CodexModelPage {
+  models: AgentModel[];
+  nextCursor: string | null;
+}
+
+/** Modellerna och nästa sida ur Codex app-servers model/list-svar. */
+export function parseCodexModels(message: unknown): CodexModelPage | null {
+  const result = asRecord(asRecord(message).result);
+  if (!Array.isArray(result.data)) return null;
+  return {
+    models: result.data.flatMap((raw: unknown): AgentModel[] => {
+      const item = asRecord(raw);
+      if (typeof item.model !== 'string' || item.model === '' || item.hidden === true) return [];
+      const levels = Array.isArray(item.supportedReasoningEfforts)
+        ? item.supportedReasoningEfforts.flatMap((rawLevel: unknown): string[] => {
+            const level = asRecord(rawLevel).reasoningEffort;
+            return typeof level === 'string' ? [level] : [];
+          })
+        : [];
+      return [
+        {
+          value: item.model,
+          label: typeof item.displayName === 'string' ? item.displayName : item.model,
+          description: typeof item.description === 'string' ? item.description : '',
+          effortLevels: levels,
+        },
+      ];
+    }),
+    nextCursor: typeof result.nextCursor === 'string' ? result.nextCursor : null,
+  };
+}

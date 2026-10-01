@@ -5,8 +5,10 @@
   "main": "out/main/index.js",
   "scripts": {
     "test": "vitest run",
+    "predev": "install-electron",
     "dev": "electron-vite dev --watch",
     "build": "electron-vite build",
+    "prepreview": "install-electron",
     "preview": "electron-vite preview",
     "typecheck": "tsc -b",
     "lint": "eslint . --max-warnings=0",

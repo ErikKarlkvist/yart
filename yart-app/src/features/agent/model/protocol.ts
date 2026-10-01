@@ -161,11 +161,12 @@ export const claudeRunner: AgentRunner = {
 export const codexRunner: AgentRunner = {
   kind: 'codex',
   persistent: false,
-  launch: ({ mcpUrl, skill, prompt, threadId, permission, model }) => {
+  launch: ({ mcpUrl, skill, prompt, threadId, permission, model, effort }) => {
     const shared = [
       '--json',
       '--skip-git-repo-check',
       ...(model === 'default' ? [] : ['-m', model]),
+      ...(effort === 'default' ? [] : ['-c', `model_reasoning_effort=${JSON.stringify(effort)}`]),
       '-c',
       `approval_policy="${permission === 'auto' ? 'never' : 'on-request'}"`,
       ...(permission === 'manual' ? ['-c', 'approvals_reviewer="auto_review"'] : []),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseClaudeModels } from './models';
+import { parseClaudeModels, parseCodexModels } from './models';
 
 describe('parseClaudeModels', () => {
   it('läser modellerna ur svaret på initialize', () => {
@@ -37,5 +37,54 @@ describe('parseClaudeModels', () => {
   it('ignorerar andra rader', () => {
     expect(parseClaudeModels('{"type":"system"}')).toBeNull();
     expect(parseClaudeModels('inte json')).toBeNull();
+  });
+});
+
+describe('parseCodexModels', () => {
+  it('läser modell-id och effort från app-server och döljer interna modeller', () => {
+    expect(
+      parseCodexModels({
+        result: {
+          data: [
+            {
+              id: 'picker-id',
+              model: 'available-model',
+              displayName: 'Available',
+              description: 'Fast',
+              supportedReasoningEfforts: [
+                { reasoningEffort: 'low' },
+                { reasoningEffort: 'high' },
+                {},
+              ],
+            },
+            { model: 'hidden-model', hidden: true },
+            { model: '' },
+            { displayName: 'no model' },
+            { model: 'minimal-model' },
+          ],
+          nextCursor: 'page-2',
+        },
+      }),
+    ).toEqual({
+      models: [
+        {
+          value: 'available-model',
+          label: 'Available',
+          description: 'Fast',
+          effortLevels: ['low', 'high'],
+        },
+        { value: 'minimal-model', label: 'minimal-model', description: '', effortLevels: [] },
+      ],
+      nextCursor: 'page-2',
+    });
+  });
+
+  it('ignorerar andra svar och känner igen sista sidan', () => {
+    expect(parseCodexModels({ result: {} })).toBeNull();
+    expect(parseCodexModels({ error: { message: 'failed' } })).toBeNull();
+    expect(parseCodexModels({ result: { data: [], nextCursor: null } })).toEqual({
+      models: [],
+      nextCursor: null,
+    });
   });
 });

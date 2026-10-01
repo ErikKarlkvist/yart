@@ -73,6 +73,23 @@ describe('codexRunner', () => {
     expect(reviewed.args).toContain('approval_policy="on-request"');
     expect(reviewed.args).toContain('approvals_reviewer="auto_review"');
   });
+
+  it('skickar valt modell-id och effort både vid start och vid resume', () => {
+    for (const threadId of [null, 'existing-thread']) {
+      const launch = codexRunner.launch({
+        ...input,
+        threadId,
+        model: 'available-model',
+        effort: 'high',
+      });
+      expect(launch.args.slice(launch.args.indexOf('-m'), launch.args.indexOf('-m') + 2)).toEqual([
+        '-m',
+        'available-model',
+      ]);
+      expect(launch.args).toContain('model_reasoning_effort="high"');
+    }
+    expect(codexRunner.launch(input).args.join(' ')).not.toContain('model_reasoning_effort');
+  });
 });
 
 describe('parseClaudeLine', () => {

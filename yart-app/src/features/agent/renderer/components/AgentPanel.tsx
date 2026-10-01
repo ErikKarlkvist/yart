@@ -25,6 +25,8 @@ function isLoginError(text: string): boolean {
  */
 export function AgentPanel(): JSX.Element {
   const selectId = useId();
+  const headBranchesId = useId();
+  const baseBranchesId = useId();
   const {
     conversations,
     activeId,
@@ -144,29 +146,39 @@ export function AgentPanel(): JSX.Element {
         <div className="agent__review-branches">
           <label>
             <span>{t('agent.reviewHead')}</span>
-            <select
+            <input
+              type="text"
+              list={headBranchesId}
               value={head}
+              autoComplete="off"
+              spellCheck={false}
               onChange={(event) => {
                 const next = event.target.value;
                 setHead(next);
                 if (base === next) setBase(defaultBaseBranch(branches, next, null) ?? '');
               }}
-            >
+            />
+            <datalist id={headBranchesId}>
               {branches.map((branch) => (
                 <option key={branch} value={branch}>
                   {branch}
                 </option>
               ))}
-            </select>
+            </datalist>
           </label>
           <label>
             <span>{t('agent.reviewBase')}</span>
-            <select
+            <input
+              type="text"
+              list={baseBranchesId}
               value={base}
+              autoComplete="off"
+              spellCheck={false}
               onChange={(event) => {
                 setBase(event.target.value);
               }}
-            >
+            />
+            <datalist id={baseBranchesId}>
               {branches
                 .filter((branch) => branch !== head)
                 .map((branch) => (
@@ -174,7 +186,7 @@ export function AgentPanel(): JSX.Element {
                     {branch}
                   </option>
                 ))}
-            </select>
+            </datalist>
           </label>
           {(!repo?.isGit || branches.length < 2) && (
             <p className="agent__hint">{t('agent.reviewNeedsBranches')}</p>

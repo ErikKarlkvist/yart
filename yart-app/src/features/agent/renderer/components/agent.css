@@ -73,9 +73,10 @@
   font-size: 12px;
 }
 
-.agent__review-branches select {
+.agent__review-branches input {
   width: 100%;
   min-width: 0;
+  color: var(--fg);
 }
 .agent__review-branches p {
   margin: 0;
