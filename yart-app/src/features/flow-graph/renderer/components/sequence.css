@@ -29,13 +29,10 @@
   border-bottom: 1px solid var(--border);
 }
 
-.sequence-participant {
+/* Två klasser så regeln vinner över .graph-node, som laddas efter och är relativ */
+.sequence-participant.graph-node {
   position: absolute;
   cursor: pointer;
-}
-
-.sequence-participant.graph-node {
-  height: auto;
 }
 
 .sequence-participant.is-pending {
