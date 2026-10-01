@@ -59,7 +59,8 @@ Flöden har en `trigger`, det som startar dem, som ritas på startnoden.
   MCP-servern till en port; annars tar den första lediga från 7390 och uppåt.
 
 Pre-commit-hooken (husky + lint-staged) kör eslint --fix och prettier på staged filer,
-sedan `tsc -b` och testerna. Committa inte med `--no-verify`.
+sedan `tsc -b` och testerna. Hookarna ligger i `.husky/` i repots rot, där commit-msg kräver
+engelska meddelanden utan AI-attribution. Committa inte med `--no-verify`.
 
 ## Arkitektur: feature slicing
 

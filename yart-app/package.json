@@ -16,7 +16,7 @@
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
     "unused": "knip",
-    "prepare": "cd .. && husky yart-app/.husky"
+    "prepare": "cd .. && husky"
   },
   "keywords": [],
   "author": "",

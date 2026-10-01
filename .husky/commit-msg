@@ -1,0 +1,13 @@
+# Commitmeddelanden skrivs på engelska och utan AI-attribution.
+msg=$(grep -v '^#' "$1")
+
+if printf '%s\n' "$msg" | grep -qiE '^co-authored-by:.*(claude|anthropic)|generated with .*claude'; then
+  echo "commit-msg: remove the AI attribution (Co-Authored-By / Generated with Claude)." >&2
+  exit 1
+fi
+
+# Svenska känns igen på å, ä, ö eller vanliga småord som saknar motsvarighet på engelska.
+if printf '%s\n' "$msg" | grep -qiE '[åäö]|(^|[^[:alpha:]])(och|att|inte|eller|ska|som|utan|också|alla|flyttar|byter)([^[:alpha:]]|$)'; then
+  echo "commit-msg: write the commit message in English." >&2
+  exit 1
+fi
