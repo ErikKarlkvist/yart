@@ -9,11 +9,11 @@ describe('conversation instructions', () => {
     expect(instructions).toContain('save_review');
   });
 
-  it('lets planning conversations discuss before saving a requested document', () => {
+  it('lets planning conversations save a plan and ask when requirements are unclear', () => {
     const instructions = conversationInstructions('plan');
     expect(instructions).toContain('critical questions');
     expect(instructions).toContain('save_document');
-    expect(instructions).toContain('without automatically updating saved artifacts');
+    expect(instructions).toContain('ask a few focused questions first');
   });
 
   it('asks every flow-producing mode for the trigger', () => {
@@ -25,7 +25,7 @@ describe('conversation instructions', () => {
     const instructions = conversationInstructions('analyse');
     expect(instructions).toContain('one companion document');
     expect(instructions).toContain('links the new flows by name');
-    expect(instructions).toContain('Answer discussion and follow-up questions in chat');
+    expect(instructions).toContain('A new analysis is delivered as flows');
   });
 
   it('ber agenten namnge konversationen med lägets verb', () => {
@@ -34,12 +34,15 @@ describe('conversation instructions', () => {
     expect(conversationInstructions('general')).toContain('name_conversation');
   });
 
-  it('låter alla lägen svara i chatten utan att kräva sparning', () => {
-    for (const mode of ['analyse', 'review', 'plan'] as const)
-      expect(conversationInstructions(mode, { head: 'a', base: 'b' })).toContain(
-        'do not save or update a flow, document or review just because of the conversation mode',
-      );
-    expect(responseHint()).toContain('answer ordinary questions and discussion in chat');
-    expect(responseHint()).not.toContain('one or two sentences');
+  it('levererar nya analyser och avgör sparning per följdfråga', () => {
+    for (const mode of ['analyse', 'review', 'plan'] as const) {
+      const instructions = conversationInstructions(mode, { head: 'a', base: 'b' });
+      expect(instructions).toContain('The first request of a conversation starts a new analysis');
+      expect(instructions).toContain('do not ask whether to save');
+      expect(instructions).toContain('Do not merge or skip calls');
+    }
+    expect(responseHint(true)).toContain('starts the conversation');
+    expect(responseHint(false)).toContain('follow-up');
+    expect(responseHint(false)).toContain('Answer every part of the request');
   });
 });

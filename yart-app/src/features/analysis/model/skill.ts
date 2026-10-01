@@ -30,6 +30,11 @@ const HOW_TO_BUILD = `## How to build a good flow
    migration or schema file that defines it.
 5. Order \`steps\` the way the flow actually runs. Responses are edges of their own going
    back to the caller, e.g. "200 OK with the todo". Every step references an edge id.
+   Cover every call on the path: each hop between components, calls between modules
+   inside a service, every database, cache, queue and external request, and the response
+   back to each caller. Do not merge or skip calls to keep the flow short. Before saving,
+   walk the code again from the trigger to the final response and check that every call
+   has an edge and a step.
    {appName} draws the flow as a sequence diagram, one lifeline per node, so calls inside
    one system are shown too: include them.
    Where the code takes one of several paths (a cache hit or miss, valid or invalid input,
@@ -259,7 +264,7 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 `;
 
 /** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 13;
+export const SKILL_VERSION = 14;
 
 export function buildSkill(): string {
   return `---

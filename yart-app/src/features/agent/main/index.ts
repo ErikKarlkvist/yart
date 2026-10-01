@@ -162,7 +162,11 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
       model: isSafeChoice(settings.model) ? settings.model : DEFAULT_CHOICE,
       effort: isSafeChoice(settings.effort) ? settings.effort : DEFAULT_CHOICE,
     };
-    running.ask(prompt, checked, responseHint());
+    running.ask(
+      prompt,
+      checked,
+      responseHint(!conversation.entries.some((entry) => entry.kind === 'user')),
+    );
   });
   handleChannel(stopAgentChannel, ({ conversationId }) => {
     denyWaiting(conversationId);
