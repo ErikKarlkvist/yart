@@ -10,6 +10,7 @@ import {
 } from './add-todo-review';
 import { dueDatesPlan } from './due-dates-plan';
 import { listTodosFlow } from './list-todos';
+import { toggleTodoFlow } from './toggle-todo';
 
 /** En inbyggd analys: ett flöde, med jämförelsen mot base när det beskriver en ändring, en review eller ett dokument. */
 export type DemoAnalysis =
@@ -18,12 +19,18 @@ export type DemoAnalysis =
   | { kind: 'document'; name: string; document: YartDocument };
 
 /** Alla fixturer, pekar på demo/todo-app. */
-export const demoFlows: readonly Flow[] = [addTodoFlow, listTodosFlow, addTodoWithListFlow];
+export const demoFlows: readonly Flow[] = [
+  addTodoFlow,
+  listTodosFlow,
+  toggleTodoFlow,
+  addTodoWithListFlow,
+];
 
 /** De inbyggda analyserna i den ordning de visas. */
 export const demoAnalyses: readonly DemoAnalysis[] = [
   { kind: 'flow', name: 'add-todo', flow: addTodoFlow },
   { kind: 'flow', name: 'list-todos', flow: listTodosFlow },
+  { kind: 'flow', name: 'toggle-todo', flow: toggleTodoFlow },
   {
     kind: 'flow',
     name: ADD_TODO_WITH_LIST_NAME,
@@ -37,4 +44,11 @@ export const demoAnalyses: readonly DemoAnalysis[] = [
 /** Sökväg till demo-repot relativt Yart-roten. */
 export const DEMO_REPO_RELATIVE_PATH = 'demo/todo-app';
 
-export { addTodoFlow, addTodoReview, addTodoWithListCompare, addTodoWithListFlow, listTodosFlow };
+export {
+  addTodoFlow,
+  addTodoReview,
+  addTodoWithListCompare,
+  addTodoWithListFlow,
+  listTodosFlow,
+  toggleTodoFlow,
+};

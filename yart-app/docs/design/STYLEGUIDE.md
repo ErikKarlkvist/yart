@@ -114,6 +114,24 @@ på fält: accentkant, ingen outline.
   (`trigger`-ikonen) i en ruta med `--fg`-kant och en pil in i noden. Grafens `fitView`
   lämnar plats för den till vänster.
 - Uppspelning: knappgrupp, ett segment per steg (spelade i accent), räknare `03/10`.
+  Under raden står flödets vägval (alt) som frågan i muted och en grupperad knapp per gren.
+
+## Sekvensdiagrammet
+
+Standardvyn för flöden; grafen nås via `SEQUENCE | GRAPH` längst till höger i nivåraden.
+
+- Deltagarna är samma kort som grafens noder och står kvar överst när man rullar. Ett
+  utfällt systems namn står över dess noder som en streckad linje i systemets färg.
+- Livlinjer i `--border-strong`, streckade. Meddelanden följer kanternas regler (muted,
+  väntande 0.35, aktiv i accent med rörliga streck); svar tillbaka till en tidigare
+  anropare är streckade. Anrop inom samma deltagare ritas som en ögla till höger.
+- Etiketten sitter ovanför pilen som en kantetikett med stegnummer; hover visar payload
+  och svar i en popover.
+- Alt-block: ram i `--border-strong`, taggen `ALT` fylld i hörnet med frågan bredvid,
+  streckad avdelare mellan grenarna och grenens namn inom `[ ]`. Spelad gren har
+  accentkant; grenar som inte spelas tonas ned. Klick på en gren eller ett nedtonat
+  meddelande väljer den vägen.
+- Startpunkten är en ifylld prick till vänster med en pil in i första livlinjen.
 
 ## Avvikelser från ritningen
 

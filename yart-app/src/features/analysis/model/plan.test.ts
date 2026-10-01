@@ -4,6 +4,7 @@ import {
   addTodoReview,
   addTodoWithListCompare,
   addTodoWithListFlow,
+  listTodosFlow,
 } from '@/common/model/fixtures';
 import {
   type SavedDocumentAnalysis,
@@ -79,6 +80,15 @@ describe('buildImplementationPlan', () => {
     expect(text).toContain('## Background');
     expect(text).toContain('### Add todo (saved as `add-todo`)');
     expect(text).toContain('Steps:\n1. ');
+  });
+
+  it('skriver alternativ som en punkt per gren med grenens steg', () => {
+    const list: SavedFlowAnalysis = { ...addFlow, flow: listTodosFlow };
+    const text = buildImplementationPlan(document('1. Add a column'), [list]);
+    expect(text).toContain(
+      '5. Alt: List cached in Redis?\n   - Cache miss:\n     1. With no cached',
+    );
+    expect(text).toContain('   - Cache hit:\n6. ');
   });
 
   it('visas bara för dokument som föreslår något', () => {

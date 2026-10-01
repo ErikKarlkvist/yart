@@ -1,6 +1,7 @@
 import { type JSX } from 'react';
 import { type FlowStep } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
+import { type PlayedAlt } from '@/common/model/steps';
 import { Icon } from '@/common/renderer/Icon';
 import { type Playback } from '../hooks/useFlowPlayback';
 import { type FlowHighlight } from '../../model/highlight';
@@ -9,6 +10,9 @@ interface Props {
   steps: readonly FlowStep[];
   playback: Playback;
   highlights: ReadonlyMap<string, FlowHighlight>;
+  /** Alternativen uppspelningen passerar, med en knapp per gren */
+  alts: readonly PlayedAlt[];
+  onChooseBranch: (key: string, branch: number) => void;
 }
 
 /** Två siffror, så räknaren inte hoppar: 03/10 */
@@ -16,7 +20,13 @@ function pad(n: number): string {
   return String(n).padStart(2, '0');
 }
 
-export function PlaybackControls({ steps, playback, highlights }: Props): JSX.Element {
+export function PlaybackControls({
+  steps,
+  playback,
+  highlights,
+  alts,
+  onChooseBranch,
+}: Props): JSX.Element {
   const step = steps[playback.stepIndex];
   const highlight = step ? highlights.get(step.edgeId) : undefined;
   const total = steps.length;
@@ -91,6 +101,31 @@ export function PlaybackControls({ steps, playback, highlights }: Props): JSX.El
           {pad(playback.stepIndex + 1)}/{pad(total)}
         </span>
       </div>
+      {alts.length > 0 && (
+        <div className="playback__alts" role="group" aria-label={t('playback.paths')}>
+          {alts.map(({ key, alt, selected }) => (
+            <span key={key} className="playback__alt">
+              <span className="playback__alt-label">{alt.alt}</span>
+              <span className="playback__alt-branches">
+                {alt.branches.map((branch, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`playback__alt-branch${index === selected ? ' is-selected' : ''}`}
+                    aria-pressed={index === selected}
+                    title={t('sequence.chooseBranch', { label: branch.label })}
+                    onClick={() => {
+                      onChooseBranch(key, index);
+                    }}
+                  >
+                    {branch.label}
+                  </button>
+                ))}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
       <div className={`playback__text${highlight ? ` is-highlight-${highlight}` : ''}`}>
         {highlight && (
           <span className={`playback__highlight is-highlight-${highlight}`}>

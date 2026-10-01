@@ -44,6 +44,11 @@ Dokument och reviewer skrivs som kort markdown med rubriker och punktlistor
 fix-planen som kopieras eller skickas till agenten (`src/features/analysis/model/plan.ts`).
 Flöden har en `trigger`, det som startar dem, som ritas på startnoden.
 
+Flöden visas som sekvensdiagram (`features/flow-graph/model/sequence.ts`), med grafen som
+alternativ vy. `steps` kan innehålla `alt` med en gren per utfall, också nästlade; spelaren
+spelar första grenen tills användaren väljer en annan. Hjälpfunktionerna för grenval ligger
+i `src/common/model/steps.ts`, och allt som spelar upp går via `resolveSteps`.
+
 ## Design
 
 Appen har ett enda, mörkt tema: Ink. Läs `docs/design/STYLEGUIDE.md` innan du ändrar eller

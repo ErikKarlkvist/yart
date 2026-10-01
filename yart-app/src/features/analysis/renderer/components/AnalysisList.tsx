@@ -1,6 +1,7 @@
 import { type JSX, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
 import { worstSeverity } from '@/common/model/review';
+import { allSteps } from '@/common/model/steps';
 import { Icon } from '@/common/renderer/Icon';
 import { analysisTitle, findingsForFlow, refLabel, type SavedAnalysis } from '../../model/analysis';
 import { useAnalyses } from '../AnalysisContext';
@@ -94,7 +95,7 @@ export function AnalysisList({ conversationTitle }: Props): JSX.Element {
                 const flowSeverity = worstSeverity(flowFindings);
                 const meta =
                   analysis.kind === 'flow'
-                    ? t('analyses.steps', { count: analysis.flow.steps.length })
+                    ? t('analyses.steps', { count: allSteps(analysis.flow.steps).length })
                     : analysis.kind === 'document'
                       ? t('analyses.linkedFlows', { count: analysis.document.flows.length })
                       : t('analyses.findings', { count: analysis.review.findings.length });

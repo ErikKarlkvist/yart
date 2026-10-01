@@ -1,0 +1,465 @@
+/* Sekvensdiagrammet: livlinjer, meddelanden uppifrån och ned, alt-block */
+.sequence {
+  position: relative;
+  min-height: 0;
+  border-top: 1px solid var(--bg-hover);
+}
+
+.sequence__scroll {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.sequence__canvas {
+  position: relative;
+}
+
+/* Deltagarna står kvar överst när diagrammet rullas */
+.sequence__heads {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in oklch, var(--bg) 92%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+.sequence-participant {
+  position: absolute;
+  cursor: pointer;
+}
+
+.sequence-participant.graph-node {
+  height: auto;
+}
+
+.sequence-participant.is-pending {
+  opacity: 0.7;
+}
+
+.sequence-participant .graph-node__flag {
+  position: absolute;
+  top: -9px;
+  right: -6px;
+}
+
+.sequence-participant:hover .graph-node__zoom {
+  opacity: 1;
+}
+
+/* Systemets namn över dess utfällda noder */
+.sequence-band {
+  position: absolute;
+  top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+  padding: 0 6px;
+  border-top: 1px dashed color-mix(in oklch, var(--node-color, var(--fg-muted)) 60%, transparent);
+  color: var(--node-color, var(--fg-muted));
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.sequence-band .icon {
+  font-size: 9px;
+}
+
+.sequence-band__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sequence-band__zoom-out {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-panel);
+  color: var(--fg-muted);
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.sequence-band:hover .sequence-band__zoom-out {
+  opacity: 1;
+}
+
+.sequence-band__zoom-out:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sequence__lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sequence-lifeline {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  transition: stroke 200ms;
+}
+
+.sequence-lifeline.is-active {
+  stroke: var(--fg-muted);
+}
+
+/* Meddelanden */
+.sequence-arrow-line {
+  fill: none;
+  stroke: var(--fg-muted);
+  stroke-width: 1.5;
+  transition:
+    stroke 200ms,
+    opacity 200ms;
+}
+
+.sequence-arrow-line.is-return {
+  stroke-dasharray: 5 4;
+}
+
+.sequence-arrow-line.is-pending {
+  opacity: 0.35;
+}
+
+.sequence-arrow-line.is-skipped {
+  opacity: 0.15;
+}
+
+.sequence-arrow-line.is-active {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  animation: graph-edge-flow 600ms linear infinite;
+}
+
+.sequence-arrow-line.is-asking {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.sequence-arrow-line[class*='is-highlight-'] {
+  stroke: var(--highlight-color);
+  stroke-width: 2;
+}
+
+.sequence-arrow-line.is-highlight-removed {
+  stroke-dasharray: 6 4;
+  opacity: 0.7;
+}
+
+.sequence-arrow path {
+  fill: var(--fg-muted);
+}
+
+.sequence-arrow.is-pending path {
+  opacity: 0.35;
+}
+
+.sequence-arrow.is-skipped path {
+  opacity: 0.15;
+}
+
+.sequence-arrow.is-active path {
+  fill: var(--accent);
+}
+
+.sequence-arrow.is-added path {
+  fill: var(--flow-added);
+}
+
+.sequence-arrow.is-changed path {
+  fill: var(--flow-changed);
+}
+
+.sequence-arrow.is-removed path {
+  fill: var(--flow-removed);
+}
+
+.sequence-arrow.is-problem path {
+  fill: var(--flow-problem);
+}
+
+.sequence-arrow.is-warning path {
+  fill: var(--flow-warning);
+}
+
+.sequence .is-highlight-added {
+  --highlight-color: var(--flow-added);
+}
+
+.sequence .is-highlight-changed {
+  --highlight-color: var(--flow-changed);
+}
+
+.sequence .is-highlight-removed {
+  --highlight-color: var(--flow-removed);
+}
+
+.sequence .is-highlight-problem {
+  --highlight-color: var(--flow-problem);
+}
+
+.sequence .is-highlight-warning {
+  --highlight-color: var(--flow-warning);
+}
+
+/* Etiketten sitter ovanför pilen, mitt på; på en ögla till höger om den */
+.sequence-message {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transform: translate(-50%, -100%);
+  scroll-margin-top: calc(var(--sequence-header) + 24px);
+  scroll-margin-bottom: 24px;
+  transition: opacity 200ms;
+}
+
+.sequence-message.is-self {
+  transform: translateY(-50%);
+}
+
+.sequence-message.is-pending {
+  opacity: 0.6;
+}
+
+.sequence-message.is-skipped {
+  opacity: 0.35;
+}
+
+.sequence-message.is-open {
+  z-index: 15;
+  opacity: 1;
+}
+
+.sequence-message__label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 300px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sequence-message__label:hover {
+  border-color: var(--accent);
+}
+
+.sequence-message.is-done .sequence-message__label {
+  color: var(--fg-body);
+}
+
+.sequence-message.is-active .sequence-message__label {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sequence-message[class*='is-highlight-'] .sequence-message__label {
+  border-color: var(--highlight-color);
+  color: var(--highlight-color);
+}
+
+.sequence-message.is-focused .sequence-message__label {
+  box-shadow: 3px 3px 0 color-mix(in oklch, var(--danger) 45%, transparent);
+}
+
+.sequence-message__number {
+  flex: none;
+  opacity: 0.8;
+}
+
+.sequence-message__number:empty {
+  display: none;
+}
+
+.sequence-message__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sequence-message.is-open .sequence-message__text {
+  white-space: normal;
+}
+
+/* Det som skickas och svaret, under etiketten när musen är över */
+.sequence-message__details {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+  max-width: 420px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-panel);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 50%);
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg);
+}
+
+.sequence-message.is-self .sequence-message__details {
+  left: 0;
+  transform: none;
+}
+
+.sequence-message__details .graph-node__ask {
+  position: static;
+  align-self: flex-end;
+  opacity: 1;
+}
+
+/* Startpunkten: en prick till vänster med en pil in i livlinjen */
+.sequence-trigger circle {
+  fill: var(--fg);
+}
+
+.sequence-trigger line {
+  stroke: var(--fg);
+  stroke-width: 1.5;
+}
+
+.sequence-trigger__label {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translateY(-100%);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.sequence-trigger__label .icon {
+  font-size: 9px;
+}
+
+.sequence-trigger__kind {
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Alt-block: ram med taggen i hörnet och en klickbar rubrik per gren */
+.sequence-fragment rect {
+  fill: color-mix(in oklch, var(--fg) 2%, transparent);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.sequence-fragment__divider {
+  stroke: var(--border-strong);
+  stroke-dasharray: 4 3;
+}
+
+.sequence-fragment.is-skipped {
+  opacity: 0.5;
+}
+
+.sequence-fragment__labels.is-skipped {
+  opacity: 0.6;
+}
+
+.sequence-fragment__title {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: stretch;
+  height: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.sequence-fragment__tag {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  background: var(--border-strong);
+  color: var(--fg);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sequence-fragment__condition {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--fg);
+}
+
+.sequence-branch {
+  position: absolute;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sequence-branch::before {
+  content: '[';
+}
+
+.sequence-branch::after {
+  content: ']';
+}
+
+.sequence-branch:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.sequence-branch.is-selected {
+  color: var(--fg);
+}
+
+.sequence-branch.is-played {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sequence-branch__empty {
+  color: var(--fg-faint);
+  font-style: italic;
+}

@@ -7,6 +7,7 @@ import {
   listTodosFlow,
 } from '@/common/model/fixtures';
 import { diffFlows, mergeForReview } from '@/common/model/review';
+import { resolveSteps } from '@/common/model/steps';
 import { buildModel, groupEdges, hideElements, mapStepIndex } from './graph';
 
 describe('buildModel', () => {
@@ -116,18 +117,18 @@ describe('mapStepIndex', () => {
 
   it('behåller samma steg när det finns i båda vyerna', () => {
     // 'insert' är steg 5 i detaljvyn (index 5) och steg 1 i systemvyn
-    expect(mapStepIndex(addTodoFlow, detail, 5, system)).toBe(1);
-    expect(mapStepIndex(addTodoFlow, system, 1, detail)).toBe(5);
+    expect(mapStepIndex(resolveSteps(addTodoFlow.steps), detail.steps, 5, system.steps)).toBe(1);
+    expect(mapStepIndex(resolveSteps(addTodoFlow.steps), system.steps, 1, detail.steps)).toBe(5);
   });
 
   it('faller tillbaka på närmast föregående steg', () => {
     // 'route-to-service' (index 3 i detalj) är internt, närmast före i systemvyn är 'post'
-    expect(mapStepIndex(addTodoFlow, detail, 3, system)).toBe(0);
+    expect(mapStepIndex(resolveSteps(addTodoFlow.steps), detail.steps, 3, system.steps)).toBe(0);
   });
 
   it('börjar från början om inget tidigare steg finns', () => {
     // 'submit' (index 0) är internt och inget systemsteg ligger före
-    expect(mapStepIndex(addTodoFlow, detail, 0, system)).toBe(0);
+    expect(mapStepIndex(resolveSteps(addTodoFlow.steps), detail.steps, 0, system.steps)).toBe(0);
   });
 });
 

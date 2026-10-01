@@ -1241,6 +1241,38 @@ button.crumb:hover:not(:disabled) {
   height: 0;
 }
 
+/* Sekvens eller graf: grupperade knappar längst till höger i nivåraden */
+.player__layouts {
+  display: flex;
+  flex: none;
+  border: 1px solid var(--border-strong);
+}
+
+.player__layout {
+  height: 22px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.player__layout + .player__layout {
+  border-left: 1px solid var(--border-strong);
+}
+
+.player__layout:hover:not(.is-current) {
+  color: var(--fg);
+}
+
+.player__layout.is-current {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
 /* Uppspelning */
 .playback {
   display: flex;
@@ -1331,6 +1363,55 @@ button.crumb:hover:not(:disabled) {
   flex: none;
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* Vägval: ett alternativ per grupp, frågan och en knapp per gren */
+.playback__alts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.playback__alt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.playback__alt-label {
+  color: var(--fg-muted);
+}
+
+.playback__alt-branches {
+  display: flex;
+  border: 1px solid var(--border-strong);
+}
+
+.playback__alt-branch {
+  height: 22px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.playback__alt-branch + .playback__alt-branch {
+  border-left: 1px solid var(--border-strong);
+}
+
+.playback__alt-branch:hover:not(.is-selected) {
+  color: var(--fg);
+}
+
+.playback__alt-branch.is-selected {
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .playback__text {

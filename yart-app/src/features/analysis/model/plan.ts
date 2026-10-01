@@ -1,4 +1,11 @@
-import { type Flow, type FlowEdge, type FlowNode, type SourceRef } from '@/common/model/flow';
+import {
+  type Flow,
+  type FlowEdge,
+  type FlowNode,
+  type FlowStepEntry,
+  isAlt,
+  type SourceRef,
+} from '@/common/model/flow';
 import { findingLocation, type ReviewFinding, sortFindings } from '@/common/model/review';
 import {
   type SavedDocumentAnalysis,
@@ -88,17 +95,28 @@ function describeFlow(analysis: SavedFlowAnalysis): string {
       `Starts when: ${flow.trigger.label} (${flow.trigger.kind})${start ? ` at ${start.label}` : ''}.`,
     );
   }
-  lines.push(
-    'Steps:',
-    ...flow.steps.map((step, i) => {
-      const edge = flow.edges.find((e) => e.id === step.edgeId);
-      const detail = edge ? ` (${describeEdge(edge, flow)})` : '';
-      return `${i + 1}. ${step.description}${detail}`;
-    }),
-  );
+  lines.push('Steps:', ...describeSteps(flow.steps, flow, ''));
   const changes = proposed(flow);
   if (changes.length > 0) lines.push('To add or change:', ...changes.map((c) => `- ${c}`));
   return lines.join('\n');
+}
+
+/** Stegen som en numrerad lista; ett alternativ blir en punkt per gren med grenens steg indragna. */
+function describeSteps(entries: readonly FlowStepEntry[], flow: Flow, indent: string): string[] {
+  return entries.flatMap((entry, i) => {
+    if (isAlt(entry)) {
+      return [
+        `${indent}${i + 1}. Alt: ${entry.alt}`,
+        ...entry.branches.flatMap((branch) => [
+          `${indent}   - ${branch.label}:`,
+          ...describeSteps(branch.steps, flow, `${indent}     `),
+        ]),
+      ];
+    }
+    const edge = flow.edges.find((e) => e.id === entry.edgeId);
+    const detail = edge ? ` (${describeEdge(edge, flow)})` : '';
+    return [`${indent}${i + 1}. ${entry.description}${detail}`];
+  });
 }
 
 /** Noder och anrop planen lägger till eller ändrar, med källa när koden finns. */

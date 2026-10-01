@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { type Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { addTodoFlow } from '@/common/model/fixtures';
+import { addTodoFlow, toggleTodoFlow } from '@/common/model/fixtures';
 import { type McpActivity } from '../model/mcp';
 import { type McpDeps, type McpServerHandle, startMcpServer } from './server';
 
@@ -83,6 +83,17 @@ describe('startMcpServer', () => {
     const save = tools.find((tool) => tool.name === 'save_flow');
     expect(JSON.stringify(save?.inputSchema)).toContain('"steps"');
     expect(JSON.stringify(save?.inputSchema)).toContain('git rev-parse');
+    // Alternativen är rekursiva: en gren rymmer steg och nya alternativ
+    expect(JSON.stringify(save?.inputSchema)).toContain('"branches"');
+    expect(JSON.stringify(save?.inputSchema)).toContain('"$ref"');
+  });
+
+  it('sparar ett flöde med alternativ', async () => {
+    const result = await client.callTool({
+      name: 'save_flow',
+      arguments: { repo: '/repo', name: 'toggle-todo', flow: toggleTodoFlow },
+    });
+    expect(result.isError).toBeFalsy();
   });
 
   it('serverar guiden som resurs', async () => {

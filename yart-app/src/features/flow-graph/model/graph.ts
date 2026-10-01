@@ -9,6 +9,7 @@ import {
   type SystemKind,
 } from '@/common/model/flow';
 import { type FlowChange, type FlowDiff, type ReviewFinding } from '@/common/model/review';
+import { type AltChoices, resolveSteps } from '@/common/model/steps';
 
 export type GraphKind = NodeKind | SystemKind;
 /** system: ett helt system. node: en nod i koden. table: en tabell i en inzoomad lagringsnod. */
@@ -92,18 +93,26 @@ export interface GraphModel {
 export type GraphView =
   { kind: 'system' } | { kind: 'focus'; systemId: string } | { kind: 'detail' };
 
+export interface BuildOptions {
+  /** Grenarna som spelas i flödets alternativ */
+  choices?: AltChoices;
+  /** Lagringsnoder med tabeller visas som en ruta per tabell. Av i sekvensdiagrammet. */
+  tables?: boolean;
+}
+
 export function buildModel(
   flow: Flow,
   view: GraphView,
   annotations: ReviewAnnotations = NO_ANNOTATIONS,
+  options: BuildOptions = {},
 ): GraphModel {
   switch (view.kind) {
     case 'system':
-      return collapse(flow, () => true, annotations);
+      return collapse(flow, () => true, annotations, options);
     case 'focus':
-      return collapse(flow, (systemId) => systemId !== view.systemId, annotations);
+      return collapse(flow, (systemId) => systemId !== view.systemId, annotations, options);
     case 'detail':
-      return collapse(flow, () => false, annotations);
+      return collapse(flow, () => false, annotations, options);
   }
 }
 
@@ -112,6 +121,7 @@ function collapse(
   flow: Flow,
   shouldCollapse: (systemId: string) => boolean,
   annotations: ReviewAnnotations,
+  { choices, tables = true }: BuildOptions,
 ): GraphModel {
   const { diff, findings } = annotations;
   const nodeFindings = (id: string): ReviewFinding[] => findings.filter((f) => f.nodeId === id);
@@ -147,7 +157,7 @@ function collapse(
       if (members.length > 0)
         groups.push({ id: system.id, kind: system.kind, label: system.label });
       for (const member of members) {
-        if (member.tables && member.tables.length > 0) {
+        if (tables && member.tables && member.tables.length > 0) {
           // Lagringsnod med tabeller visas som en ruta per tabell
           expandedTables.add(member.id);
           for (const info of tablesOf(flow, [member])) {
@@ -206,7 +216,7 @@ function collapse(
     to: targetForEdge(flow, edge, nodeToTarget, expandedTables),
   }));
   const edgeById = new Map(edges.map((e) => [e.id, e]));
-  const steps = flow.steps.filter((step) => {
+  const steps = resolveSteps(flow.steps, choices).filter((step) => {
     const edge = edgeById.get(step.edgeId);
     return !edge || edge.from !== edge.to;
   });
@@ -215,23 +225,23 @@ function collapse(
 }
 
 /**
- * Hittar motsvarande steg i en annan modell: samma steg om det finns, annars
- * det närmast föregående steget i flödet som finns i målmodellen.
+ * Hittar motsvarande steg i en annan stegföljd: samma steg om det finns, annars
+ * det närmast föregående steget i `all`, flödets spelade steg, som finns i målet.
  */
 export function mapStepIndex(
-  flow: Flow,
-  from: GraphModel,
+  all: readonly FlowStep[],
+  from: readonly FlowStep[],
   fromIndex: number,
-  to: GraphModel,
+  to: readonly FlowStep[],
 ): number {
-  const step = from.steps[fromIndex];
+  const step = from[fromIndex];
   if (!step) return 0;
-  const direct = to.steps.indexOf(step);
+  const direct = to.indexOf(step);
   if (direct !== -1) return direct;
-  const original = flow.steps.indexOf(step);
+  const original = all.indexOf(step);
   let best = 0;
-  to.steps.forEach((candidate, i) => {
-    if (flow.steps.indexOf(candidate) <= original) best = i;
+  to.forEach((candidate, i) => {
+    if (all.indexOf(candidate) <= original) best = i;
   });
   return best;
 }

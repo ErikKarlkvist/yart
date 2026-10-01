@@ -8,7 +8,15 @@ import {
   mergeForReview,
   type ReviewFinding,
 } from '@/common/model/review';
+import {
+  type AltChoices,
+  choicesFor,
+  choicesForBranch,
+  playedAlts,
+  resolveSteps,
+} from '@/common/model/steps';
 import { Icon } from '@/common/renderer/Icon';
+import { useStoredChoice } from '@/common/renderer/useStored';
 import {
   buildModel,
   type GraphNode,
@@ -16,6 +24,7 @@ import {
   hideElements,
   mapStepIndex,
 } from '../../model/graph';
+import { buildSequence, type SequenceMessage } from '../../model/sequence';
 import { type AskTarget, buildAskPrompt } from '../../model/ask';
 import { type Point } from '../../model/layout';
 import { edgeHighlight, type FlowHighlight } from '../../model/highlight';
@@ -23,7 +32,11 @@ import { AskComposer } from './AskComposer';
 import { useFlowPlayback } from '../hooks/useFlowPlayback';
 import { FlowGraph } from './FlowGraph';
 import { PlaybackControls } from './PlaybackControls';
+import { SequenceDiagram } from './SequenceDiagram';
 import './graph.css';
+
+const LAYOUTS = ['sequence', 'graph'] as const;
+type FlowLayout = (typeof LAYOUTS)[number];
 
 interface Props {
   flow: Flow;
@@ -64,6 +77,9 @@ export function FlowPlayer({
   onFocusFinding,
 }: Props): JSX.Element {
   const [view, setView] = useState<GraphView>({ kind: 'system' });
+  const [layout, setLayout] = useStoredChoice<FlowLayout>('yart.flowLayout', LAYOUTS, 'sequence');
+  // Grenen som spelas i varje alternativ; första grenen om inget valts
+  const [choices, setChoices] = useState<AltChoices>(() => new Map());
   // Det användaren dolt gäller i alla vyer. Flyttade noder sparas per vy.
   const [hiddenNodes, setHiddenNodes] = useState<ReadonlySet<string>>(() => new Set());
   const [hiddenEdges, setHiddenEdges] = useState<ReadonlySet<string>>(() => new Set());
@@ -82,9 +98,31 @@ export function FlowPlayer({
     [diff, findings],
   );
   const model = useMemo(
-    () => hideElements(buildModel(graphFlow, view, annotations), hiddenNodes, hiddenEdges),
-    [graphFlow, view, annotations, hiddenNodes, hiddenEdges],
+    () =>
+      hideElements(buildModel(graphFlow, view, annotations, { choices }), hiddenNodes, hiddenEdges),
+    [graphFlow, view, annotations, choices, hiddenNodes, hiddenEdges],
   );
+  // Alla spelade steg; sekvensdiagrammet spelar dem alla, grafen bara de som syns på nivån
+  const played = useMemo(() => resolveSteps(graphFlow.steps, choices), [graphFlow, choices]);
+  const removed = useMemo(
+    () =>
+      compare && diff
+        ? {
+            baseSteps: resolveSteps(compare.base.steps),
+            removedEdgeIds: new Set(
+              [...diff.edges].filter(([, change]) => change === 'removed').map(([id]) => id),
+            ),
+          }
+        : null,
+    [compare, diff],
+  );
+  const sequence = useMemo(
+    () =>
+      layout === 'sequence' ? buildSequence(graphFlow, view, annotations, choices, removed) : null,
+    [layout, graphFlow, view, annotations, choices, removed],
+  );
+  const steps = sequence ? sequence.steps : model.steps;
+  const alts = useMemo(() => playedAlts(graphFlow.steps, choices), [graphFlow, choices]);
   const highlights = useMemo(() => {
     const result = new Map<string, FlowHighlight>();
     for (const edge of model.edges) {
@@ -101,7 +139,7 @@ export function FlowPlayer({
       ? [...highlights.values()].includes(kind)
       : [...highlights.values(), ...model.nodes.map((node) => node.change)].includes(kind),
   );
-  const playback = useFlowPlayback(model.steps.length);
+  const playback = useFlowPlayback(steps.length);
   const hiddenCount = hiddenNodes.size + hiddenEdges.size;
   const [asking, setAsking] = useState<AskTarget | null>(null);
   const cancelAsk = useCallback(() => {
@@ -116,19 +154,73 @@ export function FlowPlayer({
   );
 
   useEffect(() => {
-    const step = model.steps[playback.stepIndex];
+    const step = steps[playback.stepIndex];
     const edge = step ? graphFlow.edges.find((e) => e.id === step.edgeId) : undefined;
     onActiveEdgeChange?.(edge ?? null);
-  }, [graphFlow, model, playback.stepIndex, onActiveEdgeChange]);
+  }, [graphFlow, steps, playback.stepIndex, onActiveEdgeChange]);
 
   /** Byter vy och flyttar uppspelningen till motsvarande steg i den nya vyn. */
   const changeView = useCallback(
     (next: GraphView) => {
-      const nextModel = buildModel(graphFlow, next, annotations);
-      playback.goTo(mapStepIndex(graphFlow, model, playback.stepIndex, nextModel));
+      // Sekvensdiagrammet spelar samma steg på alla nivåer
+      if (layout === 'graph') {
+        const nextModel = buildModel(graphFlow, next, annotations, { choices });
+        playback.goTo(mapStepIndex(played, steps, playback.stepIndex, nextModel.steps));
+      }
       setView(next);
     },
-    [graphFlow, annotations, model, playback],
+    [layout, graphFlow, annotations, choices, played, steps, playback],
+  );
+  const changeLayout = useCallback(
+    (next: FlowLayout) => {
+      if (next === layout) return;
+      const nextSteps = next === 'sequence' ? played : model.steps;
+      playback.goTo(mapStepIndex(played, steps, playback.stepIndex, nextSteps));
+      setLayout(next);
+    },
+    [layout, played, model, steps, playback, setLayout],
+  );
+
+  /**
+   * Väljer en gren och spelar från dess första steg. En tom gren lämnar
+   * uppspelningen där den är.
+   */
+  const chooseBranch = useCallback(
+    (key: string, branch: number) => {
+      const next = new Map([...choices, ...choicesForBranch(key, branch)]);
+      setChoices(next);
+      const nextPlayed = resolveSteps(graphFlow.steps, next);
+      const first = nextPlayed.find(
+        (step) => choicesFor(graphFlow.steps, step)?.get(key) === branch,
+      );
+      if (!first) return;
+      const nextSteps =
+        layout === 'sequence'
+          ? nextPlayed
+          : buildModel(graphFlow, view, annotations, { choices: next }).steps;
+      playback.goTo(mapStepIndex(nextPlayed, [first], 0, nextSteps));
+    },
+    [choices, graphFlow, layout, view, annotations, playback],
+  );
+
+  /** Klick på ett meddelande hoppar dit, via grenen det ligger i om den inte spelas. */
+  const selectMessage = useCallback(
+    (message: SequenceMessage) => {
+      if (message.edge.source) onSelectSource?.(message.edge.source);
+      const step = message.step;
+      if (!step) return;
+      if (message.played !== null) {
+        playback.goTo(message.played);
+        return;
+      }
+      const needed = choicesFor(graphFlow.steps, step);
+      if (!needed) return;
+      const next = new Map([...choices, ...needed]);
+      setChoices(next);
+      const index = resolveSteps(graphFlow.steps, next).indexOf(step);
+      if (index >= 0) playback.goTo(index);
+    },
+    [choices, graphFlow, playback, onSelectSource],
   );
 
   // Klick visar koden. Inzoomning sker via förstoringsglaset på systemnoden.
@@ -161,7 +253,7 @@ export function FlowPlayer({
     handledFocus.current = focusSeq;
     const finding = findings.find((f) => f.id === focusedFindingId);
     if (!finding) return;
-    const index = model.steps.findIndex((step) => {
+    const index = steps.findIndex((step) => {
       const edge = graphFlow.edges.find((e) => e.id === step.edgeId);
       return (
         edge !== undefined &&
@@ -169,7 +261,7 @@ export function FlowPlayer({
       );
     });
     if (index >= 0) playback.goTo(index);
-  }, [focusSeq, focusedFindingId, findings, model, graphFlow, playback]);
+  }, [focusSeq, focusedFindingId, findings, steps, graphFlow, playback]);
   const onEdgeClick = useCallback(
     (edge: FlowEdge) => {
       if (edge.source) onSelectSource?.(edge.source);
@@ -204,6 +296,19 @@ export function FlowPlayer({
     setHiddenNodes(new Set());
     setHiddenEdges(new Set());
   }, []);
+
+  const overlay =
+    onAsk && asking ? (
+      <AskComposer
+        key={askKey(asking)}
+        target={asking}
+        onSend={sendAsk}
+        onCopy={(question) =>
+          navigator.clipboard.writeText(buildAskPrompt(flow, asking, question, flowName))
+        }
+        onCancel={cancelAsk}
+      />
+    ) : null;
 
   return (
     <div className="player">
@@ -251,7 +356,7 @@ export function FlowPlayer({
             </>
           )}
           <span className="player__crumbs-spacer" />
-          {hiddenCount > 0 && (
+          {layout === 'graph' && hiddenCount > 0 && (
             <button type="button" className="crumb" onClick={restoreHidden}>
               {t('graph.restoreHidden', { count: hiddenCount })}
             </button>
@@ -266,6 +371,24 @@ export function FlowPlayer({
           >
             {t('graph.allDetails')}
           </button>
+          <span className="player__layouts" role="group" aria-label={t('graph.layout')}>
+            {LAYOUTS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={`player__layout${layout === option ? ' is-current' : ''}`}
+                aria-pressed={layout === option}
+                title={t(
+                  option === 'sequence' ? 'graph.layoutSequenceHint' : 'graph.layoutGraphHint',
+                )}
+                onClick={() => {
+                  changeLayout(option);
+                }}
+              >
+                {t(option === 'sequence' ? 'graph.layoutSequence' : 'graph.layoutGraph')}
+              </button>
+            ))}
+          </span>
         </nav>
         {legend.length > 0 && (
           <div className="player__legend" aria-label={t('flow.highlight.legend')}>
@@ -277,41 +400,55 @@ export function FlowPlayer({
           </div>
         )}
       </header>
-      <FlowGraph
-        key={viewKey}
-        model={model}
-        stepIndex={playback.stepIndex}
-        moved={movedInView}
-        onMove={onMove}
-        onHideNodes={onHideNodes}
-        onHideEdges={onHideEdges}
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
-        asking={onAsk ? asking : null}
-        onAsk={setAsking}
-        onZoom={onZoom}
-        onZoomOut={onZoomOut}
-        onGoToStep={playback.goTo}
-        diff={diff}
-        findings={findings}
-        focusedFindingId={focusedFindingId}
-        onFocusFinding={focusFinding}
-        overlay={
-          onAsk && asking ? (
-            <AskComposer
-              key={askKey(asking)}
-              target={asking}
-              onSend={sendAsk}
-              onCopy={(question) =>
-                navigator.clipboard.writeText(buildAskPrompt(flow, asking, question, flowName))
-              }
-              onCancel={cancelAsk}
-            />
-          ) : null
-        }
-      />
+      {sequence ? (
+        <SequenceDiagram
+          key={viewKey}
+          sequence={sequence}
+          stepIndex={playback.stepIndex}
+          onSelectMessage={selectMessage}
+          onChooseBranch={chooseBranch}
+          onNodeClick={onNodeClick}
+          asking={onAsk ? asking : null}
+          onAsk={setAsking}
+          onZoom={onZoom}
+          onZoomOut={view.kind === 'system' ? undefined : onZoomOut}
+          diff={diff}
+          findings={findings}
+          focusedFindingId={focusedFindingId}
+          onFocusFinding={focusFinding}
+          overlay={overlay}
+        />
+      ) : (
+        <FlowGraph
+          key={viewKey}
+          model={model}
+          stepIndex={playback.stepIndex}
+          moved={movedInView}
+          onMove={onMove}
+          onHideNodes={onHideNodes}
+          onHideEdges={onHideEdges}
+          onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
+          asking={onAsk ? asking : null}
+          onAsk={setAsking}
+          onZoom={onZoom}
+          onZoomOut={onZoomOut}
+          onGoToStep={playback.goTo}
+          diff={diff}
+          findings={findings}
+          focusedFindingId={focusedFindingId}
+          onFocusFinding={focusFinding}
+          overlay={overlay}
+        />
+      )}
       <div className="player__divider">{beforeControls}</div>
-      <PlaybackControls steps={model.steps} playback={playback} highlights={highlights} />
+      <PlaybackControls
+        steps={steps}
+        playback={playback}
+        highlights={highlights}
+        alts={alts}
+        onChooseBranch={chooseBranch}
+      />
     </div>
   );
 }

@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { addTodoFlow } from '@/common/model/fixtures';
+import { resolveSteps } from '@/common/model/steps';
 import { clampStep, stepView } from './playback';
 
 describe('stepView', () => {
+  const flow = { ...addTodoFlow, steps: resolveSteps(addTodoFlow.steps) };
+
   it('inget steg ger allt pending', () => {
-    const view = stepView(addTodoFlow, -1);
+    const view = stepView(flow, -1);
     expect([...view.edges.values()].every((s) => s === 'pending')).toBe(true);
     expect(view.activeEdgeId).toBeNull();
   });
 
   it('markerar aktiv kant och tidigare som klara', () => {
-    const view = stepView(addTodoFlow, 2);
+    const view = stepView(flow, 2);
     expect(view.activeEdgeId).toBe('post');
     expect(view.edges.get('submit')).toBe('done');
     expect(view.edges.get('create')).toBe('done');
@@ -19,7 +22,7 @@ describe('stepView', () => {
   });
 
   it('aktiva noder är kantens ändar', () => {
-    const view = stepView(addTodoFlow, 2);
+    const view = stepView(flow, 2);
     expect(view.nodes.get('todos-api')).toBe('active');
     expect(view.nodes.get('post-route')).toBe('active');
     expect(view.nodes.get('add-form')).toBe('done');

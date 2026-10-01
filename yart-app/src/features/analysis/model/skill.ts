@@ -30,6 +30,15 @@ const HOW_TO_BUILD = `## How to build a good flow
    migration or schema file that defines it.
 5. Order \`steps\` the way the flow actually runs. Responses are edges of their own going
    back to the caller, e.g. "200 OK with the todo". Every step references an edge id.
+   {appName} draws the flow as a sequence diagram, one lifeline per node, so calls inside
+   one system are shown too: include them.
+   Where the code takes one of several paths (a cache hit or miss, valid or invalid input,
+   found or not found, success or error), use an \`alt\` entry in \`steps\` instead of
+   picking one path: a short question as \`alt\` and one branch per outcome, each with a
+   short \`label\` and its own \`steps\`. Put the usual path first; it plays by default
+   and the user picks the others in the player. A branch may be empty when that path does
+   nothing more, and a branch may hold another \`alt\`. Steps after the \`alt\` run after
+   whichever branch was taken. Branches may reuse the same edge.
 6. Keep labels short and use the code's own names (component, function, route, table).
    Write each step description in two or three clear, explanatory sentences in active voice, in the
    language the user chose (or the language of their request if none was chosen),
@@ -44,8 +53,9 @@ const HOW_TO_BUILD = `## How to build a good flow
    before the PSP call." Translate the plain-language style, not the exact wording.
    Keep exact code names in labels and source references; put technical detail in
    \`description\`, \`payload\` and \`response\` on nodes and edges.
-7. If the user asks about a failure or an alternative path, model that path: the edge that
-   fails, what catches it, what is rolled back or retried, and what the caller sees.
+7. If the user asks about a failure or an alternative path, model that path as a branch
+   of an \`alt\`: the edge that fails, what catches it, what is rolled back or retried, and
+   what the caller sees.
 8. Use \`role\` to name a handler more specifically when useful, such as \`Hook\`, \`Action\` or
    \`Event\`. Use node kind \`queue\` for a queue, topic or event bus.
 9. When the user asks to save a proposed plan, use a document with a short human \`content\` and a detailed
@@ -68,7 +78,7 @@ interface Flow {
   systems: System[];  // at least one
   nodes: Node[];      // at least one
   edges: Edge[];      // at least one
-  steps: Step[];      // playback order, at least one
+  steps: (Step | Alt)[]; // playback order, at least one
 }
 
 interface Trigger {
@@ -155,6 +165,16 @@ interface Step {
   description: string; // two or three explanatory sentences, without code identifiers
 }
 
+interface Alt {       // where the flow takes one of several paths
+  alt: string;        // the condition as a short question, e.g. "List cached in Redis?"
+  branches: Branch[]; // at least two, the usual path first
+}
+
+interface Branch {
+  label: string;      // the outcome, e.g. "Cache hit"
+  steps: (Step | Alt)[]; // may be empty
+}
+
 interface Source {
   file: string;       // relative to the repository root
   line: number;       // 1-based, must exist in the file
@@ -239,7 +259,7 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 `;
 
 /** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 12;
+export const SKILL_VERSION = 13;
 
 export function buildSkill(): string {
   return `---

@@ -1,6 +1,6 @@
 import { type Flow } from '../flow';
 
-/** Visar en cache-miss: Redis är tom, listan hämtas ur Postgres och cachas. */
+/** Laddar listan, med ett alternativ för cachen: vid en miss hämtas listan ur Postgres och cachas. */
 export const listTodosFlow: Flow = {
   question: 'What happens when the list loads?',
   title: 'Load the list',
@@ -133,7 +133,7 @@ export const listTodosFlow: Flow = {
       from: 'todo-service',
       to: 'todo-cache',
       label: 'GET todos:all',
-      response: 'null, cache miss',
+      response: 'The list as JSON, or null on a cache miss',
       source: { file: 'backend/src/services/TodoService.ts', line: 13 },
     },
     {
@@ -179,14 +179,34 @@ export const listTodosFlow: Flow = {
     },
     {
       edgeId: 'cache-get',
-      description: 'The service checks Redis for the cached todo list, but the key is missing.',
+      description:
+        'The service first asks Redis for the cached list, so most page loads never reach the database.',
     },
     {
-      edgeId: 'find-all',
-      description: 'With no cached list, the service asks the repository to load all todos.',
+      alt: 'List cached in Redis?',
+      branches: [
+        {
+          label: 'Cache miss',
+          steps: [
+            {
+              edgeId: 'find-all',
+              description:
+                'With no cached list, the service asks the repository to load all todos.',
+            },
+            {
+              edgeId: 'select',
+              description: 'The repository reads todos from Postgres, newest first.',
+            },
+            {
+              edgeId: 'cache-set',
+              description:
+                'The service saves the list in Redis for 60 seconds, so the next page loads are served from the cache.',
+            },
+          ],
+        },
+        { label: 'Cache hit', steps: [] },
+      ],
     },
-    { edgeId: 'select', description: 'The repository reads todos from Postgres, newest first.' },
-    { edgeId: 'cache-set', description: 'The service saves the list in Redis for 60 seconds.' },
     { edgeId: 'respond', description: 'The API returns the todo list to the client.' },
   ],
 };

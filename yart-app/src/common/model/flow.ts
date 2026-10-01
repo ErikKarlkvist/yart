@@ -173,6 +173,59 @@ const flowStepSchema = z
   })
   .describe('One step of the playback, in the order the flow actually runs');
 
+/** Ett alternativ: en fråga i flödet med en gren per svar, som i ett alt-block i ett sekvensdiagram. */
+export interface FlowAlt {
+  alt: string;
+  branches: FlowBranch[];
+}
+
+interface FlowBranch {
+  label: string;
+  steps: FlowStepEntry[];
+}
+
+export type FlowStepEntry = FlowStep | FlowAlt;
+
+// Grenarna rymmer steg och nya alternativ, så schemat refererar till sig självt.
+const flowStepEntrySchema: z.ZodType<FlowStepEntry> = z.lazy(() =>
+  z.union([flowStepSchema, flowAltSchema]),
+);
+
+const flowBranchSchema = z
+  .object({
+    label: z
+      .string()
+      .min(1)
+      .max(60)
+      .describe('The answer that leads down this branch, e.g. "Cache hit" or "Invalid body"'),
+    get steps() {
+      return z
+        .array(flowStepEntrySchema)
+        .describe('The steps of this branch in order; empty when the branch does nothing more');
+    },
+  })
+  .describe('One path through an alt');
+
+const flowAltSchema = z
+  .object({
+    alt: z
+      .string()
+      .min(1)
+      .max(80)
+      .describe('The condition that decides the path, as a short question: "List in Redis?"'),
+    branches: z
+      .array(flowBranchSchema)
+      .min(2)
+      .describe(
+        'One branch per outcome. Put the usual path first; it is the one played by default.',
+      ),
+  })
+  .describe(
+    brandText(
+      'Where the flow takes one of several paths, like an alt fragment in a sequence diagram. {appName} draws every branch and lets the user choose which one the playback follows.',
+    ),
+  );
+
 /** Vad som sätter igång flödet. Visas där flödet börjar, så det är lätt att följa. */
 export const triggerKindSchema = z
   .enum(['user', 'webhook', 'schedule', 'queue', 'request', 'startup', 'system'])
@@ -218,7 +271,10 @@ export const flowSchema = z
     systems: z.array(flowSystemSchema).min(1),
     nodes: z.array(flowNodeSchema).min(1),
     edges: z.array(flowEdgeSchema).min(1),
-    steps: z.array(flowStepSchema).min(1),
+    steps: z
+      .array(flowStepEntrySchema)
+      .min(1)
+      .describe('Playback order. An entry is a step or an alt with a branch per path.'),
   })
   .superRefine((flow, ctx) => {
     const systemIds = new Set<string>();
@@ -337,15 +393,26 @@ export const flowSchema = z
       });
     }
 
-    flow.steps.forEach((step, i) => {
-      if (!edgeIds.has(step.edgeId)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['steps', i, 'edgeId'],
-          message: t('validation.unknownEdge', { step: i + 1, edge: step.edgeId }),
-        });
-      }
-    });
+    let stepNumber = 0;
+    const checkSteps = (entries: readonly FlowStepEntry[], path: (string | number)[]): void => {
+      entries.forEach((entry, i) => {
+        if (isAlt(entry)) {
+          entry.branches.forEach((branch, b) => {
+            checkSteps(branch.steps, [...path, i, 'branches', b, 'steps']);
+          });
+          return;
+        }
+        stepNumber += 1;
+        if (!edgeIds.has(entry.edgeId)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [...path, i, 'edgeId'],
+            message: t('validation.unknownEdge', { step: stepNumber, edge: entry.edgeId }),
+          });
+        }
+      });
+    };
+    checkSteps(flow.steps, ['steps']);
   });
 
 export type NodeKind = z.infer<typeof nodeKindSchema>;
@@ -357,6 +424,10 @@ export type FlowEdge = z.infer<typeof flowEdgeSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
 export type FlowTrigger = z.infer<typeof flowTriggerSchema>;
 export type Flow = z.infer<typeof flowSchema>;
+
+export function isAlt(entry: FlowStepEntry): entry is FlowAlt {
+  return 'branches' in entry;
+}
 
 export type FlowValidation = { ok: true; flow: Flow } | { ok: false; errors: string[] };
 

@@ -102,6 +102,33 @@ describe('validateFlow', () => {
     expect(errorsOf(flow)).toContainEqual(expect.stringContaining('unknown edge "nope"'));
   });
 
+  it('avvisar okända kanter inne i ett alternativ, med vägen dit', () => {
+    const flow = {
+      ...base,
+      steps: [
+        { edgeId: 'submit', description: 'x' },
+        {
+          alt: 'Valid?',
+          branches: [
+            { label: 'Yes', steps: [{ edgeId: 'create', description: 'x' }] },
+            { label: 'No', steps: [{ edgeId: 'nope', description: 'x' }] },
+          ],
+        },
+      ],
+    };
+    expect(errorsOf(flow)).toEqual([
+      'steps.1.branches.1.steps.0.edgeId: Step 3 points to unknown edge "nope"',
+    ]);
+  });
+
+  it('kräver minst två grenar i ett alternativ', () => {
+    const flow = {
+      ...base,
+      steps: [{ alt: 'Valid?', branches: [{ label: 'Yes', steps: [] }] }],
+    };
+    expect(errorsOf(flow).some((e) => e.startsWith('steps.0.branches'))).toBe(true);
+  });
+
   it('avvisar dubbla id:n', () => {
     const [first] = base.nodes;
     const flow = { ...base, nodes: [...base.nodes, { ...first }] };
