@@ -48,6 +48,8 @@ const MIN_SCALE = 0.4;
 const MAX_SCALE = 1.6;
 /** Ett brett diagram krymps för att få plats, men inte mer än så här */
 const MIN_FIT_SCALE = 0.7;
+/** Hur långt systemets färgfält når utanför dess yttersta deltagare */
+const LANE_PADDING = 14;
 
 /** Stegnummer med två siffror, som 03 */
 function stepNumber(n: number): string {
@@ -96,6 +98,49 @@ export function SequenceDiagram({
     element.addEventListener('wheel', onWheel, { passive: false });
     return () => {
       element.removeEventListener('wheel', onWheel);
+    };
+  }, []);
+
+  // Dra i ytan för att flytta diagrammet, som i grafen. Knappar och etiketter tar sina egna klick.
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    let drag: { x: number; y: number; left: number; top: number } | null = null;
+    const onDown = (event: PointerEvent): void => {
+      if (
+        event.button !== 0 ||
+        (event.target as Element).closest('button, a, input, .sequence-participant')
+      )
+        return;
+      drag = {
+        x: event.clientX,
+        y: event.clientY,
+        left: element.scrollLeft,
+        top: element.scrollTop,
+      };
+      element.setPointerCapture(event.pointerId);
+      element.classList.add('is-panning');
+    };
+    const onMove = (event: PointerEvent): void => {
+      if (!drag) return;
+      element.scrollLeft = drag.left - (event.clientX - drag.x);
+      element.scrollTop = drag.top - (event.clientY - drag.y);
+    };
+    const onUp = (event: PointerEvent): void => {
+      if (!drag) return;
+      drag = null;
+      element.releasePointerCapture(event.pointerId);
+      element.classList.remove('is-panning');
+    };
+    element.addEventListener('pointerdown', onDown);
+    element.addEventListener('pointermove', onMove);
+    element.addEventListener('pointerup', onUp);
+    element.addEventListener('pointercancel', onUp);
+    return () => {
+      element.removeEventListener('pointerdown', onDown);
+      element.removeEventListener('pointermove', onMove);
+      element.removeEventListener('pointerup', onUp);
+      element.removeEventListener('pointercancel', onUp);
     };
   }, []);
 
@@ -149,7 +194,6 @@ export function SequenceDiagram({
     width: sequence.width,
     height: sequence.height,
     zoom: scale ?? 1,
-    '--sequence-header': `${sequence.headerHeight}px`,
   } as CSSProperties;
 
   return (
@@ -238,6 +282,20 @@ export function SequenceDiagram({
                 );
               })}
             </div>
+
+            {/* Systemets färg följer med hela vägen ned bakom dess livlinjer */}
+            {sequence.bands.map((band) => (
+              <div
+                key={band.systemId}
+                className={`sequence-lane graph-group--${band.kind}`}
+                style={{
+                  left: band.x - LANE_PADDING,
+                  width: band.width + 2 * LANE_PADDING,
+                  top: 0,
+                  height: sequence.height,
+                }}
+              />
+            ))}
 
             <svg className="sequence__lines" width={sequence.width} height={sequence.height}>
               <defs>

@@ -14,19 +14,24 @@
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 24px 24px;
+  /* Rutnätet följer med innehållet när ytan rullas eller dras */
+  background-attachment: local;
+  cursor: grab;
+}
+
+.sequence__scroll.is-panning {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .sequence__canvas {
   position: relative;
 }
 
-/* Deltagarna står kvar överst när diagrammet rullas */
+/* Rubriken ligger i samma yta som resten och följer med när man drar */
 .sequence__heads {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: color-mix(in oklch, var(--bg) 92%, transparent);
-  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 2;
 }
 
 /* Två klasser så regeln vinner över .graph-node, som laddas efter och är relativ */
@@ -47,6 +52,16 @@
 
 .sequence-participant:hover .graph-node__zoom {
   opacity: 1;
+}
+
+/* Ett utfällt systems fält: svag färg och streckade kanter från rubriken och ned */
+.sequence-lane {
+  position: absolute;
+  border-right: 1px dashed color-mix(in oklch, var(--node-color, var(--fg-muted)) 35%, transparent);
+  border-left: 1px dashed color-mix(in oklch, var(--node-color, var(--fg-muted)) 35%, transparent);
+  background: color-mix(in oklch, var(--node-color, var(--fg-muted)) 5%, transparent);
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Systemets namn över dess utfällda noder */
@@ -226,7 +241,7 @@
   align-items: center;
   gap: 4px;
   transform: translate(-50%, -100%);
-  scroll-margin-top: calc(var(--sequence-header) + 24px);
+  scroll-margin-top: 24px;
   scroll-margin-bottom: 24px;
   transition: opacity 200ms;
 }
