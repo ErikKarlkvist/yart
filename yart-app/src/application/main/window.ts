@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { BrowserWindow, nativeTheme, shell } from 'electron';
 import { is } from '@electron-toolkit/utils';
 import { APP_NAME } from '@/common/model/brand';
+import icon from '../../../resources/icon.png?asset';
 
 export function createMainWindow(): BrowserWindow {
   // Appen har bara ett mörkt tema, så fönstret och systemets kontroller är alltid mörka.
@@ -13,6 +14,8 @@ export function createMainWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     backgroundColor: '#0a0a0a',
+    // macOS tar ikonen från appen, se index.ts; Windows och Linux tar den från fönstret
+    icon,
     title: APP_NAME,
     titleBarStyle: process.platform === 'win32' ? 'hidden' : 'hiddenInset',
     ...(process.platform === 'win32'

@@ -23,10 +23,17 @@
 }
 
 .onboarding__title {
-  margin: 0 0 8px;
-  font-family: var(--font-mono);
-  font-size: 22px;
+  margin: 0 0 4px;
   line-height: 1.2;
+}
+
+.onboarding__subtitle {
+  margin: 0 0 14px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .onboarding__tagline {

@@ -1,4 +1,5 @@
 import { type JSX, useEffect, useState } from 'react';
+import { BrandMark } from '@/common/renderer/BrandMark';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { AGENT_KINDS, type AgentKind, type RunnableAgent } from '@/common/model/agent';
@@ -52,8 +53,9 @@ export function Onboarding(): JSX.Element | null {
         aria-labelledby="onboarding-title"
       >
         <h2 id="onboarding-title" className="onboarding__title">
-          {t('onboarding.title')}
+          <BrandMark size="lg" />
         </h2>
+        <p className="onboarding__subtitle">{t('onboarding.subtitle')}</p>
         <p className="onboarding__tagline">{t('onboarding.tagline')}</p>
         <p className="onboarding__intro">{t('onboarding.intro')}</p>
 

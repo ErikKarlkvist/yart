@@ -175,6 +175,37 @@ textarea:focus {
   overflow: hidden;
 }
 
+/* Märket och namnet, i guiden och på den tomma huvudytan */
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand-mark__image {
+  width: 1.4em;
+  height: 1.4em;
+}
+
+.brand-mark--md {
+  font-size: 16px;
+}
+
+.brand-mark--lg {
+  font-size: 28px;
+}
+
+.workspace__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
 .workspace > .player {
   place-self: stretch;
 }

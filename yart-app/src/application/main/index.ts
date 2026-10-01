@@ -4,6 +4,7 @@ import { app, BrowserWindow, Menu } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { registerApplicationHandlers } from './handlers';
 import { createMainWindow } from './window';
+import icon from '../../../resources/icon.png?asset';
 import { APP_NAME } from '@/common/model/brand';
 
 // Preserve the existing settings and reviews directory when the display name changes.
@@ -28,6 +29,8 @@ if (process.env.YART_DEBUG_PORT) {
 
 void app.whenReady().then(() => {
   electronApp.setAppUserModelId('se.karlkvist.yart');
+  // Under utveckling är det Electrons egen app som körs, så Dock-ikonen sätts här
+  if (process.platform === 'darwin') app.dock?.setIcon(icon);
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);

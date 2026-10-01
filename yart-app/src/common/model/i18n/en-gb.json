@@ -154,7 +154,7 @@
   "log.errorsReturned": "The errors were returned to the agent so it can fix the content.",
   "log.dismiss": "Dismiss",
   "log.via": "{client} ({tool})",
-  "onboarding.title": "Yet Another Review Tool – YART",
+  "onboarding.subtitle": "Yet another review tool",
   "onboarding.tagline": "Designed to be controlled by AI",
   "onboarding.intro": "Connect the AI on your machine to the app, or use an external AI through MCP and skills.",
   "onboarding.gettingStarted": "Getting started",

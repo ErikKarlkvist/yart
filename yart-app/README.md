@@ -1,6 +1,6 @@
 # yart-app
 
-The YART desktop app. See the [README in the repository root](../README.md) for what
+The yart desktop app. See the [README in the repository root](../README.md) for what
 it does and how to connect an agent.
 
 ```bash

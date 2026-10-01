@@ -1,5 +1,6 @@
 import { type JSX, type ReactNode } from 'react';
 import { type FlowEdge, type SourceRef } from '@/common/model/flow';
+import { BrandMark } from '@/common/renderer/BrandMark';
 import { t } from '@/common/model/i18n';
 import { type ReviewFinding } from '@/common/model/review';
 import {
@@ -86,7 +87,10 @@ export function Workspace({
           onSendToAgent={onSendToAgent}
         />
       ) : (
-        <p className="shell__empty">{hasRepo ? t('app.chooseAnalysis') : t('app.chooseRepo')}</p>
+        <div className="workspace__empty">
+          <BrandMark size="lg" />
+          <p className="shell__empty">{hasRepo ? t('app.chooseAnalysis') : t('app.chooseRepo')}</p>
+        </div>
       )}
     </main>
   );
