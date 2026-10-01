@@ -95,6 +95,9 @@ export interface Sequence {
   height: number;
   /** Höjden på rubriken med deltagarna, livlinjerna börjar under den */
   headerHeight: number;
+  /** Alla deltagare står i samma höjd och är lika höga, oavsett nivå */
+  boxTop: number;
+  boxHeight: number;
 }
 
 /** Ett borttaget anrop i en review och steget före det i base. */
@@ -282,7 +285,8 @@ export function buildSequence(
     });
   }
   const boxHeight = Math.max(0, ...participants.map((p) => SEQUENCE.boxHeight[p.node.level]));
-  const headerHeight = (bands.length > 0 ? SEQUENCE.bandHeight : 0) + boxHeight + 16;
+  const boxTop = (bands.length > 0 ? SEQUENCE.bandHeight : 0) + 8;
+  const headerHeight = boxTop + boxHeight + 16;
 
   // Raderna uppifrån och ned. Alt-blockens bredd räknas från det de rymmer.
   let y = headerHeight + SEQUENCE.headerGap;
@@ -429,6 +433,8 @@ export function buildSequence(
     width,
     height,
     headerHeight,
+    boxTop,
+    boxHeight,
   };
 }
 

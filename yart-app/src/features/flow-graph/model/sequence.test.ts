@@ -104,3 +104,18 @@ describe('buildSequence', () => {
     expect(ghosts.every((m) => m.played === null)).toBe(true);
   });
 });
+
+describe('deltagarnas höjd', () => {
+  it('alla deltagare står i samma höjd, även när system och noder blandas', () => {
+    const sequence = buildSequence(
+      addTodoFlow,
+      { kind: 'focus', systemId: 'backend' },
+      undefined,
+      new Map(),
+    );
+    const levels = new Set(sequence.participants.map((p) => p.node.level));
+    expect(levels).toEqual(new Set(['system', 'node']));
+    expect(sequence.boxHeight).toBeGreaterThan(0);
+    expect(sequence.boxTop + sequence.boxHeight).toBeLessThan(sequence.headerHeight);
+  });
+});

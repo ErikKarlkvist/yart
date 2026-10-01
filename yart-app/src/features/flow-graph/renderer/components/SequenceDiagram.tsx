@@ -190,8 +190,8 @@ export function SequenceDiagram({
                     style={{
                       left: x - width / 2,
                       width,
-                      height: SEQUENCE.boxHeight[node.level],
-                      bottom: 16,
+                      top: sequence.boxTop,
+                      height: sequence.boxHeight,
                     }}
                     title={node.description}
                     onClick={() => onNodeClick?.(node)}
