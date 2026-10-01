@@ -62,7 +62,6 @@ export function installMockBridge(): void {
 
   const handlers: Record<string, (payload: unknown) => unknown> = {
     'app:info': () => ({ version: '0.1.0', electron: t('app.mockElectron'), platform: 'web' }),
-    'app:titlebar-theme': () => undefined,
     'repo:list-recent': () => recent,
     'repo:pick-local': () => null,
     'repo:open-demo': () => {

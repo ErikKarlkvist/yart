@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  background: color-mix(in oklch, var(--bg) 70%, transparent);
   backdrop-filter: blur(4px);
 }
 
@@ -15,16 +15,16 @@
   max-height: 100%;
   overflow-y: auto;
   padding: 28px 32px 24px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  border: 1px solid var(--border-strong);
   background: var(--bg-panel);
-  box-shadow: 0 24px 60px rgb(0 0 0 / 0.25);
+  box-shadow: 6px 6px 0 rgb(0 0 0 / 50%);
   font-size: 13px;
   line-height: 1.55;
 }
 
 .onboarding__title {
   margin: 0 0 8px;
+  font-family: var(--font-mono);
   font-size: 22px;
   line-height: 1.2;
 }
@@ -78,18 +78,21 @@
 }
 
 .onboarding__done {
-  padding: 8px 18px;
+  height: 30px;
+  padding: 0 18px;
   border: none;
-  border-radius: 8px;
   background: var(--accent);
   color: var(--on-accent);
-  font: inherit;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
 }
 
 .onboarding__done:hover {
-  filter: brightness(1.08);
+  background: color-mix(in oklch, var(--accent) 88%, var(--fg));
 }
 
 .onboarding__check {
@@ -116,6 +119,5 @@
 
 .agent-picker--wide .agent-picker__option {
   flex: 1;
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 9px 12px;
 }

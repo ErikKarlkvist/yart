@@ -4,9 +4,26 @@
 
 .repo-menu__button {
   max-width: 260px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.repo-menu__folder {
+  color: var(--accent);
+}
+
+.repo-menu__name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.repo-menu__chevron {
+  color: var(--fg-muted);
+}
+
+.repo-menu__chevron .icon {
+  font-size: 8px;
 }
 
 .repo-menu__popover {
@@ -17,20 +34,19 @@
   z-index: 50;
   min-width: 260px;
   padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
   background: var(--bg-panel);
-  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 50%);
   color: var(--fg);
   font-size: 13px;
 }
 
 .repo-menu__heading {
   margin: 2px 6px 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--fg-muted);
 }
 
@@ -43,15 +59,15 @@
 .repo-menu__item {
   display: flex;
   align-items: center;
-  border-radius: 6px;
 }
 
 .repo-menu__item.is-active {
-  background: var(--bg);
+  background: var(--bg-hover);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .repo-menu__item:hover {
-  background: var(--bg);
+  background: var(--bg-hover);
 }
 
 .repo-menu__open {

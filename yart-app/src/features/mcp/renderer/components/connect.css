@@ -37,9 +37,9 @@
   display: block;
   margin: 0 0 10px;
   padding: 6px 8px;
-  border-radius: 6px;
-  background: var(--bg);
-  font-family: var(--font-mono, ui-monospace, monospace);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-family: var(--font-mono);
   font-size: 12px;
   overflow-wrap: anywhere;
   user-select: text;
@@ -87,9 +87,8 @@
   display: flex;
   gap: 10px;
   padding: 6px 10px;
-  border-radius: 6px;
-  border-left: 3px solid var(--accent);
-  background: var(--bg);
+  border-left: 2px solid var(--accent);
+  background: var(--bg-panel);
 }
 
 .connect__entry--failed {
@@ -123,22 +122,23 @@
 .agent-picker {
   display: inline-flex;
   margin: 0 0 12px;
-  padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
 }
 
 .agent-picker__option {
-  padding: 5px 12px;
+  padding: 7px 12px;
   border: none;
-  border-radius: 6px;
   background: none;
   color: var(--fg-muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   cursor: pointer;
+}
+
+.agent-picker__option + .agent-picker__option {
+  border-left: 1px solid var(--border);
 }
 
 .agent-picker__option:hover {
@@ -146,9 +146,9 @@
 }
 
 .agent-picker__option.is-active {
-  background: var(--bg-panel);
-  color: var(--fg);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
 }
 
 .setup__step {

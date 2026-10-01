@@ -1,18 +1,19 @@
 .analyses {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
 .analyses__muted {
   margin: 0;
+  padding: 0 14px;
   color: var(--fg-muted);
 }
 
 .analyses__error {
-  margin: 0;
+  margin: 0 14px;
   padding: 8px 10px;
-  border-radius: 6px;
+  border: 1px solid var(--danger);
   background: var(--danger-bg);
   color: var(--danger);
 }
@@ -20,25 +21,32 @@
 .analyses__group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .analyses__group-heading {
-  margin: 4px 0 0;
-  font-size: 11px;
-  font-weight: 600;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .analyses__group-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  padding: 3px 2px;
+  padding: 2px 14px 6px;
   border: none;
   background: none;
   color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   text-align: left;
+}
+
+.analyses__group-toggle .icon {
+  font-size: 8px;
 }
 
 .analyses__group-toggle:hover {
@@ -48,7 +56,6 @@
 .analyses__group-label {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -56,8 +63,8 @@
 
 /* Branch och commit, för analyser som inte kommer från en konversation */
 .analyses__group-label--ref {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .analyses__list {
@@ -66,42 +73,57 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .analyses__item {
   display: flex;
   align-items: center;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  gap: 6px;
+  padding-right: 14px;
+}
+
+.analyses__item:hover {
+  background: var(--bg-hover);
 }
 
 .analyses__item.is-active {
-  border-color: var(--accent);
-  background: var(--bg);
+  background: var(--bg-hover);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .analyses__open {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 8px 10px;
   min-width: 0;
+  padding: 9px 0 9px 32px;
+  border: none;
+  background: none;
+  text-align: left;
 }
 
-.analyses__open:hover {
+/* Pilen före vald analys. Platsen finns på alla rader så texten inte hoppar. */
+.analyses__open::before {
+  content: '›';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: transparent;
+  font-family: var(--font-mono);
+}
+
+.analyses__item.is-active .analyses__open::before {
   color: var(--accent);
 }
 
 .analyses__title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-weight: 600;
   max-width: 100%;
   min-width: 0;
@@ -117,19 +139,30 @@
 }
 
 .analyses__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   flex-shrink: 0;
   margin: 0;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 10px;
+  padding: 1px 4px;
+  border: 1px solid var(--border-strong);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  vertical-align: 1px;
-  color: var(--bg-panel);
+}
+
+.analyses__tag.is-document {
+  border-color: var(--plan);
+  color: var(--plan);
+}
+
+/* Reviewn fylls med fyndens värsta allvarsgrad */
+.analyses__tag.is-error,
+.analyses__tag.is-warning,
+.analyses__tag.is-info,
+.analyses__tag.is-none {
+  border-color: transparent;
+  color: var(--bg);
   background: var(--fg-muted);
 }
 
@@ -150,8 +183,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: lowercase;
   color: var(--fg-muted);
+}
+
+/* Antal fynd på ett flöde, i värsta allvarsgradens färg */
+.analyses__findings {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid currentcolor;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--danger);
+}
+
+.analyses__findings.is-warning {
+  color: var(--warn);
+}
+
+.analyses__findings.is-info {
+  color: var(--accent);
 }
 
 .analyses__rejection {
@@ -199,9 +252,8 @@
   display: flex;
   gap: 12px;
   padding: 6px 10px;
-  border-radius: 6px;
-  border-left: 3px solid var(--accent);
-  background: var(--bg);
+  border-left: 2px solid var(--accent);
+  background: var(--bg-panel);
 }
 
 .delivery__entry--rejected {
@@ -211,8 +263,9 @@
 .delivery__time {
   flex-shrink: 0;
   color: var(--fg-muted);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .delivery__body {

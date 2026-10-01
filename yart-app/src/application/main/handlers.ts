@@ -1,5 +1,5 @@
-import { app, BrowserWindow } from 'electron';
-import { appInfoChannel, titleBarThemeChannel } from '@/application/ipc/channels';
+import { app } from 'electron';
+import { appInfoChannel } from '@/application/ipc/channels';
 import { handleChannel } from '@/common/main/ipc';
 import { t } from '@/common/model/i18n';
 import { type AgentHandle, registerAgentHandlers } from '@/features/agent/main';
@@ -15,16 +15,6 @@ export function registerApplicationHandlers(): void {
     electron: process.versions.electron,
     platform: process.platform,
   }));
-  handleChannel(titleBarThemeChannel, ({ dark }) => {
-    if (process.platform !== 'win32') return;
-    for (const window of BrowserWindow.getAllWindows()) {
-      window.setTitleBarOverlay({
-        color: dark ? '#161a22' : '#ffffff',
-        symbolColor: dark ? '#e6e8ee' : '#1c2230',
-        height: 38,
-      });
-    }
-  });
 
   registerRepoHandlers();
   const analyses = registerAnalysisHandlers();

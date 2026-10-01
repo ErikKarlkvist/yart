@@ -8,11 +8,11 @@ import { invokeChannel } from '@/common/renderer/ipc';
 import { useAgent } from '@/features/agent';
 import { analysisTitle, findingsForFlow, useAnalyses } from '@/features/analysis';
 import { DockLayout, DockResizeHandle, DockToggles, useDock, ViewsMenu } from '@/features/layout';
-import { useSetup } from '@/features/mcp';
+import { useMcpStatus, useSetup } from '@/features/mcp';
 import { RepoMenu, useRepo } from '@/features/repo';
 import { useTabTitle } from './AppTabsContext';
+import { McpIndicator } from './McpIndicator';
 import { type PanelId, usePanels } from './panels';
-import { ThemeSelect } from './ThemeSelect';
 import { useWindowBar } from './WindowBarContext';
 import { Workspace } from './Workspace';
 
@@ -28,6 +28,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
   const { layout, reveal } = useDock();
   const agent = useAgent();
   const { showGuide, agent: agentKind } = useSetup();
+  const mcp = useMcpStatus();
   // Koden för steget som spelas eller klickats i grafen, visas i panelen Kod.
   const [source, setSource] = useState<SourceRef | null>(null);
   // Valt fynd taggas med analysen. Räknaren låter samma fynd fokuseras igen.
@@ -79,6 +80,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
   );
 
   const panels = usePanels({
+    mcp,
     flow,
     findings,
     source: flow ? source : null,
@@ -103,7 +105,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
           <div className="shell__window-items">
             <ViewsMenu panels={panels} />
             <RepoMenu />
-            <ThemeSelect />
+            <span className="shell__window-divider" />
             <DockToggles />
           </div>,
           windowBar,
@@ -137,6 +139,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
                 <span>{repo.branch ?? t('repo.detachedHead')}</span>
               </span>
             )}
+            <McpIndicator status={mcp.status} />
           </span>
           <button
             type="button"
@@ -144,7 +147,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
             title={t('app.guideHint')}
             onClick={showGuide}
           >
-            <Icon name="info" size="sm" /> {t('app.guide')}
+            {t('app.guide')}
           </button>
         </footer>
       </div>

@@ -214,26 +214,34 @@ export function AgentPanel(): JSX.Element {
           </div>
         </div>
       )}
-      <select
-        id={selectId}
-        className="agent__conversation-select"
-        aria-label={t('agent.conversations')}
-        value={activeId ?? NEW}
-        disabled={!hasRepo}
-        onChange={(event) => {
-          if (event.target.value === NEW) startNew();
-          else choose(event.target.value);
-          setDraft('');
-        }}
-      >
-        <option value={NEW}>{t('agent.untitled')}</option>
-        {conversations.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.title || t('agent.untitled')} ·{' '}
-            {new Date(item.updatedAt).toLocaleDateString(LOCALE)}
-          </option>
-        ))}
-      </select>
+      <div className="agent__conversation">
+        <span className="agent__conversation-icon">
+          <Icon name="chat" size="sm" />
+        </span>
+        <select
+          id={selectId}
+          className="agent__conversation-select"
+          aria-label={t('agent.conversations')}
+          value={activeId ?? NEW}
+          disabled={!hasRepo}
+          onChange={(event) => {
+            if (event.target.value === NEW) startNew();
+            else choose(event.target.value);
+            setDraft('');
+          }}
+        >
+          <option value={NEW}>{t('agent.untitled')}</option>
+          {conversations.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.title || t('agent.untitled')} ·{' '}
+              {new Date(item.updatedAt).toLocaleDateString(LOCALE)}
+            </option>
+          ))}
+        </select>
+        <span className="agent__conversation-chevron">
+          <Icon name="chevronDown" size="sm" />
+        </span>
+      </div>
       <textarea
         className="agent__input"
         rows={3}
@@ -321,7 +329,7 @@ export function AgentPanel(): JSX.Element {
         )}
         <button
           type="button"
-          className="agent__send"
+          className="button--primary agent__send"
           disabled={
             !hasRepo ||
             busy ||
@@ -331,7 +339,7 @@ export function AgentPanel(): JSX.Element {
           }
           onClick={send}
         >
-          <Icon name="chat" size="sm" /> {t('agent.send')}
+          {t('agent.send')}
         </button>
       </div>
     </div>
@@ -378,7 +386,7 @@ export function AgentPanel(): JSX.Element {
               <div className="agent__approval-actions">
                 <button
                   type="button"
-                  className="agent__allow"
+                  className="button--primary agent__allow"
                   onClick={() => {
                     answer(approval.id, true);
                   }}
@@ -387,6 +395,7 @@ export function AgentPanel(): JSX.Element {
                 </button>
                 <button
                   type="button"
+                  className="button agent__deny"
                   onClick={() => {
                     answer(approval.id, false);
                   }}
@@ -417,7 +426,8 @@ function capitalise(text: string): string {
  */
 function ToolGroup({ names }: { names: string[] }): JSX.Element {
   const [open, setOpen] = useState(false);
-  const latest = names.at(-1) ?? '';
+  // Varje verktyg en gång, i den ordning de först anropades
+  const unique = [...new Set(names)].join(' · ');
   return (
     <li className="agent__entry agent__entry--tool">
       <button
@@ -429,11 +439,11 @@ function ToolGroup({ names }: { names: string[] }): JSX.Element {
           setOpen((o) => !o);
         }}
       >
-        <Icon name="link" size="sm" /> {latest}
+        {names.length > 1 && <Icon name={open ? 'chevronDown' : 'chevronRight'} size="sm" />}
+        <span className="agent__tool-names">{unique}</span>
         {names.length > 1 && (
           <span className="agent__tool-count">{t('agent.toolCalls', { count: names.length })}</span>
         )}
-        {names.length > 1 && <Icon name={open ? 'chevronDown' : 'chevronRight'} size="sm" />}
       </button>
       {open && (
         <ol className="agent__tool-list">

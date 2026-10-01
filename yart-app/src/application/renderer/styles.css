@@ -1,22 +1,11 @@
 @import './palette.css';
 
-/* Ljust tema är standard. Mörkt tas via systemet, eller tvingas med data-theme på <html>. */
+/* Appen har bara det mörka temat Ink, se palette.css. */
 :root {
-  color-scheme: light;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   color: var(--fg);
   background: var(--bg);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
 }
 
 * {
@@ -28,13 +17,18 @@ body {
   overflow: hidden;
 }
 
+::selection {
+  background: var(--selection);
+}
+
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
   background: var(--bg);
   padding: 6px 10px;
 }
@@ -42,7 +36,7 @@ select {
 button,
 select {
   cursor: pointer;
-  background: var(--bg-panel);
+  background: none;
 }
 
 /* Menyn behöver egna färger även när operativsystemet ritar select-kontrollen. */
@@ -52,13 +46,50 @@ select optgroup {
   background: var(--bg-panel);
 }
 
-button:hover:not(:disabled) {
+button:hover:not(:disabled),
+select:hover:not(:disabled) {
   border-color: var(--accent);
 }
 
-button:disabled {
-  opacity: 0.5;
+button:disabled,
+select:disabled {
+  opacity: 0.4;
   cursor: default;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Strukturell text: flikar, etiketter och knappar i mono med versaler */
+.button,
+.button--primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.button--primary {
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.button--primary:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--accent) 88%, var(--fg));
 }
 
 /* Ikoner och ikonknappar */
@@ -68,7 +99,7 @@ button:disabled {
 }
 
 .icon--sm {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .icon--md {
@@ -82,14 +113,15 @@ button:disabled {
 .icon-button {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   color: var(--fg);
 }
 
 .icon-button--primary {
   border-color: var(--accent);
+  background: none;
   color: var(--accent);
 }
 
@@ -103,7 +135,6 @@ button:disabled {
 
 .icon-button--quiet:hover:not(:disabled) {
   border-color: transparent;
-  background: var(--bg);
   color: var(--fg);
 }
 
@@ -111,22 +142,20 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 8px;
+  padding: 3px 6px;
   border-color: transparent;
   background: none;
   color: var(--fg-muted);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .text-button:hover:not(:disabled) {
-  border-color: var(--border);
+  border-color: transparent;
   color: var(--fg);
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: var(--accent);
 }
 
 .shell {
@@ -150,14 +179,23 @@ select:focus {
   place-self: stretch;
 }
 
-/* Analyserna i en docka */
+/* Analyserna i en docka. Raderna går kant i kant, så panelen saknar sidomarginal. */
+.dock__pane:has(> .analyses-panel) {
+  padding: 12px 0;
+}
+
 .analyses-panel {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+.analyses-panel > .shell__empty {
+  padding: 0 14px;
+}
+
 .analyses-panel__error {
+  margin: 0 14px;
   padding: 6px 8px;
   border: 1px solid var(--danger);
   background: none;
@@ -169,7 +207,7 @@ select:focus {
 .shell__footer-tools {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .shell__version {
@@ -185,6 +223,10 @@ select:focus {
   white-space: nowrap;
 }
 
+.shell__current-branch .icon {
+  font-size: 10px;
+}
+
 .shell__current-branch span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -195,6 +237,23 @@ select:focus {
   align-items: center;
   gap: 4px;
   -webkit-app-region: no-drag;
+}
+
+.shell__window-items .button {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.shell__window-items .button .icon {
+  font-size: 10px;
+}
+
+.shell__window-divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--border);
 }
 
 .shell__empty {
@@ -210,12 +269,11 @@ select:focus {
 .count-badge {
   flex-shrink: 0;
   min-width: 18px;
-  padding: 0 6px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg);
-  font-size: 11px;
-  font-weight: 600;
+  padding: 0 5px;
+  border: 1px solid var(--border-strong);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
   color: var(--fg-muted);
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -230,8 +288,32 @@ select:focus {
   padding: 0 12px;
   gap: 12px;
   border-top: 1px solid var(--border);
+  background: var(--bg);
   color: var(--fg-muted);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* MCP-serverns status: en fyrkant som lyser när servern lyssnar */
+.shell__mcp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.shell__mcp-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--fg-faint);
+}
+
+.shell__mcp.is-listening .shell__mcp-dot {
+  background: var(--accent);
+}
+
+.shell__mcp.is-failed .shell__mcp-dot {
+  background: var(--danger);
 }
 
 /* Dragbara handtag mellan panelerna */
@@ -326,42 +408,33 @@ select:focus {
   display: flex;
   align-items: center;
   max-width: 260px;
+  height: 30px;
+  padding: 0 6px 0 12px;
   border: 1px solid transparent;
   border-bottom: none;
-  border-radius: 6px 6px 0 0;
+  border-radius: var(--radius);
   color: var(--fg-muted);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   -webkit-app-region: no-drag;
 }
 
 .tab.is-active {
+  margin-bottom: -1px;
   border-color: var(--border);
   background: var(--bg);
   color: var(--fg);
-  font-weight: 600;
-}
-
-/* En flik som bara är en knapp */
-button.tab {
-  padding: 6px 12px;
-  background: none;
-}
-
-button.tab.is-active {
-  background: var(--bg);
-  margin-bottom: -1px;
-  padding-bottom: 7px;
 }
 
 .tab--caps {
-  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .tab__open {
   min-width: 0;
-  padding: 6px 10px;
+  height: 100%;
+  padding: 0;
   border: none;
   background: none;
   color: inherit;
@@ -371,23 +444,30 @@ button.tab.is-active {
   white-space: nowrap;
 }
 
+/* Den valda appfliken får en pil i accentfärg före titeln */
+.app__tabs .tab.is-active .tab__open::before {
+  content: '› ';
+  color: var(--accent);
+}
+
 .tab__close {
   display: grid;
   place-items: center;
   width: 20px;
   height: 20px;
-  margin-right: 4px;
+  margin-left: 4px;
   padding: 0;
   border: none;
-  border-radius: 999px;
   background: none;
-  color: inherit;
-  opacity: 0.6;
+  color: var(--fg-muted);
 }
 
-.tab__close:hover {
-  opacity: 1;
-  background: var(--border);
+.tab__close .icon {
+  font-size: 10px;
+}
+
+.tab__close:hover:not(:disabled) {
+  color: var(--fg);
 }
 
 .tab__add {

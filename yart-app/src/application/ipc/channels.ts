@@ -7,4 +7,3 @@ export interface AppInfo {
 }
 
 export const appInfoChannel = defineChannel<undefined, AppInfo>('app:info');
-export const titleBarThemeChannel = defineChannel<{ dark: boolean }>('app:titlebar-theme');

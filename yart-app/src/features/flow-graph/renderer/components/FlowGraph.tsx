@@ -1,5 +1,6 @@
 import {
   Background,
+  BackgroundVariant,
   type EdgeChange,
   type EdgeMouseHandler,
   type EdgeTypes,
@@ -191,6 +192,7 @@ export function FlowGraph({
           change: node.change,
           findings: node.findings,
           trigger: node.trigger,
+          memberCount: node.memberCount,
           onResize,
         },
       };
@@ -450,7 +452,7 @@ export function FlowGraph({
           onEdgeClick={handleEdgeClick}
           onPaneClick={unpin}
         >
-          <Background gap={24} size={1} />
+          <Background variant={BackgroundVariant.Lines} gap={24} color="var(--grid)" />
         </ReactFlow>
         {overlay}
       </GraphStateContext.Provider>

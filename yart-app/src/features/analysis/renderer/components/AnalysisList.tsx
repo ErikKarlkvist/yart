@@ -2,7 +2,7 @@ import { type JSX, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
 import { worstSeverity } from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
-import { analysisTitle, refLabel, type SavedAnalysis } from '../../model/analysis';
+import { analysisTitle, findingsForFlow, refLabel, type SavedAnalysis } from '../../model/analysis';
 import { useAnalyses } from '../AnalysisContext';
 import './analysis.css';
 
@@ -89,6 +89,9 @@ export function AnalysisList({ conversationTitle }: Props): JSX.Element {
                       : analysis.origin === 'builtin'
                         ? t('analyses.builtin')
                         : formatDate(analysis.createdAt);
+                const flowFindings =
+                  analysis.kind === 'flow' ? findingsForFlow(analyses, analysis.name) : [];
+                const flowSeverity = worstSeverity(flowFindings);
                 const meta =
                   analysis.kind === 'flow'
                     ? t('analyses.steps', { count: analysis.flow.steps.length })
@@ -114,10 +117,10 @@ export function AnalysisList({ conversationTitle }: Props): JSX.Element {
                           <span
                             className={`analyses__tag is-${worstSeverity(analysis.review.findings) ?? 'none'}`}
                           >
-                            <Icon name="warning" size="sm" /> {t('analyses.review')}
+                            {t('analyses.review')}
                           </span>
                         ) : (
-                          <span className="analyses__tag">
+                          <span className={`analyses__tag is-${analysis.kind}`}>
                             {t(
                               analysis.kind === 'document' ? 'analyses.document' : 'analyses.flow',
                             )}
@@ -129,6 +132,14 @@ export function AnalysisList({ conversationTitle }: Props): JSX.Element {
                         {description} · {meta}
                       </span>
                     </button>
+                    {flowSeverity && (
+                      <span
+                        className={`analyses__findings is-${flowSeverity}`}
+                        title={t('review.findings', { count: flowFindings.length })}
+                      >
+                        {t(`review.count.${flowSeverity}`, { count: flowFindings.length })}
+                      </span>
+                    )}
                     {analysis.origin !== 'builtin' && (
                       <button
                         type="button"

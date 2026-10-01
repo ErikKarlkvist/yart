@@ -4,19 +4,22 @@ import { is } from '@electron-toolkit/utils';
 import { APP_NAME } from '@/common/model/brand';
 
 export function createMainWindow(): BrowserWindow {
+  // Appen har bara ett mörkt tema, så fönstret och systemets kontroller är alltid mörka.
+  nativeTheme.themeSource = 'dark';
   const window = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 900,
     minHeight: 600,
     show: false,
+    backgroundColor: '#0a0a0a',
     title: APP_NAME,
     titleBarStyle: process.platform === 'win32' ? 'hidden' : 'hiddenInset',
     ...(process.platform === 'win32'
       ? {
           titleBarOverlay: {
-            color: nativeTheme.shouldUseDarkColors ? '#161a22' : '#ffffff',
-            symbolColor: nativeTheme.shouldUseDarkColors ? '#e6e8ee' : '#1c2230',
+            color: '#121212',
+            symbolColor: '#f2f2f2',
             height: 38,
           },
         }

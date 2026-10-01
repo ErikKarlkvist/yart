@@ -31,7 +31,7 @@ export function ViewsMenu({ panels }: Props): JSX.Element {
     <div className="views-menu" ref={root}>
       <button
         type="button"
-        className="text-button"
+        className="button"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         title={t('views.hint')}

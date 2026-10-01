@@ -1,7 +1,6 @@
 import { type CSSProperties, type JSX } from 'react';
 import { t } from '@/common/model/i18n';
 import { type ReviewFinding, sortFindings, worstSeverity } from '@/common/model/review';
-import { Icon } from '@/common/renderer/Icon';
 import { useFindingState } from './GraphStateContext';
 
 interface Props {
@@ -38,8 +37,7 @@ export function FindingFlag({ findings, className = '', style }: Props): JSX.Ele
         if (next) focusFinding(next.id);
       }}
     >
-      <Icon name={severity} size="sm" />
-      {findings.length > 1 && <span className="graph-flag__count">{findings.length}</span>}
+      {t(`review.count.${severity}`, { count: findings.length })}
     </button>
   );
 }

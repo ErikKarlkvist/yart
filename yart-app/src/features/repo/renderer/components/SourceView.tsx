@@ -43,6 +43,18 @@ export function SourceView({ source, commit }: Props): JSX.Element {
   }, [repoPath, source.file, source.line, commit, key]);
 
   const current = result?.key === key ? result : null;
+  const [copied, setCopied] = useState(false);
+  const copyPath = (): void => {
+    navigator.clipboard
+      .writeText(`${source.file}:${source.line}`)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => {
+          setCopied(false);
+        }, 1500);
+      })
+      .catch(console.error);
+  };
   const targetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,8 +63,19 @@ export function SourceView({ source, commit }: Props): JSX.Element {
 
   return (
     <div className="source">
-      <div className="source__path">
-        {source.file}:{source.line}
+      <div className="source__head">
+        <span className="source__path">
+          {source.file}
+          <span className="source__line-number">:{source.line}</span>
+        </span>
+        <button
+          type="button"
+          className="button source__copy"
+          title={t('source.copyPath')}
+          onClick={copyPath}
+        >
+          {copied ? t('side.copied') : t('side.copy')}
+        </button>
       </div>
       {!current && <p className="source__muted">{t('source.reading')}</p>}
       {current && 'error' in current && <p className="source__error">{current.error}</p>}

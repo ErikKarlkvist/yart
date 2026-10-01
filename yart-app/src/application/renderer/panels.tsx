@@ -5,7 +5,7 @@ import { AgentPanel } from '@/features/agent';
 import { DeliveryLog, type SavedFlowAnalysis } from '@/features/analysis';
 import { ReviewPanel } from '@/features/flow-graph';
 import { type DockLayoutState, type DockPanel } from '@/features/layout';
-import { ConnectPanel, useMcpStatus } from '@/features/mcp';
+import { ConnectPanel, type McpState } from '@/features/mcp';
 import { SourceView } from '@/features/repo';
 import { AnalysesPanel } from './AnalysesPanel';
 
@@ -39,6 +39,7 @@ export const DEFAULT_LAYOUT: DockLayoutState = {
 >;
 
 interface PanelContext {
+  mcp: McpState;
   /** Det valda flödet, null när en annan sorts analys eller ingen är vald */
   flow: SavedFlowAnalysis | null;
   /** Fynden som pekar på det valda flödet */
@@ -52,14 +53,13 @@ interface PanelContext {
 
 /** Panelerna för en appflik. Var de ligger bestäms av dockornas layout. */
 export function usePanels({
+  mcp,
   flow,
   findings,
   source,
   focusedFindingId,
   onFocusFinding,
 }: PanelContext): DockPanel[] {
-  const mcp = useMcpStatus();
-
   const panels: Record<PanelId, Omit<DockPanel, 'id'>> = {
     analyses: {
       title: t('panel.analyses'),

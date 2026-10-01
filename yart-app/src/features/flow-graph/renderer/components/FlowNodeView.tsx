@@ -3,7 +3,7 @@ import { type JSX, memo, useCallback } from 'react';
 import { type FlowTrigger } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
 import { type FlowChange, type ReviewFinding } from '@/common/model/review';
-import { Icon, type IconName } from '@/common/renderer/Icon';
+import { Icon } from '@/common/renderer/Icon';
 import { type GraphKind, type GraphLevel, type TableInfo } from '../../model/graph';
 import { type Size } from '../../model/layout';
 import { useNodeState } from './GraphStateContext';
@@ -23,17 +23,8 @@ type GraphNodeData = {
   change: FlowChange | undefined;
   findings: ReviewFinding[];
   trigger: FlowTrigger | undefined;
+  memberCount: number | undefined;
   onResize: (id: string, size: Size) => void;
-};
-
-const TRIGGER_ICONS: Readonly<Record<FlowTrigger['kind'], IconName>> = {
-  user: 'user',
-  webhook: 'external',
-  schedule: 'clock',
-  queue: 'queue',
-  request: 'http',
-  startup: 'play',
-  system: 'service',
 };
 
 export type GraphNode = Node<GraphNodeData, 'flow'>;
@@ -72,27 +63,28 @@ export const FlowNodeView = memo(function FlowNodeView({
       <Handle type="target" position={Position.Top} id="in-top" className="graph-handle" />
       <Handle type="source" position={Position.Bottom} id="out-bottom" className="graph-handle" />
       <Handle type="target" position={Position.Bottom} id="in-bottom" className="graph-handle" />
-      <span className="graph-node__icon">
-        <Icon name={data.kind} size={system ? 'lg' : 'md'} />
+      <span className="graph-node__header">
+        <Icon name={data.kind} size="sm" />
+        <span className="graph-node__kind">{data.role ?? t(`kind.${data.kind}`)}</span>
+        <span className="graph-node__spacer" />
+        {system && data.memberCount !== undefined && (
+          <span className="graph-node__count">
+            {t('graph.nodeCount', { count: data.memberCount })}
+          </span>
+        )}
+        {data.change && (
+          <span className={`graph-node__change is-${data.change}`}>
+            {t(`review.${data.change}`)}
+          </span>
+        )}
       </span>
-      <span className="graph-node__text">
-        <span className="graph-node__kind">
-          {data.role ?? t(`kind.${data.kind}`)}
-          {data.change && (
-            <span className={`graph-node__change is-${data.change}`}>
-              {t(`review.${data.change}`)}
-            </span>
-          )}
-        </span>
-        <span className="graph-node__label">{data.label}</span>
-      </span>
+      <span className="graph-node__label">{data.label}</span>
       {data.trigger && (
         <span
           className={`graph-node__trigger is-${data.trigger.kind}`}
           title={t('graph.triggerHint', { label: data.trigger.label })}
         >
-          <Icon name={TRIGGER_ICONS[data.trigger.kind]} size="sm" />
-          <span className="graph-node__trigger-text">{data.trigger.label}</span>
+          {t('graph.trigger', { kind: data.trigger.kind, label: data.trigger.label })}
         </span>
       )}
       <FindingFlag findings={data.findings} className="graph-node__flag" />

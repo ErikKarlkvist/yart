@@ -5,12 +5,42 @@
   font-size: 13px;
 }
 
+/* Konversationsvalet: en vanlig select med pratbubbla före och pil efter */
+.agent__conversation {
+  position: relative;
+  margin-bottom: 8px;
+}
+
 .agent__conversation-select {
   width: 100%;
   min-width: 0;
-  margin-bottom: 6px;
-  padding: 4px 6px;
+  height: 30px;
+  padding: 0 28px 0 30px;
+  appearance: none;
+  color: var(--fg);
   font-size: 12px;
+  text-overflow: ellipsis;
+}
+
+.agent__conversation-icon,
+.agent__conversation-chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-muted);
+  pointer-events: none;
+}
+
+.agent__conversation-icon {
+  left: 10px;
+}
+
+.agent__conversation-chevron {
+  right: 10px;
+}
+
+.agent__conversation-chevron .icon {
+  font-size: 9px;
 }
 
 .agent__mode-picker {
@@ -20,18 +50,24 @@
 .agent__mode-buttons {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 0;
+  border: 1px solid var(--border);
 }
 
 .agent__mode-button {
-  padding: 8px 4px;
-  border: 1px solid color-mix(in srgb, var(--mode-color) 45%, var(--border));
-  border-radius: 8px;
+  padding: 9px 4px;
+  border: none;
+  background: none;
   color: var(--mode-color);
-  background: color-mix(in srgb, var(--mode-color) 12%, var(--bg-panel));
-  font: inherit;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   cursor: pointer;
+}
+
+.agent__mode-button + .agent__mode-button {
+  border-left: 1px solid var(--border);
 }
 
 .agent__mode-button--analyse {
@@ -44,9 +80,9 @@
   --mode-color: var(--mode-plan);
 }
 .agent__mode-button.is-selected {
-  background: color-mix(in srgb, var(--mode-color) 20%, var(--bg-panel));
-  outline: 2px solid var(--mode-color);
-  outline-offset: 2px;
+  background: var(--mode-color);
+  color: var(--bg);
+  font-weight: 700;
 }
 .agent__mode-button:disabled {
   opacity: 0.4;
@@ -98,28 +134,36 @@
   list-style: none;
 }
 
+/* Assistentens svar: panelbakgrund med accentlinje till vänster */
 .agent__entry {
   padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--bg);
+  border-left: 2px solid var(--accent);
+  background: var(--bg-panel);
+  color: var(--fg-body);
+}
+
+.agent__entry strong {
+  color: var(--fg);
 }
 
 .agent__entry--user {
-  margin-left: 24px;
+  margin-left: 32px;
   border: 1px solid var(--border);
-  background: var(--bg-panel);
+  color: var(--fg);
 }
 
 .agent__entry--error {
-  border-left: 3px solid var(--danger);
+  border-left-color: var(--danger);
 }
 
 .agent__entry--tool {
-  padding: 0 10px;
+  padding: 0 2px;
+  border: none;
   background: none;
 }
 
 .agent__entry--busy {
+  border: none;
   color: var(--fg-muted);
   font-style: italic;
   background: none;
@@ -133,8 +177,12 @@
   border: none;
   background: none;
   color: var(--fg-muted);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.agent__tool .icon {
+  font-size: 8px;
 }
 
 .agent__tool:disabled {
@@ -146,24 +194,23 @@
 }
 
 .agent__tool-count {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 11px;
-  opacity: 0.8;
+  color: var(--fg-faint);
 }
 
 .agent__tool-list {
   margin: 4px 0 0;
   padding-left: 22px;
   color: var(--fg-muted);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
 
 .agent__time {
   display: block;
   margin-bottom: 2px;
   color: var(--fg-muted);
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -175,19 +222,25 @@
 }
 
 .agent__compose {
-  padding: 8px 12px 10px;
+  padding: 10px 14px 12px;
   border-top: 1px solid var(--border);
+  background: var(--bg-panel);
 }
 
 .agent__input {
+  display: block;
   width: 100%;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  min-height: 64px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
   background: var(--bg);
   color: var(--fg);
   font: inherit;
   resize: vertical;
+}
+
+.agent__input::placeholder {
+  color: var(--fg-faint);
 }
 
 .agent__input:focus {
@@ -199,7 +252,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 /* Läge och modell under textrutan, tysta tills man pekar på dem */
@@ -213,12 +266,13 @@
   border-color: transparent;
   background: none;
   color: var(--fg-muted);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
 
-.agent__setting:hover,
+.agent__setting:hover:not(:disabled),
 .agent__setting:focus {
-  border-color: var(--border);
+  border-color: var(--border-strong);
   color: var(--fg);
 }
 
@@ -230,16 +284,16 @@
   flex: none;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
 }
 
 /* Något agenten väntar på lov för */
 .agent__entry--approval {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   border: 1px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  background: color-mix(in oklch, var(--accent) 6%, var(--bg));
+  color: var(--fg);
 }
 
 .agent__approval-title {
@@ -249,10 +303,10 @@
 
 .agent__approval-detail {
   padding: 4px 6px;
-  border-radius: 4px;
   background: var(--bg-panel);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
+  color: var(--fg-body);
+  font-family: var(--font-mono);
+  font-size: 11px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -262,10 +316,11 @@
   gap: 6px;
 }
 
-.agent__allow {
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: 600;
+.agent__approval-actions .button,
+.agent__approval-actions .button--primary {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
 }
 
 .agent__hint {
@@ -276,20 +331,8 @@
 .agent__send {
   flex: none;
   margin-left: 4px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
-.agent__send:disabled {
-  opacity: 0.5;
-  cursor: default;
+.agent__send::after {
+  content: '↵';
 }

@@ -64,7 +64,6 @@
 .document-view__flows li {
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
   background: var(--bg-panel);
 }
 
@@ -126,7 +125,6 @@
   margin: 0 0 8px;
   padding: 8px 10px;
   border-left: 3px solid var(--fg-muted);
-  border-radius: 4px;
   background: var(--bg-panel);
 }
 
@@ -203,9 +201,8 @@ button.document-view__finding-open:hover .document-view__finding-title {
 .document-view__content code,
 .document-view__finding-text code {
   padding: 1px 5px;
-  border-radius: 4px;
   background: var(--bg-panel);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
 }
 
@@ -253,7 +250,7 @@ button.document-view__point-flow:hover {
 }
 
 .document-view__finding.is-checked {
-  outline: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline: 1px solid color-mix(in oklch, var(--accent) 45%, transparent);
 }
 
 .document-view__finding-row {

@@ -28,7 +28,7 @@ export function RepoMenu(): JSX.Element {
     <div className="repo-menu" ref={root}>
       <button
         type="button"
-        className="text-button repo-menu__button"
+        className="button repo-menu__button"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         title={repo?.path ?? t('repo.none')}
@@ -36,7 +36,13 @@ export function RepoMenu(): JSX.Element {
           setOpen((o) => !o);
         }}
       >
-        <Icon name="folder" size="sm" /> {repo?.name ?? t('repo.folder')}
+        <span className="repo-menu__folder">
+          <Icon name="folder" size="sm" />
+        </span>
+        <span className="repo-menu__name">{repo?.name ?? t('repo.folder')}</span>
+        <span className="repo-menu__chevron">
+          <Icon name="chevronDown" size="sm" />
+        </span>
       </button>
       {isOpen && (
         <div className="repo-menu__popover" role="menu">

@@ -1,14 +1,37 @@
 .source {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-height: 0;
 }
 
+.source__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .source__path {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--fg-muted);
+}
+
+.source__line-number {
+  color: var(--accent);
+}
+
+.source__copy.button {
+  flex: none;
+  height: 22px;
+  padding: 0 8px;
+  color: var(--fg-muted);
+  font-size: 10px;
 }
 
 .source__muted {
@@ -25,11 +48,11 @@
   margin: 0;
   padding: 6px 0;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  font-family: var(--font-mono);
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
   overflow: auto;
 }
 
@@ -39,18 +62,28 @@
 }
 
 .source__line.is-target {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.source__line.is-target .source__n {
+  color: var(--accent);
+}
+
+.source__line.is-target .source__text {
+  color: var(--fg);
 }
 
 .source__n {
   width: 3.5em;
   flex-shrink: 0;
   text-align: right;
-  padding-right: 12px;
-  color: var(--fg-muted);
+  padding-right: 14px;
+  color: var(--fg-faint);
   user-select: none;
 }
 
 .source__text {
   white-space: pre;
+  color: var(--fg-body);
 }

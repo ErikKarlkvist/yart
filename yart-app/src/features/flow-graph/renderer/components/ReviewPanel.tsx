@@ -8,7 +8,6 @@ import {
   type ReviewFinding,
   sortFindings,
 } from '@/common/model/review';
-import { Icon } from '@/common/renderer/Icon';
 import { FindingDetails } from './FindingDetails';
 import './graph.css';
 
@@ -73,7 +72,7 @@ export function ReviewPanel({
                 }}
               >
                 <span className={`review__severity is-${finding.severity}`}>
-                  <Icon name={finding.severity} size="sm" />
+                  {t(`review.tag.${finding.severity}`)}
                 </span>
                 <span className="review__title">{finding.title}</span>
                 {location && <span className="review__where">{location}</span>}

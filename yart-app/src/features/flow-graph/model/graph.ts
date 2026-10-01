@@ -38,6 +38,8 @@ export interface GraphNode {
   table?: TableInfo;
   /** För level table: antal kolumner, styr nodens höjd i layouten */
   columnCount?: number;
+  /** För level system: hur många av flödets noder systemet rymmer */
+  memberCount?: number;
   /** I en review: hur noden skiljer sig från base. Ett system ärver sina noders ändringar. */
   change: FlowChange | undefined;
   /** I en review: fynd som gäller noden, eller för ett system dess noder och interna anrop */
@@ -138,6 +140,7 @@ function collapse(
         change: systemChange(members, diff),
         findings: systemFindings(flow, members, findings),
         trigger: members.some((m) => m.id === flow.trigger?.nodeId) ? flow.trigger : undefined,
+        memberCount: members.length,
       });
       for (const member of members) nodeToTarget.set(member.id, system.id);
     } else {

@@ -51,6 +51,11 @@ type GraphEdgeData = {
   focused: boolean;
 };
 
+/** Stegnummer med två siffror, som 03 */
+function stepNumber(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
 /** Hur långt från linjen etiketten sitter, i pixlar */
 const LABEL_DISTANCE = 26;
 
@@ -110,7 +115,7 @@ export const FlowEdgeView = memo(function FlowEdgeView({
       )}
       {data.status === 'active' && (
         <circle
-          r="5"
+          r="4"
           className={`graph-edge__pulse${data.highlight ? ` is-highlight-${data.highlight}` : ''}`}
         >
           <animateMotion dur="1.2s" repeatCount="indefinite" path={path} />
@@ -163,8 +168,13 @@ export const FlowEdgeView = memo(function FlowEdgeView({
                         data.onGoToStep((member.steps[0] ?? 1) - 1);
                       }}
                     >
-                      {member.steps.map((n) => `#${n}`).join(' ')}
+                      {member.steps.map(stepNumber).join(' ')}
                     </button>
+                  )}
+                  {!open && member.steps.length > 0 && (
+                    <span className="graph-edge-label__number">
+                      {member.steps.map(stepNumber).join(' ')}
+                    </span>
                   )}
                   {member.label}
                   {open && member.change && (

@@ -54,24 +54,25 @@
   inset: 0;
   z-index: 4;
   border: 2px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  background: color-mix(in oklch, var(--accent) 8%, transparent);
   pointer-events: none;
 }
 
 /* Dubbla klasser, så de vinner över .tab-strip och .tab i styles.css som laddas efter */
 .tab-strip.dock__tabs {
   flex: none;
-  height: auto;
-  padding: 6px 8px 0;
+  align-items: stretch;
+  gap: 0;
+  height: 34px;
+  padding: 0;
   overflow: visible;
-  /* Raden är grå och den valda fliken har innehållets färg, så de sitter ihop */
-  background: var(--bg);
+  background: var(--bg-panel);
 }
 
 .dock__tab-list {
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
+  align-items: stretch;
+  gap: 0;
   min-width: 0;
   overflow-x: auto;
   /* Listan ligger över radens underkant, så den valda fliken kan täcka den */
@@ -83,17 +84,25 @@
 }
 
 .dock__tabs > .icon-button {
-  align-self: center;
+  width: 34px;
+  height: auto;
 }
 
-.dock__tab {
+.dock__tabs > .icon-button .icon {
+  font-size: 10px;
+}
+
+.tab.dock__tab {
   position: relative;
   flex: none;
+  height: auto;
+  padding: 0 8px 0 12px;
+  border: none;
+  border-right: 1px solid var(--border);
   cursor: grab;
 }
 
 .dock__tab .tab__open {
-  padding: 6px 4px 6px 10px;
   cursor: inherit;
   /* Knappar ärver inte text-transform, så versalerna från .tab--caps förs vidare här */
   text-transform: inherit;
@@ -101,17 +110,29 @@
 }
 
 .tab.dock__tab.is-active {
-  position: relative;
   z-index: 1;
-  border-color: var(--border);
-  border-bottom-color: transparent;
-  background: var(--bg-panel);
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--bg);
+  background: var(--bg);
+  color: var(--accent);
+}
+
+/* Den valda fliken står inom hakparenteser, [ ANALYSES ] */
+.dock__tab.is-active .tab__open::before {
+  content: '[ ';
+}
+
+.dock__tab.is-active .tab__open::after {
+  content: ' ]';
+}
+
+.dock__tab .tab__close .icon {
+  font-size: 9px;
 }
 
 /* Stängknappen syns på vald flik och vid hover, platsen hålls så flikarna inte hoppar */
 .dock__tab .tab__close {
   visibility: hidden;
-  margin-right: 2px;
 }
 
 .dock__tab.is-active .tab__close,
@@ -137,7 +158,6 @@
   top: 4px;
   bottom: 4px;
   width: 2px;
-  border-radius: 1px;
   background: var(--accent);
 }
 
@@ -151,6 +171,7 @@
 
 .dock__body {
   position: relative;
+  background: var(--bg);
   flex: 1;
   min-height: 0;
 }
@@ -201,14 +222,13 @@
   display: grid;
   place-items: center;
   border: 2px dashed var(--accent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--bg-panel) 85%, transparent);
+  background: color-mix(in oklch, var(--bg-panel) 85%, transparent);
   opacity: 0.7;
 }
 
 .dock-edge.is-over {
   opacity: 1;
-  background: color-mix(in srgb, var(--accent) 14%, var(--bg-panel));
+  background: color-mix(in oklch, var(--accent) 14%, var(--bg-panel));
 }
 
 .dock-edge--left,
@@ -236,8 +256,10 @@
 .dock-edge__label {
   padding: 0 8px;
   color: var(--fg);
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   text-align: center;
   pointer-events: none;
 }
@@ -255,10 +277,9 @@
   flex-direction: column;
   min-width: 180px;
   padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
   background: var(--bg-panel);
-  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 50%);
 }
 
 .dock-menu__item {
@@ -270,18 +291,24 @@
 }
 
 .dock-menu__item:hover {
-  background: var(--bg);
+  background: var(--bg-hover);
 }
 
 /* Växlarna i fönsterraden */
 .dock-toggles {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
 }
 
 .dock-toggles__button {
+  width: 28px;
+  height: 26px;
   color: var(--fg-muted);
+}
+
+.dock-toggles__button .icon {
+  font-size: 14px;
 }
 
 .dock-toggles__button.is-open {
@@ -303,20 +330,19 @@
   gap: 8px;
   min-width: 280px;
   padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
   background: var(--bg-panel);
-  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 50%);
   color: var(--fg);
   font-size: 13px;
 }
 
 .views-menu__heading {
   margin: 2px 6px 4px;
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--fg-muted);
 }
 
@@ -330,11 +356,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  border-radius: 6px;
 }
 
 .views-menu__item:hover {
-  background: var(--bg);
+  background: var(--bg-hover);
 }
 
 .views-menu__open {
