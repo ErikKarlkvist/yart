@@ -2,9 +2,9 @@ import { listTodosFlow } from '@/common/model/fixtures';
 import { APP_NAME } from '@/common/model/brand';
 
 /**
- * Skillen Claude Code läser när appen nås via MCP. Installeras från appen i
- * användarens skillmapp. De delade avsnitten är dokumentation för alla agenter,
- * MCP-servern serverar samma text som resurs.
+ * Skillen Claude Code och Codex läser när appen nås via MCP, och guiden med reglerna.
+ * Skillen installeras från appen i användarens skillmapp och pekar på guiden, som
+ * MCP-servern serverar.
  */
 
 const HOW_TO_BUILD = `## How to build a good flow
@@ -263,9 +263,15 @@ ${JSON.stringify(listTodosFlow, null, 2)}
 \`\`\`
 `;
 
-/** Bumpa versionen när innehållet ändras så appen kan visa att den installerade kopian är gammal. */
-export const SKILL_VERSION = 14;
+/**
+ * Bumpa versionen när skillen ändras så appen kan visa att den installerade kopian är gammal.
+ * Skillen är medvetet kort och säger bara när appen ska användas och att guiden ska läsas;
+ * reglerna, schemat och exemplet ligger i guiden som MCP-servern serverar, så de kan
+ * ändras utan att någon behöver installera om skillen.
+ */
+export const SKILL_VERSION = 15;
 
+/** Den installerade skillen: när {appName} ska användas och var reglerna finns. */
 export function buildSkill(): string {
   return `---
 name: yart
@@ -277,10 +283,10 @@ description: Deliver data-flow diagrams, architecture documents and change revie
 {appName} is a desktop app that shows concise documents and animated sequence
 diagrams of data flows through a codebase, and reviews of changes against them.
 It is running on the user's machine and you reach it through the MCP server
-\`yart\` with the tools \`list_repos\`, \`list_analyses\`, \`get_analysis\`,
-\`save_flow\`, \`save_document\` and \`save_review\`. The user sees what you save
-as soon as the tool returns. If the tools are missing, ask the user to start
-{appName} and connect it with the command shown in its Connect panel.
+\`yart\` with the tools \`get_guide\`, \`list_repos\`, \`list_analyses\`,
+\`get_analysis\`, \`save_flow\`, \`save_document\` and \`save_review\`. The user sees
+what you save as soon as the tool returns. If the tools are missing, ask the user to
+start {appName} and connect it with the command shown in its Connect panel.
 
 **Only when the user asks for {appName}.** Use the tools when the user asks for
 something in {appName}: a flow, a diagram, a document or a review to show there, or an
@@ -292,8 +298,26 @@ If a flow in {appName} would help, offer it and wait for the user to ask for it.
 **Match the answer to the request.** When the user asks to create or update a flow,
 document or review, save it with the corresponding tool and briefly explain what was
 saved. When the user is discussing or asking a question, answer directly in chat with
-enough detail to be useful. Do not save or change an artifact merely because the
-conversation takes place in {appName}.
+enough detail to be useful.
+
+## Workflow
+
+1. Call \`get_guide\` once in the session, before you save anything, and follow it. It
+   holds the rules for good flows, documents and reviews, the schema and an example, and
+   {appName} keeps it up to date.
+2. Pass the repository root from \`git rev-parse --show-toplevel\` as \`repo\` to every tool.
+3. Save with \`save_flow\`, \`save_document\` or \`save_review\`. If a tool returns an
+   error, fix the content and call it again with the same name.
+`.replaceAll('{appName}', APP_NAME);
+}
+
+/**
+ * Guiden: allt en agent behöver för att bygga bra flöden, dokument och reviewer.
+ * Serveras av MCP-servern (verktyget get_guide och resursen yart://guide) och ges
+ * direkt till appens egna agentsessioner.
+ */
+export function buildGuide(): string {
+  return `# {appName} guide
 
 **Write for people, keep the detail for AI.** Everything a person reads (\`content\`
 on documents and reviews, finding descriptions) is short and easy to skim: Markdown with
@@ -327,8 +351,7 @@ document can be this companion; flows made only to support a review do not need 
    name such as \`add-todo\`. {appName} validates the content and checks that every
    file and line exists. If the tool returns an error, fix the content and call
    it again with the same name.
-5. Tell the user what you saved and what it shows. For an ordinary chat question,
-   answer in chat without calling a save tool.
+5. Tell the user what you saved and what it shows.
 
 ## Scope
 

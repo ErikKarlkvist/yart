@@ -2,7 +2,7 @@ import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { app } from 'electron';
 import { type AnalysisApi } from '@/features/analysis/main';
-import { buildSkill } from '@/features/analysis/model/skill';
+import { buildGuide, buildSkill } from '@/features/analysis/model/skill';
 import { analysisTitle, type SavedAnalysis } from '@/features/analysis/model/analysis';
 import { type McpRegistration } from '@/features/mcp/main';
 import { type McpAnalysisSummary } from '@/features/mcp/main/server';
@@ -13,6 +13,7 @@ export function mcpDeps(analyses: AnalysisApi): McpRegistration {
   return {
     version: app.getVersion(),
     skill: buildSkill,
+    guide: buildGuide,
     listRepos: async () =>
       (await readRecent()).map(({ path, name, branch }) => ({ path, name, branch })),
     resolveRepo: async (path) => {

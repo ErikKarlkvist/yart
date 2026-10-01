@@ -6,6 +6,9 @@ import { brandText } from '@/common/model/brand';
  * användas.
  */
 export const TOOL_DESCRIPTIONS = {
+  get_guide: brandText(
+    'Returns the {appName} guide: how to build good flows, documents and reviews, the full schema and an example. Call it once in the session before saving anything and follow it.',
+  ),
   list_repos: brandText(
     'Lists the repositories {appName} knows about, with their absolute paths. Use it to check that the repository you work in is one of them; if it is not, saving to it adds it.',
   ),

@@ -18,7 +18,10 @@ import { type McpDeps, type McpServerHandle, startMcpServer } from './server';
 import { installSkill, skillPath, skillState } from './skill';
 import { errorMessage } from '@/common/model/json';
 
-export type McpRegistration = Omit<McpDeps, 'onActivity'>;
+export type McpRegistration = Omit<McpDeps, 'onActivity'> & {
+  /** Den korta skillen som installeras i agentens skillmapp */
+  skill: () => string;
+};
 
 export interface McpHandle {
   /** Adressen servern lyssnar på, null tills den startat */
@@ -49,7 +52,8 @@ export function registerMcpHandlers(deps: McpRegistration): McpHandle {
     await installSkill(skillPath(home, target), deps.skill());
     return status();
   });
-  handleChannel(skillTextChannel, () => deps.skill());
+  // En agent utan skills får allt i ett: när appen ska användas och reglerna
+  handleChannel(skillTextChannel, () => `${deps.skill()}\n\n${deps.guide()}`);
 
   const onActivity = (entry: McpActivity): void => {
     activity.unshift(entry);

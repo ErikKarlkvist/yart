@@ -11,7 +11,7 @@ import {
   NAME_CONVERSATION_TOOL,
   PERMISSION_PROMPT_TOOL,
 } from '@/common/model/agent';
-import { APP_NAME } from '@/common/model/brand';
+import { APP_NAME, brandText } from '@/common/model/brand';
 import { documentSchema } from '@/common/model/document';
 import { flowSchema } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
@@ -20,6 +20,11 @@ import { flowCompareSchema, reviewSchema } from '@/common/model/review';
 import { MCP_HOST, MCP_PATH, type McpActivity, mcpUrl } from '../model/mcp';
 import { REPO_PARAM_DESCRIPTION, TOOL_DESCRIPTIONS, type ToolName } from '../model/tools';
 import { errorMessage } from '@/common/model/json';
+
+/** Det klienten får vid anslutning. Kort; reglerna hämtas med get_guide. */
+const SERVER_INSTRUCTIONS = brandText(
+  '{appName} shows data flows through a codebase as animated sequence diagrams, with documents and reviews that point into them. Before saving anything, call get_guide once in the session and follow it: it holds the rules for good flows, documents and reviews, the schema and an example.',
+);
 
 interface McpRepo {
   path: string;
@@ -43,8 +48,8 @@ type McpDeliverResult =
 /** Vad servern behöver från resten av appen. Kopplas ihop i application. */
 export interface McpDeps {
   version: string;
-  /** Skillen, som också serveras som resurs till alla MCP-klienter */
-  skill: () => string;
+  /** Guiden med reglerna, serveras som verktyg och resurs till alla MCP-klienter */
+  guide: () => string;
   listRepos: () => Promise<McpRepo[]>;
   /** Normaliserar sökvägen och gör repot känt för appen. null om det inte är en mapp. */
   resolveRepo: (path: string) => Promise<string | null>;
@@ -220,7 +225,10 @@ interface OwnSession {
 }
 
 function createSession(deps: McpDeps, { conversationId, permissions }: OwnSession): McpServer {
-  const server = new McpServer({ name: 'yart', version: deps.version });
+  const server = new McpServer(
+    { name: 'yart', version: deps.version },
+    { instructions: SERVER_INSTRUCTIONS },
+  );
   const client = (): string => server.server.getClientVersion()?.name ?? t('mcp.unknownClient');
 
   const text = (value: unknown, isError = false): ToolResult => ({
@@ -340,7 +348,16 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
       description: `How to build good flows, documents and reviews for ${APP_NAME}.`,
       mimeType: 'text/markdown',
     },
-    (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: deps.skill() }] }),
+    (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: deps.guide() }] }),
+  );
+
+  server.registerTool(
+    'get_guide',
+    { description: TOOL_DESCRIPTIONS.get_guide, annotations: { readOnlyHint: true } },
+    () =>
+      run('get_guide', null, () =>
+        Promise.resolve({ result: text(deps.guide()), summary: t('mcp.readGuide') }),
+      ),
   );
 
   server.registerTool(

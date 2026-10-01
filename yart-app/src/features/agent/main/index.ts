@@ -35,7 +35,7 @@ import { conversationInstructions, responseHint } from '../model/conversationIns
 export interface AgentDeps {
   /** MCP-serverns adress, null tills den lyssnar */
   mcpUrl: () => string | null;
-  /** Skillen: systemprompt för Claude Code, inledning för Codex */
+  /** Guiden med reglerna: systemprompt för Claude Code, inledning för Codex */
   skill: () => string;
 }
 

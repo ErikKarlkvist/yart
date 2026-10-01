@@ -23,7 +23,7 @@ function textOf(result: unknown): string {
 function fakeDeps(activity: McpActivity[], delivered: Delivered[]): McpDeps {
   return {
     version: '0.0.0',
-    skill: () => '# Guide',
+    guide: () => '# Guide',
     listRepos: () => Promise.resolve([{ path: '/repo', name: 'repo', branch: 'main' }]),
     resolveRepo: (path) => Promise.resolve(path === '/repo' ? '/repo' : null),
     listAnalyses: () =>
@@ -74,6 +74,7 @@ describe('startMcpServer', () => {
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'get_analysis',
+      'get_guide',
       'list_analyses',
       'list_repos',
       'save_document',
