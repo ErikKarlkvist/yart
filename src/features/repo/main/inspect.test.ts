@@ -32,7 +32,7 @@ describe('inspectRepo', () => {
   });
 
   it('faller tillbaka på filvandring för mappar utan git', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'reverik-'));
+    const dir = await mkdtemp(join(tmpdir(), 'yart-'));
     await writeFile(join(dir, 'a.py'), '');
     await writeFile(join(dir, 'b.py'), '');
     await writeFile(join(dir, 'c.go'), '');

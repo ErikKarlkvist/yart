@@ -28,7 +28,7 @@ export interface RepoState {
 
 export function useRepoState(): RepoState {
   // Valt repo är per appflik
-  const lastRepoKey = useScopedKey('reverik.lastRepo');
+  const lastRepoKey = useScopedKey('yart.lastRepo');
   const [repo, setRepo] = useState<RepoInfo | null>(null);
   const [recent, setRecent] = useState<RepoInfo[]>([]);
   const [busy, setBusy] = useState(false);

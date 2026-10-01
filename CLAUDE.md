@@ -1,9 +1,10 @@
-# Reverik
+# yart-app
 
-PoC: Electron-app som visar dataflöden i en kodbas som animerade sekvensdiagram, med
-dokument och reviewer som pekar in i dem. Det synliga namnet är Kire (`APP_NAME` i
-`src/common/model/brand.ts`); internt heter allt fortfarande `reverik`: mappen, sparad
-data, MCP-servern och skillen. Texter som når modellen tar namnet via `brandText`.
+yart (yet another review tool): Electron-app som visar dataflöden i en kodbas som
+animerade sekvensdiagram, med dokument och reviewer som pekar in i dem. Namnet står i
+`APP_NAME` i `src/common/model/brand.ts`; texter som når modellen tar det via `brandText`.
+Sparad data, MCP-servern och skillen heter `yart`. Data från tiden som Reverik flyttas
+från den gamla datamappen vid start (`src/application/main/index.ts`).
 
 ## MCP och agenter
 
@@ -51,10 +52,10 @@ Flöden har en `trigger`, det som startar dem, som ritas på startnoden.
   i stället för preload-bryggan och svarar med demo-repot och fixturerna.
   `npm run dev -- --rendererOnly` startar bara Vite utan Electron, samma sak finns
   som `renderer` i `.claude/launch.json`.
-- Riktig Electron går att felsöka utifrån: `REVERIK_DEBUG_PORT=9333 npm run dev` öppnar
-  DevTools-protokollet på porten. `REVERIK_USER_DATA=<mapp>` ger instansen en egen datamapp,
+- Riktig Electron går att felsöka utifrån: `YART_DEBUG_PORT=9333 npm run dev` öppnar
+  DevTools-protokollet på porten. `YART_USER_DATA=<mapp>` ger instansen en egen datamapp,
   så en testinstans kan köras bredvid den vanliga. Kör då med `--outDir` till en annan mapp
-  inuti projektet, annars hittar main inte `node_modules`. `REVERIK_MCP_PORT=<port>` låser
+  inuti projektet, annars hittar main inte `node_modules`. `YART_MCP_PORT=<port>` låser
   MCP-servern till en port; annars tar den första lediga från 7390 och uppåt.
 
 Pre-commit-hooken (husky + lint-staged) kör eslint --fix och prettier på staged filer,
@@ -79,7 +80,7 @@ arkitekturen som säger nej, inte lintern som är fel.
 Allt utom huvudytan i mitten är en panel som ligger i en av tre dockor: vänster, höger
 eller nederkant. Användaren drar flikar mellan dockorna, högerklickar eller använder menyn
 Views i fönsterraden, och fäller ihop dockorna med knapparna där. En flik kan stängas helt;
-panelen minns sin docka och öppnas där igen från Views eller när appen visar den. Layouten sparas i `reverik.layout` och delas
+panelen minns sin docka och öppnas där igen från Views eller när appen visar den. Layouten sparas i `yart.layout` och delas
 av alla appflikar. Mekaniken är generisk och ligger i `src/features/layout/` (ren logik i
 `model/dock.ts`). Vilka paneler som finns och var de ligger från början står i
 `src/application/renderer/panels.tsx`: en ny panel är ett id, en plats i `DEFAULT_LAYOUT`

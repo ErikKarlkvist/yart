@@ -12,7 +12,7 @@ import {
   conversationSummarySchema,
 } from '../model/conversation';
 
-/** Conversation summaries load without reading message histories. All files stay in Kire's user data. */
+/** Conversation summaries load without reading message histories. All files stay in yart's user data. */
 export class ConversationStore {
   private readonly queues = new Map<string, Promise<unknown>>();
   private readonly pending = new Map<string, Conversation>();

@@ -1,5 +1,5 @@
 {
-  "name": "reverik",
+  "name": "yart",
   "version": "0.1.0",
   "description": "PoC: dataflödesvisualisering av kodbaser, matad av AI-agenter över MCP",
   "main": "out/main/index.js",

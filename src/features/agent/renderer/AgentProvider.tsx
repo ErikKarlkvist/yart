@@ -64,7 +64,7 @@ export function AgentProvider({
     }),
     [permission, models, efforts],
   );
-  const selectionKey = useScopedKey('reverik.conversation');
+  const selectionKey = useScopedKey('yart.conversation');
   const [conversations, setConversations] = useState<Tagged<ConversationSummary[]> | null>(null);
   const [selected, setSelected] = useState<Tagged<string> | null>(null);
   const [opened, setOpened] = useState<Tagged<OpenConversation> | null>(null);

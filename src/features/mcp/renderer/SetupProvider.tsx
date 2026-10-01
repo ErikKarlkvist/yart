@@ -12,13 +12,13 @@ import {
 import { SetupContext } from './SetupContext';
 
 /** Globala för appen, inte per flik: guiden ska bara behöva stängas en gång. */
-const ONBOARDED_KEY = 'reverik.onboarded';
-const AGENT_KEY = 'reverik.agent';
-const PERMISSION_KEY = 'reverik.agentPermission';
-const CLAUDE_MODEL_KEY = 'reverik.claudeModel';
-const CODEX_MODEL_KEY = 'reverik.codexModel';
-const CLAUDE_EFFORT_KEY = 'reverik.claudeEffort';
-const CODEX_EFFORT_KEY = 'reverik.codexEffort';
+const ONBOARDED_KEY = 'yart.onboarded';
+const AGENT_KEY = 'yart.agent';
+const PERMISSION_KEY = 'yart.agentPermission';
+const CLAUDE_MODEL_KEY = 'yart.claudeModel';
+const CODEX_MODEL_KEY = 'yart.codexModel';
+const CLAUDE_EFFORT_KEY = 'yart.claudeEffort';
+const CODEX_EFFORT_KEY = 'yart.codexEffort';
 
 export function SetupProvider({ children }: { children: ReactNode }): JSX.Element {
   const [guideOpen, setGuideOpen] = useState(() => readStored(ONBOARDED_KEY) !== 'true');

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { headRef, resolveCommit } from '@/common/main/git';
-import { type ReverikDocument, validateDocument } from '@/common/model/document';
+import { type YartDocument, validateDocument } from '@/common/model/document';
 import { type Flow, flowSchema, validateFlow } from '@/common/model/flow';
 import {
   checkFindingTargets,
@@ -33,7 +33,7 @@ export type IntakeResult =
 
 type Parsed =
   | { ok: true; kind: 'flow'; flow: Flow; compare?: FlowCompare; ref: AnalysisRef | null }
-  | { ok: true; kind: 'document'; document: ReverikDocument; ref: AnalysisRef | null }
+  | { ok: true; kind: 'document'; document: YartDocument; ref: AnalysisRef | null }
   | { ok: true; kind: 'review'; review: Review; ref: AnalysisRef | null }
   | { ok: false; errors: string[] };
 

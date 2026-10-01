@@ -8,7 +8,7 @@ import { asRecord } from '@/common/model/json';
  */
 export const CLAUDE_INITIALIZE = `${JSON.stringify({
   type: 'control_request',
-  request_id: 'reverik-models',
+  request_id: 'yart-models',
   request: { subtype: 'initialize' },
 })}\n`;
 

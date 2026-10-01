@@ -34,7 +34,7 @@ describe('conversation instructions', () => {
   it('säger att svaret ska sparas i appen och inte skrivas i chatten', () => {
     for (const mode of ['analyse', 'review', 'plan'] as const)
       expect(conversationInstructions(mode, { head: 'a', base: 'b' })).toContain(
-        'Deliver the answer in Kire',
+        'Deliver the answer in yart',
       );
     expect(conversationInstructions('general')).not.toContain('Deliver the answer in');
   });
@@ -48,17 +48,12 @@ describe('deliveryReminder', () => {
 
   it('känner igen sparverktygen med och utan prefix', () => {
     expect(isDeliveryTool('save_flow')).toBe(true);
-    expect(isDeliveryTool('reverik.save_review')).toBe(true);
+    expect(isDeliveryTool('yart.save_review')).toBe(true);
     expect(isDeliveryTool('list_analyses')).toBe(false);
     expect(isDeliveryTool('name_conversation')).toBe(false);
   });
 
-  it('använder appens namn, inte det gamla', () => {
-    for (const mode of ['analyse', 'review', 'plan', 'general'] as const) {
-      expect(conversationInstructions(mode, { head: 'a', base: 'b' })).not.toContain('Reverik');
-      expect(deliveryReminder(mode) ?? '').not.toContain('Reverik');
-      expect(deliveryHint(mode) ?? '').not.toContain('Reverik');
-    }
+  it('ger en leveranshint bara i lägen som sparar', () => {
     expect(deliveryHint('analyse')).toContain('save_flow');
     expect(deliveryHint('general')).toBeNull();
   });

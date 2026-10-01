@@ -55,8 +55,8 @@ export function installMockBridge(): void {
     activity: [],
     error: null,
     skills: {
-      claude: { path: '/mock/home/.claude/skills/reverik/SKILL.md', state: 'missing' },
-      codex: { path: '/mock/home/.codex/skills/reverik/SKILL.md', state: 'missing' },
+      claude: { path: '/mock/home/.claude/skills/yart/SKILL.md', state: 'missing' },
+      codex: { path: '/mock/home/.codex/skills/yart/SKILL.md', state: 'missing' },
     },
   };
 
@@ -234,7 +234,7 @@ export function installMockBridge(): void {
         context = 8,
       } = payload as { file: string; line: number; context?: number };
       // ?raw ger filen som en ES-modul med texten som default-export, annars transpilerar Vite tsx.
-      const url = `/@fs${__REVERIK_ROOT__}/${DEMO_REPO_RELATIVE_PATH}/${file}?raw`;
+      const url = `/@fs${__YART_ROOT__}/${DEMO_REPO_RELATIVE_PATH}/${file}?raw`;
       const module = (await import(/* @vite-ignore */ url)) as { default: string };
       const all = module.default.split('\n');
       const startLine = Math.max(1, line - context);

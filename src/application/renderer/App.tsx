@@ -7,7 +7,7 @@ import { DEFAULT_LAYOUT } from './panels';
 export function App(): JSX.Element {
   return (
     <SetupProvider>
-      <DockProvider defaults={DEFAULT_LAYOUT} storageKey="reverik.layout">
+      <DockProvider defaults={DEFAULT_LAYOUT} storageKey="yart.layout">
         <AppTabs />
       </DockProvider>
       <Onboarding />

@@ -7,7 +7,7 @@ describe('parseClaudeModels', () => {
       type: 'control_response',
       response: {
         subtype: 'success',
-        request_id: 'reverik-models',
+        request_id: 'yart-models',
         response: {
           models: [
             {

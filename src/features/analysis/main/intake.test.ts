@@ -43,7 +43,7 @@ describe('intakeAnalysis', () => {
   let store: AnalysisStore;
 
   beforeEach(async () => {
-    repo = await mkdtemp(join(tmpdir(), 'reverik-intake-'));
+    repo = await mkdtemp(join(tmpdir(), 'yart-intake-'));
     await writeFile(join(repo, 'a.ts'), 'line1\nline2\nline3\n');
     await writeFile(join(repo, 'b.ts'), 'only line');
     store = new AnalysisStore(join(repo, '.store'));

@@ -12,12 +12,12 @@ const input = {
 };
 
 describe('claudeRunner', () => {
-  it('kör headless med strömmande JSON och bara Reveriks MCP-server', () => {
+  it('kör headless med strömmande JSON och bara Yarts MCP-server', () => {
     const launch = claudeRunner.launch(input);
     expect(launch.command).toBe('claude');
     expect(launch.args).toContain('--strict-mcp-config');
     expect(launch.args.join(' ')).toContain('"url":"http://127.0.0.1:7390/mcp"');
-    expect(launch.args).toContain('mcp__reverik__save_flow');
+    expect(launch.args).toContain('mcp__yart__save_flow');
     expect(launch.args).not.toContain('Edit');
     expect(launch.args.at(-1)).toBe('SKILL');
     expect(JSON.parse(launch.stdin ?? '')).toEqual({
@@ -28,7 +28,7 @@ describe('claudeRunner', () => {
     expect(launch.args).toContain('acceptEdits');
     expect(launch.args).not.toContain('--tools');
     expect(launch.args).not.toContain('--model');
-    expect(launch.args).toContain('mcp__reverik__permission_prompt');
+    expect(launch.args).toContain('mcp__yart__permission_prompt');
     expect(launch.env?.MCP_TOOL_TIMEOUT).toBeDefined();
     const manual = claudeRunner.launch({
       ...input,
@@ -54,9 +54,9 @@ describe('codexRunner', () => {
     expect(first.args).toContain('workspace-write');
     expect(first.args).not.toContain('-m');
     expect(first.args).toContain('approval_policy="never"');
-    expect(first.args).toContain('mcp_servers.reverik.url="http://127.0.0.1:7390/mcp"');
+    expect(first.args).toContain('mcp_servers.yart.url="http://127.0.0.1:7390/mcp"');
     for (const tool of ['save_flow', 'save_document', 'save_review']) {
-      expect(first.args).toContain(`mcp_servers.reverik.tools.${tool}.approval_mode="approve"`);
+      expect(first.args).toContain(`mcp_servers.yart.tools.${tool}.approval_mode="approve"`);
     }
     expect(first.args.at(-1)).toBe('-');
     expect(first.stdin).toContain('SKILL');
@@ -66,7 +66,7 @@ describe('codexRunner', () => {
     expect(next.args.slice(0, 3)).toEqual(['exec', 'resume', '--json']);
     expect(next.args).not.toContain('--sandbox');
     expect(next.args).toContain('sandbox_mode="workspace-write"');
-    expect(next.args).toContain('mcp_servers.reverik.tools.save_flow.approval_mode="approve"');
+    expect(next.args).toContain('mcp_servers.yart.tools.save_flow.approval_mode="approve"');
     expect(next.args.slice(-2)).toEqual(['abc', '-']);
     expect(next.stdin).toBe('mer');
     const reviewed = codexRunner.launch({ ...input, permission: 'manual' });
@@ -82,7 +82,7 @@ describe('parseClaudeLine', () => {
       message: {
         content: [
           { type: 'text', text: 'Saved.' },
-          { type: 'tool_use', name: 'mcp__reverik__save_flow', input: {} },
+          { type: 'tool_use', name: 'mcp__yart__save_flow', input: {} },
           { type: 'tool_use', name: 'Read', input: {} },
         ],
       },
@@ -127,7 +127,7 @@ describe('parseCodexLine', () => {
       parseCodexLine(
         JSON.stringify({
           type: 'item.started',
-          item: { type: 'mcp_tool_call', server: 'reverik', tool: 'save_flow' },
+          item: { type: 'mcp_tool_call', server: 'yart', tool: 'save_flow' },
         }),
       ),
     ).toEqual([{ type: 'tool', name: 'save_flow' }]);

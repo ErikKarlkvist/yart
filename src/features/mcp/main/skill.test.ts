@@ -8,7 +8,7 @@ describe('skill', () => {
   let home: string;
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'reverik-skill-'));
+    home = await mkdtemp(join(tmpdir(), 'yart-skill-'));
   });
 
   afterEach(async () => {
@@ -17,10 +17,10 @@ describe('skill', () => {
 
   it('ligger där respektive agent letar efter personliga skills', () => {
     expect(relative(home, skillPath(home, 'claude')).replaceAll('\\', '/')).toBe(
-      '.claude/skills/reverik/SKILL.md',
+      '.claude/skills/yart/SKILL.md',
     );
     expect(relative(home, skillPath(home, 'codex')).replaceAll('\\', '/')).toBe(
-      '.codex/skills/reverik/SKILL.md',
+      '.codex/skills/yart/SKILL.md',
     );
   });
 

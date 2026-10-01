@@ -12,15 +12,15 @@ describe('buildSkill', () => {
   const skill = buildSkill();
 
   it('has the frontmatter Claude Code expects and a version marker', () => {
-    expect(skill.startsWith('---\nname: reverik\ndescription: ')).toBe(true);
-    expect(skill).toContain(`reverik-skill v${SKILL_VERSION}`);
+    expect(skill.startsWith('---\nname: yart\ndescription: ')).toBe(true);
+    expect(skill).toContain(`yart-skill v${SKILL_VERSION}`);
   });
 
   it('delivers through the MCP tools and never through files in the repository', () => {
     for (const tool of ['save_flow', 'save_document', 'save_review', 'list_analyses'])
       expect(skill).toContain(`\`${tool}\``);
     expect(skill).toContain('git rev-parse --show-toplevel');
-    expect(skill).not.toContain('.reverik/');
+    expect(skill).not.toContain('.yart/');
     expect(skill).not.toContain('.errors.json');
   });
 

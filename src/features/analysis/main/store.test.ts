@@ -3,14 +3,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { addTodoFlow, listTodosFlow } from '@/common/model/fixtures';
-import { type ReverikDocument } from '@/common/model/document';
+import { type YartDocument } from '@/common/model/document';
 import { AnalysisStore } from './store';
 
 describe('AnalysisStore', () => {
   let store: AnalysisStore;
 
   beforeEach(async () => {
-    store = new AnalysisStore(await mkdtemp(join(tmpdir(), 'reverik-analyses-')));
+    store = new AnalysisStore(await mkdtemp(join(tmpdir(), 'yart-analyses-')));
   });
 
   it('är tom från början', async () => {
@@ -42,7 +42,7 @@ describe('AnalysisStore', () => {
   });
 
   it('ersätter en analys med samma sort och namn och behåller id', async () => {
-    const document: ReverikDocument = {
+    const document: YartDocument = {
       title: 'Overview',
       summary: 'A short overview.',
       content: 'The app calls the API.',

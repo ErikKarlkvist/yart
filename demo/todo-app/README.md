@@ -1,7 +1,7 @@
 # Demo: todo-app
 
-En liten men realistisk todo-app som Reverik kan analysera. Den är inte en del av
-Reverik-appen utan ett målrepo. Välj mappen `demo/todo-app` som repo i Reverik.
+En liten men realistisk todo-app som Yart kan analysera. Den är inte en del av
+Yart-appen utan ett målrepo. Välj mappen `demo/todo-app` som repo i Yart.
 
 ```
 frontend/   React + Vite. Formulär och lista, hook som pratar med API:t.

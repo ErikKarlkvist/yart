@@ -5,7 +5,7 @@ import { invokeChannel } from '@/common/renderer/ipc';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
-const STORAGE_KEY = 'reverik.theme';
+const STORAGE_KEY = 'yart.theme';
 const PREFERENCES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 
 function isPreference(value: unknown): value is ThemePreference {

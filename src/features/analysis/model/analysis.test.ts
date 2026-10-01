@@ -24,9 +24,9 @@ describe('savedAnalysisSchema', () => {
 
   it('ger äldre analyser ett namn ur filen eller id:t', () => {
     const { name: _name, ...unnamed } = base;
-    expect(
-      savedAnalysisSchema.parse({ ...unnamed, file: '.reverik/flows/add-todo.json' }).name,
-    ).toBe('add-todo');
+    expect(savedAnalysisSchema.parse({ ...unnamed, file: '.yart/flows/add-todo.json' }).name).toBe(
+      'add-todo',
+    );
     expect(savedAnalysisSchema.parse({ ...unnamed, id: 'builtin:0' }).name).toBe(
       'legacy-builtin-0',
     );

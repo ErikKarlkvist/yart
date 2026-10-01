@@ -1,10 +1,10 @@
-import { type ReverikDocument } from '../document';
+import { type YartDocument } from '../document';
 
 /**
  * Ett planeringsdokument för demo-appen: förfallodatum på todos. Texten är
  * kort för människor, `plan` är den detaljerade planen för en AI-agent.
  */
-export const dueDatesPlan: ReverikDocument = {
+export const dueDatesPlan: YartDocument = {
   title: 'Due dates on todos',
   summary:
     'Todos get an optional due date that is set in the form, stored in Postgres and shown in the list.',

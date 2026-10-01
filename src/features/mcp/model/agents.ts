@@ -5,17 +5,17 @@ export type SkillTarget = RunnableAgent;
 
 /** Var respektive agent letar efter personliga skills, relativt hemmappen. */
 export const SKILL_PATHS: Readonly<Record<SkillTarget, string>> = {
-  claude: '.claude/skills/reverik/SKILL.md',
-  codex: '.codex/skills/reverik/SKILL.md',
+  claude: '.claude/skills/yart/SKILL.md',
+  codex: '.codex/skills/yart/SKILL.md',
 };
 
 /** Kommandot som registrerar servern hos agenten. null för agenter utan känt kommando. */
 export function connectCommand(agent: AgentKind, url: string): string | null {
   switch (agent) {
     case 'claude':
-      return `claude mcp add --transport http reverik ${url}`;
+      return `claude mcp add --transport http yart ${url}`;
     case 'codex':
-      return `codex mcp add reverik --url ${url}`;
+      return `codex mcp add yart --url ${url}`;
     case 'manual':
       return null;
   }
@@ -23,5 +23,5 @@ export function connectCommand(agent: AgentKind, url: string): string | null {
 
 /** Samma registrering som konfiguration, för den som hellre redigerar filen. */
 export function codexConfigSnippet(url: string): string {
-  return `[mcp_servers.reverik]\nurl = "${url}"`;
+  return `[mcp_servers.yart]\nurl = "${url}"`;
 }

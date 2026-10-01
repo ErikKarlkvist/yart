@@ -4,7 +4,7 @@ import { type RepoInfo } from '../model/repo';
 /** Öppnar systemdialog för att välja en lokal mapp. null om användaren avbryter. */
 export const pickLocalRepoChannel = defineChannel<undefined, RepoInfo | null>('repo:pick-local');
 
-/** Öppnar demo-appen som ligger i Reverik-repot under demo/todo-app. */
+/** Öppnar demo-appen som ligger i Yart-repot under demo/todo-app. */
 export const openDemoRepoChannel = defineChannel<undefined, RepoInfo>('repo:open-demo');
 
 /** Läser om ett repo på en känd sökväg, t.ex. från listan över senaste. */

@@ -86,7 +86,7 @@ describe('startMcpServer', () => {
   });
 
   it('serverar guiden som resurs', async () => {
-    const { contents } = await client.readResource({ uri: 'reverik://guide' });
+    const { contents } = await client.readResource({ uri: 'yart://guide' });
     expect(contents[0]).toMatchObject({ text: '# Guide' });
   });
 
@@ -120,7 +120,7 @@ describe('startMcpServer', () => {
     expect(delivered[0]?.content).toEqual({ flow: addTodoFlow, compare });
   });
 
-  it('svarar med felen när Reverik avvisar innehållet', async () => {
+  it('svarar med felen när Yart avvisar innehållet', async () => {
     const result = await client.callTool({
       name: 'save_flow',
       arguments: { repo: '/repo', name: 'bad', flow: addTodoFlow },

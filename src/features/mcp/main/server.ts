@@ -212,7 +212,7 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
 
 const repoParam = z.string().min(1).describe(REPO_PARAM_DESCRIPTION);
 
-/** En McpServer med Reveriks verktyg och guiden som resurs. */
+/** En McpServer med Yarts verktyg och guiden som resurs. */
 /** Appens egen agent ansluter med sin konversation, och om den kan fråga om lov */
 interface OwnSession {
   conversationId: string | null;
@@ -220,7 +220,7 @@ interface OwnSession {
 }
 
 function createSession(deps: McpDeps, { conversationId, permissions }: OwnSession): McpServer {
-  const server = new McpServer({ name: 'reverik', version: deps.version });
+  const server = new McpServer({ name: 'yart', version: deps.version });
   const client = (): string => server.server.getClientVersion()?.name ?? t('mcp.unknownClient');
 
   const text = (value: unknown, isError = false): ToolResult => ({
@@ -334,7 +334,7 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
 
   server.registerResource(
     'guide',
-    'reverik://guide',
+    'yart://guide',
     {
       title: `${APP_NAME} guide`,
       description: `How to build good flows, documents and reviews for ${APP_NAME}.`,

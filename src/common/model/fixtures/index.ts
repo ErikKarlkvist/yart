@@ -1,4 +1,4 @@
-import { type ReverikDocument } from '../document';
+import { type YartDocument } from '../document';
 import { type Flow } from '../flow';
 import { type FlowCompare, type Review } from '../review';
 import { addTodoFlow } from './add-todo';
@@ -15,7 +15,7 @@ import { listTodosFlow } from './list-todos';
 export type DemoAnalysis =
   | { kind: 'flow'; name: string; flow: Flow; compare?: FlowCompare }
   | { kind: 'review'; name: string; review: Review }
-  | { kind: 'document'; name: string; document: ReverikDocument };
+  | { kind: 'document'; name: string; document: YartDocument };
 
 /** Alla fixturer, pekar på demo/todo-app. */
 export const demoFlows: readonly Flow[] = [addTodoFlow, listTodosFlow, addTodoWithListFlow];
@@ -34,7 +34,7 @@ export const demoAnalyses: readonly DemoAnalysis[] = [
   { kind: 'document', name: 'due-dates-plan', document: dueDatesPlan },
 ];
 
-/** Sökväg till demo-repot relativt Reverik-roten. */
+/** Sökväg till demo-repot relativt Yart-roten. */
 export const DEMO_REPO_RELATIVE_PATH = 'demo/todo-app';
 
 export { addTodoFlow, addTodoReview, addTodoWithListCompare, addTodoWithListFlow, listTodosFlow };

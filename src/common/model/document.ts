@@ -39,11 +39,11 @@ export const documentSchema = z.object({
     .describe('Names of saved flows the document links to, so the reader can explore the details'),
 });
 
-export type ReverikDocument = z.infer<typeof documentSchema>;
+export type YartDocument = z.infer<typeof documentSchema>;
 
 export function validateDocument(
   input: unknown,
-): { ok: true; document: ReverikDocument } | { ok: false; errors: string[] } {
+): { ok: true; document: YartDocument } | { ok: false; errors: string[] } {
   const result = documentSchema.safeParse(input);
   if (result.success) return { ok: true, document: result.data };
   return {

@@ -24,7 +24,7 @@ export function conversationInstructions(
  * utan det här skriver agenten gärna en lång rapport i stället för att spara.
  */
 const DELIVER =
-  'Deliver the answer in {appName} (its tools are on the MCP server called reverik), not in the chat: the user reads flows, documents and reviews in the app, and the chat is only for a one or two sentence confirmation of what you saved, or a short question when you need an answer before you can continue. Never write reports, call-chain summaries, code listings or file lists in the chat; put that detail into the saved flow (sources, descriptions, payloads) and the document instead. If the {appName} tools are not available, say so in one sentence instead of answering in the chat.';
+  'Deliver the answer in {appName} (its tools are on the MCP server called yart), not in the chat: the user reads flows, documents and reviews in the app, and the chat is only for a one or two sentence confirmation of what you saved, or a short question when you need an answer before you can continue. Never write reports, call-chain summaries, code listings or file lists in the chat; put that detail into the saved flow (sources, descriptions, payloads) and the document instead. If the {appName} tools are not available, say so in one sentence instead of answering in the chat.';
 
 /** Verktygen som sparar något i appen, med eller utan MCP-prefix */
 export function isDeliveryTool(name: string): boolean {

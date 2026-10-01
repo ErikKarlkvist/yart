@@ -90,7 +90,7 @@ export function AgentSetup({ mcp, agent, onAgent, showPath }: Props): JSX.Elemen
         <p className="setup__text">{t(`setup.guideText.${agent}`)}</p>
         {agent === 'manual' ? (
           <div className="connect__command">
-            <code className="connect__code">reverik://guide</code>
+            <code className="connect__code">yart://guide</code>
             <button type="button" className="text-button" onClick={copyGuide}>
               <Icon name="copy" size="sm" />{' '}
               {guideCopied ? t('setup.guideCopied') : t('setup.copyGuide')}

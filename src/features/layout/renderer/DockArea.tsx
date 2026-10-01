@@ -8,7 +8,7 @@ import { DockResizeHandle } from './DockResizeHandle';
 import { type DockPanel } from './panel';
 
 /** Typen på det som dras, så andra drag (filer, text) inte tas emot */
-const PANEL_DRAG_TYPE = 'application/x-reverik-panel';
+const PANEL_DRAG_TYPE = 'application/x-yart-panel';
 
 const HIDE_ICON: Readonly<Record<DockSide, IconName>> = {
   left: 'chevronLeft',

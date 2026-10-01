@@ -57,7 +57,7 @@ export function registerMcpHandlers(deps: McpRegistration): McpHandle {
     emitEvent(mcpActivityEvent, entry);
   };
 
-  startMcpServer({ ...deps, onActivity }, { ports: candidatePorts(process.env.REVERIK_MCP_PORT) })
+  startMcpServer({ ...deps, onActivity }, { ports: candidatePorts(process.env.YART_MCP_PORT) })
     .then((started) => {
       handle = started;
     })

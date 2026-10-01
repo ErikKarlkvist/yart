@@ -16,7 +16,7 @@ interface TabsState {
   next: number;
 }
 
-const TABS_KEY = 'reverik.tabs';
+const TABS_KEY = 'yart.tabs';
 const FRESH: TabsState = { ids: [1], active: 1, next: 2 };
 
 function isTabsState(value: unknown): value is TabsState {
@@ -147,7 +147,7 @@ interface TabWindowProps {
 
 /** En fliks hela app, med egna providers och eget lagringsprefix. */
 function TabWindow({ id, active, onTitle }: TabWindowProps): JSX.Element {
-  const scope = `reverik.tab:${id}.`;
+  const scope = `yart.tab:${id}.`;
   const titleApi = useMemo(
     () => ({
       setTitle: (title: string | null) => {

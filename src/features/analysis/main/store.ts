@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { type ReverikDocument } from '@/common/model/document';
+import { type YartDocument } from '@/common/model/document';
 import { type Flow } from '@/common/model/flow';
 import { type FlowCompare, type Review } from '@/common/model/review';
 import {
@@ -19,7 +19,7 @@ export type NewAnalysis = {
   conversationId?: string | undefined;
 } & (
   | { kind: 'flow'; flow: Flow; compare?: FlowCompare }
-  | { kind: 'document'; document: ReverikDocument }
+  | { kind: 'document'; document: YartDocument }
   | { kind: 'review'; review: Review }
 );
 

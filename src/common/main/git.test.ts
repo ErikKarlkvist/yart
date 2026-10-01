@@ -7,7 +7,7 @@ import { headRef, readFileAtCommit, resolveCommit } from './git';
 
 /** Ett litet repo: main med a.txt, branchen feature lägger till b.txt, main utcheckad. */
 export async function makeRepo(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'reverik-git-'));
+  const dir = await mkdtemp(join(tmpdir(), 'yart-git-'));
   const git = simpleGit(dir);
   await git.raw(['init', '-b', 'main']);
   await git.addConfig('user.name', 'Test');

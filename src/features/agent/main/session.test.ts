@@ -24,7 +24,7 @@ out({ type: 'system', subtype: 'init' });
 rl.on('line', (line) => {
   const text = JSON.parse(line).message.content;
   if (text === 'die') { process.stderr.write('boom\\n'); process.exit(2); }
-  out({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'mcp__reverik__save_flow', input: {} }] } });
+  out({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'mcp__yart__save_flow', input: {} }] } });
   out({ type: 'assistant', message: { content: [{ type: 'text', text: 'Reply to ' + text }] } });
   if (text === 'fail') out({ type: 'result', subtype: 'success', is_error: true, result: 'Failed to authenticate' });
   else out({ type: 'result', subtype: 'success' });
@@ -45,7 +45,7 @@ if (resume && args.includes('--sandbox')) {
 const prompt = args.at(-1) === '-' ? fs.readFileSync(0, 'utf8') : args.at(-1);
 const thread = resume ? args[args.length - 2] : 'thread-1';
 out({ type: 'thread.started', thread_id: thread });
-out({ type: 'item.started', item: { type: 'mcp_tool_call', server: 'reverik', tool: 'save_flow' } });
+out({ type: 'item.started', item: { type: 'mcp_tool_call', server: 'yart', tool: 'save_flow' } });
 out({ type: 'item.completed', item: { type: 'agent_message', text: (resume ? 'Resumed ' + thread + ': ' : 'Reply to ') + prompt.split('---').pop().trim() } });
 out({ type: 'turn.completed', usage: {} });
 `;
@@ -54,7 +54,7 @@ let claudeScript: string;
 let codexScript: string;
 
 beforeAll(async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'reverik-agent-'));
+  const dir = await mkdtemp(join(tmpdir(), 'yart-agent-'));
   claudeScript = join(dir, 'fake-claude.cjs');
   codexScript = join(dir, 'fake-codex.cjs');
   await writeFile(claudeScript, FAKE_CLAUDE);

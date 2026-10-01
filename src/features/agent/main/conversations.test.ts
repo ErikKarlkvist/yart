@@ -6,7 +6,7 @@ import { ConversationStore } from './conversations';
 
 describe('ConversationStore', () => {
   it('saves per-repository conversations and loads their messages on demand', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'kire-conversations-'));
+    const dir = await mkdtemp(join(tmpdir(), 'yart-conversations-'));
     try {
       const store = new ConversationStore(dir);
       const first = await store.create('/repo/a', 'codex', 'review', {

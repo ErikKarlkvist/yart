@@ -53,13 +53,13 @@ const ALLOWED_TOOLS: readonly string[] = [
   'Bash(git status:*)',
   'Bash(git branch:*)',
   'Bash(git rev-parse:*)',
-  'mcp__reverik__list_repos',
-  'mcp__reverik__list_analyses',
-  'mcp__reverik__get_analysis',
-  'mcp__reverik__save_flow',
-  'mcp__reverik__save_document',
-  'mcp__reverik__save_review',
-  'mcp__reverik__name_conversation',
+  'mcp__yart__list_repos',
+  'mcp__yart__list_analyses',
+  'mcp__yart__get_analysis',
+  'mcp__yart__save_flow',
+  'mcp__yart__save_document',
+  'mcp__yart__save_review',
+  'mcp__yart__name_conversation',
 ];
 
 /**
@@ -130,14 +130,14 @@ export const claudeRunner: AgentRunner = {
       '--verbose',
       '--strict-mcp-config',
       '--mcp-config',
-      JSON.stringify({ mcpServers: { reverik: { type: 'http', url: mcpUrl } } }),
+      JSON.stringify({ mcpServers: { yart: { type: 'http', url: mcpUrl } } }),
       '--allowedTools',
       ...ALLOWED_TOOLS,
       // Auto godkänner filändringar själv, Manual frågar. Allt som kräver lov går till panelen.
       '--permission-mode',
       permission === 'auto' ? 'acceptEdits' : 'default',
       '--permission-prompt-tool',
-      `mcp__reverik__${PERMISSION_PROMPT_TOOL}`,
+      `mcp__yart__${PERMISSION_PROMPT_TOOL}`,
       ...(model === 'default' ? [] : ['--model', model]),
       ...(effort === 'default' ? [] : ['--effort', effort]),
       '--append-system-prompt',
@@ -152,7 +152,7 @@ export const claudeRunner: AgentRunner = {
 };
 
 /**
- * Codex: `codex exec --json` per fråga, med skrivrätt i repot och Reveriks
+ * Codex: `codex exec --json` per fråga, med skrivrätt i repot och Yarts
  * MCP-server som konfiguration. exec kan inte fråga användaren, så Manual
  * låter Codex automatiska granskare godkänna i stället. Följdfrågor
  * återupptar tråden. Skillen inleder första frågan eftersom exec saknar
@@ -170,9 +170,9 @@ export const codexRunner: AgentRunner = {
       `approval_policy="${permission === 'auto' ? 'never' : 'on-request'}"`,
       ...(permission === 'manual' ? ['-c', 'approvals_reviewer="auto_review"'] : []),
       '-c',
-      `mcp_servers.reverik.url=${JSON.stringify(mcpUrl)}`,
+      `mcp_servers.yart.url=${JSON.stringify(mcpUrl)}`,
       ...(['save_flow', 'save_document', 'save_review', 'name_conversation'] as const).flatMap(
-        (tool) => ['-c', `mcp_servers.reverik.tools.${tool}.approval_mode="approve"`],
+        (tool) => ['-c', `mcp_servers.yart.tools.${tool}.approval_mode="approve"`],
       ),
     ];
     const text = threadId === null ? `${skill}\n\n---\n\n${prompt}` : prompt;
@@ -291,7 +291,7 @@ export function parseCodexLine(line: string): AgentOutput[] {
   }
 }
 
-/** MCP-verktyg visas med sitt korta namn, `mcp__reverik__save_flow` blir `save_flow`. */
+/** MCP-verktyg visas med sitt korta namn, `mcp__yart__save_flow` blir `save_flow`. */
 function toolLabel(name: string): string {
-  return name.replace(/^mcp__reverik__/, '');
+  return name.replace(/^mcp__yart__/, '');
 }

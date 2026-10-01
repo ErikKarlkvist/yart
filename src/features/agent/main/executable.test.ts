@@ -12,7 +12,7 @@ afterEach(async () => {
 
 describe('agentExecutable on Windows', () => {
   it('finds Codex inside an npm global install even when only the cmd shim is on PATH', async () => {
-    directory = await mkdtemp(join(tmpdir(), 'reverik-codex-cli-'));
+    directory = await mkdtemp(join(tmpdir(), 'yart-codex-cli-'));
     const binary = join(
       directory,
       'node_modules',
@@ -34,7 +34,7 @@ describe('agentExecutable on Windows', () => {
   });
 
   it('finds a native Codex executable directly on PATH', async () => {
-    directory = await mkdtemp(join(tmpdir(), 'reverik-codex-native-'));
+    directory = await mkdtemp(join(tmpdir(), 'yart-codex-native-'));
     const binary = join(directory, 'codex.exe');
     await writeFile(binary, '');
 
