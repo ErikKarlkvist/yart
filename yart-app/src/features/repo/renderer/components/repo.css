@@ -11,7 +11,8 @@
 
 .repo-menu__popover {
   position: absolute;
-  left: 0;
+  /* Knappen sitter nära fönstrets högerkant, så menyn öppnas åt vänster. */
+  right: 0;
   top: calc(100% + 6px);
   z-index: 50;
   min-width: 260px;
@@ -74,6 +75,10 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* Linjen skiljer bara av listan med senaste repon när den finns. */
+.repo-menu__list + .repo-menu__actions {
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
