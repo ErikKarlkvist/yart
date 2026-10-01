@@ -205,7 +205,6 @@ export function AgentPanel(): JSX.Element {
                 disabled={!hasRepo}
                 onClick={() => {
                   selectMode(choice);
-                  setDraft('');
                 }}
               >
                 {t(`agent.mode.${choice}`)}
