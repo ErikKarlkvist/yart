@@ -25,7 +25,7 @@ const noop = (): void => undefined;
 export const SetupContext = createContext<SetupApi>({
   agent: 'claude',
   setAgent: noop,
-  permission: 'auto',
+  permission: 'edits',
   setPermission: noop,
   models: { claude: 'default', codex: 'default' },
   setModel: noop,

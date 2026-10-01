@@ -10,10 +10,11 @@ export type RunnableAgent = Exclude<AgentKind, 'manual'>;
 
 /**
  * Hur mycket agenten får göra utan att fråga. Den har alltid skrivrätt i repot.
- * auto: ändrar filer utan att fråga och frågar bara för annat, som kommandon.
+ * edits: ändrar filer utan att fråga och frågar bara för annat, som kommandon.
+ * all: gör allt utan att fråga, även skalkommandon.
  * manual: frågar innan den ändrar något.
  */
-export const AGENT_PERMISSIONS = ['auto', 'manual'] as const;
+export const AGENT_PERMISSIONS = ['edits', 'all', 'manual'] as const;
 export type AgentPermission = (typeof AGENT_PERMISSIONS)[number];
 
 /** Det användaren valt under textrutan och som gäller när agenten startas. */

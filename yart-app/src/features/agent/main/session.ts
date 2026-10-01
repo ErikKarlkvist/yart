@@ -11,7 +11,11 @@ import {
 import { agentEnv } from './env';
 import { agentExecutable } from './executable';
 
-const DEFAULT_SETTINGS: AgentSettings = { permission: 'auto', model: 'default', effort: 'default' };
+const DEFAULT_SETTINGS: AgentSettings = {
+  permission: 'edits',
+  model: 'default',
+  effort: 'default',
+};
 
 function key(settings: AgentSettings): string {
   return `${settings.permission}|${settings.model}|${settings.effort}`;

@@ -6,7 +6,7 @@ const input = {
   skill: 'SKILL',
   prompt: 'hej',
   threadId: null,
-  permission: 'auto' as const,
+  permission: 'edits' as const,
   model: 'default',
   effort: 'default',
 };
@@ -41,6 +41,8 @@ describe('claudeRunner', () => {
     expect(manual.args.join(' ')).toContain('--model opus');
     expect(manual.args.join(' ')).toContain('--effort high');
     expect(launch.args).not.toContain('--effort');
+    const all = claudeRunner.launch({ ...input, permission: 'all' });
+    expect(all.args.join(' ')).toContain('--permission-mode bypassPermissions');
     const resumed = claudeRunner.launch({ ...input, threadId: 'session-1' });
     expect(resumed.args.slice(-2)).toEqual(['--resume', 'session-1']);
   });
@@ -72,6 +74,13 @@ describe('codexRunner', () => {
     const reviewed = codexRunner.launch({ ...input, permission: 'manual' });
     expect(reviewed.args).toContain('approval_policy="on-request"');
     expect(reviewed.args).toContain('approvals_reviewer="auto_review"');
+    expect(reviewed.args).toContain('workspace-write');
+    const all = codexRunner.launch({ ...input, permission: 'all' });
+    expect(all.args).toContain('approval_policy="never"');
+    expect(all.args).toContain('danger-full-access');
+    expect(all.args).not.toContain('workspace-write');
+    const allResumed = codexRunner.launch({ ...input, permission: 'all', threadId: 'abc' });
+    expect(allResumed.args).toContain('sandbox_mode="danger-full-access"');
   });
 
   it('skickar valt modell-id och effort både vid start och vid resume', () => {

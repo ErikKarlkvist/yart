@@ -23,7 +23,7 @@ const CODEX_EFFORT_KEY = 'yart.codexEffort';
 export function SetupProvider({ children }: { children: ReactNode }): JSX.Element {
   const [guideOpen, setGuideOpen] = useState(() => readStored(ONBOARDED_KEY) !== 'true');
   const [agent, setAgent] = useStoredChoice(AGENT_KEY, AGENT_KINDS, 'claude');
-  const [permission, setPermission] = useStoredChoice(PERMISSION_KEY, AGENT_PERMISSIONS, 'auto');
+  const [permission, setPermission] = useStoredChoice(PERMISSION_KEY, AGENT_PERMISSIONS, 'edits');
   // Modellerna kommer från agenten själv, så lagringen tar vilket säkert värde som helst
   const [claudeModel, setClaudeModel] = useStoredString(
     CLAUDE_MODEL_KEY,

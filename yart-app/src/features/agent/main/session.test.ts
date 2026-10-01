@@ -176,11 +176,11 @@ describe('AgentSession med Claude Code', () => {
     const session = new AgentSession(tmpdir(), runner, context, c.events);
     session.ask('read', { permission: 'manual', model: 'default', effort: 'default' });
     await c.until(() => c.states.at(-1) === 'idle');
-    session.ask('edit', { permission: 'auto', model: 'opus', effort: 'high' });
+    session.ask('edit', { permission: 'edits', model: 'opus', effort: 'high' });
     await c.until(() =>
       c.entries.some((entry) => entry.kind === 'assistant' && entry.text === 'Reply to edit'),
     );
-    expect(launched).toEqual(['manual/default', 'auto/opus']);
+    expect(launched).toEqual(['manual/default', 'edits/opus']);
     session.stop();
   });
 

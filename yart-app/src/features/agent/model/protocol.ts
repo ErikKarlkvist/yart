@@ -115,6 +115,13 @@ export interface AgentRunner {
   parse: (line: string) => AgentOutput[];
 }
 
+/** Claude Codes --permission-mode för varje läge. */
+const CLAUDE_PERMISSION_MODES: Readonly<Record<AgentPermission, string>> = {
+  edits: 'acceptEdits',
+  all: 'bypassPermissions',
+  manual: 'default',
+};
+
 /** Claude Code: en långlivad `claude -p` med stream-json in och ut. */
 export const claudeRunner: AgentRunner = {
   kind: 'claude',
@@ -133,9 +140,9 @@ export const claudeRunner: AgentRunner = {
       JSON.stringify({ mcpServers: { yart: { type: 'http', url: mcpUrl } } }),
       '--allowedTools',
       ...ALLOWED_TOOLS,
-      // Auto godkänner filändringar själv, Manual frågar. Allt som kräver lov går till panelen.
+      // Allt som kräver lov i läget går till panelen via permission_prompt.
       '--permission-mode',
-      permission === 'auto' ? 'acceptEdits' : 'default',
+      CLAUDE_PERMISSION_MODES[permission],
       '--permission-prompt-tool',
       `mcp__yart__${PERMISSION_PROMPT_TOOL}`,
       ...(model === 'default' ? [] : ['--model', model]),
@@ -168,7 +175,7 @@ export const codexRunner: AgentRunner = {
       ...(model === 'default' ? [] : ['-m', model]),
       ...(effort === 'default' ? [] : ['-c', `model_reasoning_effort=${JSON.stringify(effort)}`]),
       '-c',
-      `approval_policy="${permission === 'auto' ? 'never' : 'on-request'}"`,
+      `approval_policy="${permission === 'manual' ? 'on-request' : 'never'}"`,
       ...(permission === 'manual' ? ['-c', 'approvals_reviewer="auto_review"'] : []),
       '-c',
       `mcp_servers.yart.url=${JSON.stringify(mcpUrl)}`,
@@ -176,13 +183,15 @@ export const codexRunner: AgentRunner = {
         (tool) => ['-c', `mcp_servers.yart.tools.${tool}.approval_mode="approve"`],
       ),
     ];
+    // Allow all släpper sandlådan, så kommandon når även utanför repot och nätet.
+    const sandbox = permission === 'all' ? 'danger-full-access' : 'workspace-write';
     const text = threadId === null ? `${skill}\n\n---\n\n${prompt}` : prompt;
     return {
       command: 'codex',
       args:
         threadId === null
-          ? ['exec', ...shared, '--sandbox', 'workspace-write', '-']
-          : ['exec', 'resume', ...shared, '-c', 'sandbox_mode="workspace-write"', threadId, '-'],
+          ? ['exec', ...shared, '--sandbox', sandbox, '-']
+          : ['exec', 'resume', ...shared, '-c', `sandbox_mode="${sandbox}"`, threadId, '-'],
       stdin: text,
     };
   },

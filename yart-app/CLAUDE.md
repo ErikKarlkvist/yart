@@ -20,7 +20,9 @@ Codex som `codex exec --json` per fråga som återupptar tråden. Båda får app
 som enda server, skillen och lägets instruktioner
 (`src/features/agent/model/conversationInstructions.ts`), och har skrivrätt i repot.
 
-- Auto/Manual under textrutan styr godkännanden. Claude Code frågar via MCP-verktyget
+- Läget under textrutan styr godkännanden: Allow edits (filändringar utan att fråga,
+  `acceptEdits` / Codex utan frågor i sandlådan), Allow all (`bypassPermissions` / Codex
+  `danger-full-access`) och Manual. Claude Code frågar via MCP-verktyget
   `permission_prompt` och frågan visas i panelen med Allow och Deny.
 - Agenten namnger konversationen via `name_conversation`. Båda verktygen finns bara för
   appens egna sessioner, som ansluter med `?conversation=<id>` i MCP-adressen. Det som
