@@ -16,7 +16,7 @@ export interface Playback {
  * Indexet lagras rått och klampas vid läsning, så antalet steg kan ändras
  * (t.ex. när grafens nivå byts) utan att positionen går förlorad.
  */
-export function useFlowPlayback(stepCount: number, intervalMs = 5000): Playback {
+export function useFlowPlayback(stepCount: number, intervalMs = 3000): Playback {
   const [rawIndex, setRawIndex] = useState(0);
   const [wantsPlay, setWantsPlay] = useState(false);
 
