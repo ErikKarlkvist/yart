@@ -120,8 +120,9 @@ på fält: accentkant, ingen outline.
 
 Standardvyn för flöden; grafen nås via `SEQUENCE | GRAPH` längst till höger i nivåraden.
 
-- Deltagarna är samma kort som grafens noder och står kvar överst när man rullar. Ett
-  utfällt systems namn står över dess noder som en streckad linje i systemets färg.
+- Deltagarna är samma kort som grafens noder och ligger i samma yta som resten; ytan dras
+  runt med musen som grafen, och rutnätet följer med. Ett utfällt systems namn står över
+  dess noder, och systemets färg (5 %) med streckade kanter följer med hela vägen ned.
 - Livlinjer i `--border-strong`, streckade. Meddelanden följer kanternas regler (muted,
   väntande 0.35, aktiv i accent med rörliga streck); svar tillbaka till en tidigare
   anropare är streckade. Anrop inom samma deltagare ritas som en ögla till höger.
