@@ -48,6 +48,20 @@ const MIN_SCALE = 0.4;
 const MAX_SCALE = 1.6;
 /** Ett brett diagram krymps för att få plats, men inte mer än så här */
 const MIN_FIT_SCALE = 0.7;
+/** Så långt pekaren får röra sig innan ett klick blir ett drag */
+const DRAG_THRESHOLD = 4;
+/** Rutnätets steg i diagrammets koordinater, samma som grafens */
+const GRID = 24;
+
+interface Viewport {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
 /** Hur långt systemets färgfält når utanför dess yttersta deltagare */
 const LANE_PADDING = 14;
 
@@ -72,28 +86,44 @@ export function SequenceDiagram({
   onFocusFinding,
   overlay,
 }: Props): JSX.Element {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState<number | null>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState<Viewport | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  // Uppspelningen flyttar vyn mjukt; drag och hjul flyttar den direkt
+  const [gliding, setGliding] = useState(false);
 
-  // Krymp ett brett diagram så det får plats i bredd när det visas första gången.
+  // Krymp ett brett diagram så det får plats i bredd, och centrera ett smalt.
   useLayoutEffect(() => {
-    const element = scrollRef.current;
-    if (!element || scale !== null) return;
-    const fit = (element.clientWidth - 8) / sequence.width;
-    setScale(Math.max(MIN_FIT_SCALE, Math.min(1, fit)));
-  }, [scale, sequence.width]);
+    const element = viewportRef.current;
+    if (!element || view !== null) return;
+    const scale = Math.max(MIN_FIT_SCALE, Math.min(1, (element.clientWidth - 16) / sequence.width));
+    const x = Math.max(0, (element.clientWidth - sequence.width * scale) / 2);
+    setView({ x, y: 0, scale });
+  }, [view, sequence.width]);
 
-  // Nyp eller ctrl+hjul zoomar, vanligt hjul rullar.
+  // Hjul och tvåfingersdrag flyttar ytan fritt; nyp eller ctrl+hjul zoomar kring pekaren.
   useEffect(() => {
-    const element = scrollRef.current;
+    const element = viewportRef.current;
     if (!element) return;
     const onWheel = (event: WheelEvent): void => {
-      if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
-      setScale((current) =>
-        Math.max(MIN_SCALE, Math.min(MAX_SCALE, (current ?? 1) * Math.exp(-event.deltaY / 300))),
-      );
+      setGliding(false);
+      if (event.ctrlKey || event.metaKey) {
+        const rect = element.getBoundingClientRect();
+        const px = event.clientX - rect.left;
+        const py = event.clientY - rect.top;
+        setView((current) => {
+          const from = current ?? { x: 0, y: 0, scale: 1 };
+          const scale = clamp(from.scale * Math.exp(-event.deltaY / 200), MIN_SCALE, MAX_SCALE);
+          const ratio = scale / from.scale;
+          return { scale, x: px - (px - from.x) * ratio, y: py - (py - from.y) * ratio };
+        });
+        return;
+      }
+      setView((current) => {
+        const from = current ?? { x: 0, y: 0, scale: 1 };
+        return { ...from, x: from.x - event.deltaX, y: from.y - event.deltaY };
+      });
     };
     element.addEventListener('wheel', onWheel, { passive: false });
     return () => {
@@ -101,53 +131,91 @@ export function SequenceDiagram({
     };
   }, []);
 
-  // Dra i ytan för att flytta diagrammet, som i grafen. Knappar och etiketter tar sina egna klick.
+  // Dra var som helst för att flytta ytan, som i grafen. Ett klick som inte rört sig
+  // når deltagare, etiketter och knappar som vanligt.
   useEffect(() => {
-    const element = scrollRef.current;
+    const element = viewportRef.current;
     if (!element) return;
-    let drag: { x: number; y: number; left: number; top: number } | null = null;
+    let drag: { x: number; y: number; id: number; moved: boolean } | null = null;
+    let suppressClick = false;
     const onDown = (event: PointerEvent): void => {
-      if (
-        event.button !== 0 ||
-        (event.target as Element).closest('button, a, input, .sequence-participant')
-      )
+      if (event.button !== 0 || (event.target as Element).closest('input, textarea, select'))
         return;
-      drag = {
-        x: event.clientX,
-        y: event.clientY,
-        left: element.scrollLeft,
-        top: element.scrollTop,
-      };
-      element.setPointerCapture(event.pointerId);
-      element.classList.add('is-panning');
+      drag = { x: event.clientX, y: event.clientY, id: event.pointerId, moved: false };
     };
     const onMove = (event: PointerEvent): void => {
       if (!drag) return;
-      element.scrollLeft = drag.left - (event.clientX - drag.x);
-      element.scrollTop = drag.top - (event.clientY - drag.y);
+      const dx = event.clientX - drag.x;
+      const dy = event.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      if (!drag.moved) {
+        drag.moved = true;
+        element.setPointerCapture(drag.id);
+        element.classList.add('is-panning');
+        setGliding(false);
+      }
+      drag.x = event.clientX;
+      drag.y = event.clientY;
+      setView((current) => {
+        const from = current ?? { x: 0, y: 0, scale: 1 };
+        return { ...from, x: from.x + dx, y: from.y + dy };
+      });
     };
-    const onUp = (event: PointerEvent): void => {
-      if (!drag) return;
+    const onUp = (): void => {
+      if (drag?.moved) {
+        suppressClick = true;
+        element.releasePointerCapture(drag.id);
+        element.classList.remove('is-panning');
+      }
       drag = null;
-      element.releasePointerCapture(event.pointerId);
-      element.classList.remove('is-panning');
+    };
+    // Ett drag som slutar på en knapp ska inte räknas som ett klick på den
+    const onClick = (event: MouseEvent): void => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.stopPropagation();
+      event.preventDefault();
     };
     element.addEventListener('pointerdown', onDown);
     element.addEventListener('pointermove', onMove);
     element.addEventListener('pointerup', onUp);
     element.addEventListener('pointercancel', onUp);
+    element.addEventListener('click', onClick, true);
     return () => {
       element.removeEventListener('pointerdown', onDown);
       element.removeEventListener('pointermove', onMove);
       element.removeEventListener('pointerup', onUp);
       element.removeEventListener('pointercancel', onUp);
+      element.removeEventListener('click', onClick, true);
     };
   }, []);
 
-  // Det aktiva meddelandet rullas fram när uppspelningen går vidare.
+  // Det aktiva meddelandet flyttas in i bild när uppspelningen går vidare.
   useEffect(() => {
-    const active = scrollRef.current?.querySelector('.sequence-message.is-active');
-    active?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    const element = viewportRef.current;
+    const active = element?.querySelector('.sequence-message.is-active');
+    if (!element || !active) return;
+    const box = element.getBoundingClientRect();
+    const target = active.getBoundingClientRect();
+    const margin = 48;
+    const dx =
+      target.left < box.left + margin
+        ? box.left + margin - target.left
+        : target.right > box.right - margin
+          ? box.right - margin - target.right
+          : 0;
+    const dy =
+      target.top < box.top + margin
+        ? box.top + margin - target.top
+        : target.bottom > box.bottom - margin
+          ? box.bottom - margin - target.bottom
+          : 0;
+    if (dx === 0 && dy === 0) return;
+    setGliding(true);
+    setView((current) => {
+      const from = current ?? { x: 0, y: 0, scale: 1 };
+      return { ...from, x: from.x + dx, y: from.y + dy };
+    });
   }, [stepIndex, sequence]);
 
   const statusOf = useCallback(
@@ -190,17 +258,25 @@ export function SequenceDiagram({
   const askingNodeId = asking?.kind === 'node' ? asking.node.id : null;
   const askingEdgeId = asking?.kind === 'edge' ? asking.edge.id : null;
   const lifelineBottom = sequence.height - SEQUENCE.margin / 2;
-  const style = {
+  const current = view ?? { x: 0, y: 0, scale: 1 };
+  const style: CSSProperties = {
     width: sequence.width,
     height: sequence.height,
-    zoom: scale ?? 1,
-  } as CSSProperties;
+    transform: `translate(${current.x}px, ${current.y}px) scale(${current.scale})`,
+  };
+  // Rutnätet följer med när ytan flyttas och zoomas
+  const grid = GRID * current.scale;
+  const viewportStyle: CSSProperties = {
+    backgroundSize: `${grid}px ${grid}px`,
+    backgroundPosition: `${current.x}px ${current.y}px`,
+    visibility: view ? 'visible' : 'hidden',
+  };
 
   return (
     <div className="sequence">
       <GraphStateContext.Provider value={graphState}>
-        <div className="sequence__scroll" ref={scrollRef}>
-          <div className="sequence__canvas" style={style}>
+        <div className="sequence__viewport" ref={viewportRef} style={viewportStyle}>
+          <div className={`sequence__canvas${gliding ? ' is-gliding' : ''}`} style={style}>
             <div className="sequence__heads" style={{ height: sequence.headerHeight }}>
               {sequence.bands.map((band) => (
                 <div

@@ -5,27 +5,31 @@
   border-top: 1px solid var(--bg-hover);
 }
 
-.sequence__scroll {
+.sequence__viewport {
   position: absolute;
   inset: 0;
-  overflow: auto;
+  overflow: hidden;
   background-color: var(--bg);
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 24px 24px;
-  /* Rutnätet följer med innehållet när ytan rullas eller dras */
-  background-attachment: local;
   cursor: grab;
+  touch-action: none;
 }
 
-.sequence__scroll.is-panning {
+.sequence__viewport.is-panning {
   cursor: grabbing;
   user-select: none;
 }
 
+/* Ytan flyttas och zoomas med transform, fritt åt alla håll som grafen */
 .sequence__canvas {
   position: relative;
+  transform-origin: 0 0;
+}
+
+.sequence__canvas.is-gliding {
+  transition: transform 300ms ease-out;
 }
 
 /* Rubriken ligger i samma yta som resten och följer med när man drar */
@@ -241,8 +245,6 @@
   align-items: center;
   gap: 4px;
   transform: translate(-50%, -100%);
-  scroll-margin-top: 24px;
-  scroll-margin-bottom: 24px;
   transition: opacity 200ms;
 }
 
