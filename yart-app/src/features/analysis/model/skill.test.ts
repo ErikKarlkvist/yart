@@ -30,6 +30,14 @@ describe('buildSkill', () => {
     }
   });
 
+  it('is only used when the user asks for yart', () => {
+    const frontmatter = skill.split('\n---\n')[0] ?? '';
+    expect(frontmatter).toContain('Use only when the user asks for something in yart');
+    expect(frontmatter).not.toContain('whenever');
+    expect(skill).toContain('Only when the user asks for yart.');
+    expect(skill).toContain('A review asked for without mentioning yart is answered the usual way');
+  });
+
   it('chooses between documents, flows and reviews', () => {
     expect(skill).toContain('Choose the deliverable that matches the question');
     expect(skill).toContain('Do not create Mermaid');
@@ -47,7 +55,7 @@ describe('buildSkill', () => {
     expect(skill).toContain('interface Trigger {');
     for (const kind of triggerKindSchema.options) expect(skill).toContain(`'${kind}'`);
     expect(skill).toContain('Write for people, keep the detail for AI');
-    expect(skill).toContain('The answer lives in');
+    expect(skill).toContain('the answer lives in yart, not in the chat');
     expect(skill).toContain('plan?: string;');
     expect(skill).toContain('fix?: string;');
     const example = JSON.parse(/```json\n([\s\S]*?)\n```/.exec(skill)?.[1] ?? '{}') as {
