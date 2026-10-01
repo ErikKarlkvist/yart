@@ -225,7 +225,7 @@
   "onboarding.path.codex": "Codex",
   "onboarding.path.manual": "External AI",
   "onboarding.builtinTitle": "1. {name}, installed and logged in",
-  "onboarding.builtinText": "{appName} runs the {command} command from your machine in the background, with your own login and no API key.",
+  "onboarding.builtinText": "{appName} runs the {command} command from your machine in the background.",
   "onboarding.externalAskTitle": "3. Open a repository and ask",
   "onboarding.externalAskText": "Choose a folder with Folder in the window bar, then ask your agent in its own terminal. For example:",
   "onboarding.externalPrefix": "In {appName}:",
