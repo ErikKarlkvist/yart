@@ -1,6 +1,7 @@
 import { type JSX, useEffect, useId, useRef, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
+import { Markdown } from '@/common/renderer/Markdown';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { AGENT_PERMISSIONS, DEFAULT_CHOICE } from '@/common/model/agent';
 import { useAgent } from '../AgentContext';
@@ -362,7 +363,11 @@ export function AgentPanel(): JSX.Element {
                   <span className="agent__time">
                     {new Date(group.entry.at).toLocaleTimeString(LOCALE, { timeStyle: 'short' })}
                   </span>
-                  <p className="agent__text">{group.entry.text}</p>
+                  {group.entry.kind === 'assistant' ? (
+                    <Markdown text={group.entry.text} className="agent__text agent__text--rich" />
+                  ) : (
+                    <p className="agent__text">{group.entry.text}</p>
+                  )}
                   {group.entry.kind === 'error' && isLoginError(group.entry.text) && (
                     <p className="agent__hint">{t('agent.loginHint')}</p>
                   )}

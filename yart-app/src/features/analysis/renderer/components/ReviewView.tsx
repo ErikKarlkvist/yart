@@ -231,11 +231,12 @@ function FindingRow({
         )}
       </div>
       <div className="document-view__finding-body">
-        <p className="document-view__finding-text">{finding.description}</p>
+        <Markdown text={finding.description} className="document-view__finding-text" />
         {finding.suggestion && (
-          <p className="document-view__finding-text">
-            <strong>{t('review.suggestion')}</strong> {finding.suggestion}
-          </p>
+          <div className="document-view__finding-suggestion">
+            <strong>{t('review.suggestion')}</strong>
+            <Markdown text={finding.suggestion} className="document-view__finding-text" />
+          </div>
         )}
       </div>
     </li>

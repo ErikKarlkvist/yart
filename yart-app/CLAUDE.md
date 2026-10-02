@@ -42,8 +42,9 @@ levererar via MCP som vanligt.
 
 ## Innehåll: kort för människor, detaljer för AI
 
-Dokument och reviewer skrivs som kort markdown med rubriker och punktlistor
-(`src/common/model/markdown.ts`). Det en agent behöver ligger i egna fält som inte visas:
+Dokument och reviewer skrivs som kort markdown med rubriker och punktlistor. All markdown,
+också agentens svar i chatten, ritas av `Markdown` i `src/common/renderer/Markdown.tsx`
+(react-markdown med GFM; länkar öppnas i webbläsaren, rå HTML blir text). Det en agent behöver ligger i egna fält som inte visas:
 `plan` på dokument och `fix` på fynd. Ur dem och flödena byggs implementationsplanen och
 fix-planen som kopieras eller skickas till agenten (`src/features/analysis/model/plan.ts`).
 Flöden har en `trigger`, det som startar dem, som ritas på startnoden.
