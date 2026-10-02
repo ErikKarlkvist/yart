@@ -7,6 +7,7 @@ import { Icon } from '@/common/renderer/Icon';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { useAgent } from '@/features/agent';
 import { analysisTitle, findingsForFlow, useAnalyses } from '@/features/analysis';
+import { type FlowPaths } from '@/features/flow-graph';
 import { DockLayout, DockResizeHandle, DockToggles, useDock, ViewsMenu } from '@/features/layout';
 import { useMcpStatus, useSetup } from '@/features/mcp';
 import { RepoMenu, useRepo } from '@/features/repo';
@@ -34,6 +35,8 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
   // Valt fynd taggas med analysen. Räknaren låter samma fynd fokuseras igen.
   const [focused, setFocused] = useState<{ analysisId: string; findingId: string } | null>(null);
   const [focusSeq, setFocusSeq] = useState(0);
+  // Vägvalen i flödet som spelas, visas i panelen Paths
+  const [paths, setPaths] = useState<FlowPaths | null>(null);
   const focusedFindingId =
     focused !== null && focused.analysisId === current?.id ? focused.findingId : null;
   const flow = current?.kind === 'flow' ? current : null;
@@ -85,6 +88,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
     findings,
     source: flow ? source : null,
     focusedFindingId,
+    paths: flow ? paths : null,
     onFocusFinding: onFocusInCurrent,
   });
 
@@ -120,6 +124,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
             hasRepo={repo !== null}
             onAsk={onAsk}
             onActiveEdgeChange={onActiveEdgeChange}
+            onPathsChange={setPaths}
             onSelectSource={setSource}
             focusedFindingId={focusedFindingId}
             focusSeq={focusSeq}
