@@ -34,11 +34,6 @@
   line-height: 1.7;
 }
 
-.document-view__content p {
-  margin: 0 0 16px;
-  white-space: pre-line;
-}
-
 .document-view__flows {
   max-width: 720px;
   margin-top: 32px;
@@ -173,7 +168,7 @@ button.document-view__finding-open:hover .document-view__finding-title {
   line-height: 1.5;
 }
 
-/* Läsbar text: rubriker och listor i dokumentets innehåll */
+/* Läsbar text: rubrikerna i dokumentets innehåll är lite större än i chatten */
 .document-view__content h3 {
   margin: 24px 0 8px;
   font-size: 16px;
@@ -184,26 +179,16 @@ button.document-view__finding-open:hover .document-view__finding-title {
   font-size: 14px;
 }
 
-.document-view__content > :first-child {
-  margin-top: 0;
-}
-
+.document-view__content p,
 .document-view__content ul,
 .document-view__content ol {
-  margin: 0 0 16px;
-  padding-left: 22px;
+  margin-bottom: 16px;
 }
 
-.document-view__content li {
-  margin: 0 0 4px;
-}
-
-.document-view__content code,
-.document-view__finding-text code {
-  padding: 1px 5px;
-  background: var(--bg-panel);
-  font-family: var(--font-mono);
-  font-size: 12px;
+.document-view__finding-suggestion {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
 }
 
 /* Reviewpunkterna, att välja till en fix-plan */

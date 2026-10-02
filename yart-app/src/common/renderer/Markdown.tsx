@@ -1,59 +1,39 @@
 import { type JSX } from 'react';
-import { type InlinePart, parseMarkdown } from '@/common/model/markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import './markdown.css';
 
-/** Rubriknivåerna i texten under dokumentets egen rubrik */
-const HEADINGS = { 1: 'h3', 2: 'h3', 3: 'h4' } as const;
+/**
+ * Rubrikerna hamnar under vyns egen rubrik, så # och ## blir h3 och djupare h4.
+ * Länkar öppnas i webbläsaren: target _blank går via fönstrets openhandler i main.
+ * Rå HTML i texten visas som text, aldrig som element.
+ */
+const COMPONENTS: Components = {
+  h1: ({ children }) => <h3>{children}</h3>,
+  h2: ({ children }) => <h3>{children}</h3>,
+  h3: ({ children }) => <h4>{children}</h4>,
+  h4: ({ children }) => <h4>{children}</h4>,
+  h5: ({ children }) => <h4>{children}</h4>,
+  h6: ({ children }) => <h4>{children}</h4>,
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noreferrer" title={href}>
+      {children}
+    </a>
+  ),
+  table: ({ children }) => (
+    <div className="markdown__table">
+      <table>{children}</table>
+    </div>
+  ),
+};
 
-/** Läsbar text i den lilla markdown dokument och reviewer skrivs i. */
+/** Markdown i dokument, reviewer och agentens svar: GFM med länkar, tabeller och kodblock. */
 export function Markdown({ text, className }: { text: string; className?: string }): JSX.Element {
   return (
     <div className={className ? `markdown ${className}` : 'markdown'}>
-      {parseMarkdown(text).map((block, index) => {
-        switch (block.kind) {
-          case 'heading': {
-            const Tag = HEADINGS[block.level];
-            return (
-              <Tag key={index}>
-                <Inline parts={block.content} />
-              </Tag>
-            );
-          }
-          case 'paragraph':
-            return (
-              <p key={index}>
-                <Inline parts={block.content} />
-              </p>
-            );
-          case 'list': {
-            const Tag = block.ordered ? 'ol' : 'ul';
-            return (
-              <Tag key={index}>
-                {block.items.map((item, i) => (
-                  <li key={i}>
-                    <Inline parts={item} />
-                  </li>
-                ))}
-              </Tag>
-            );
-          }
-        }
-      })}
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={COMPONENTS}>
+        {text}
+      </ReactMarkdown>
     </div>
-  );
-}
-
-function Inline({ parts }: { parts: InlinePart[] }): JSX.Element {
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.kind === 'strong' ? (
-          <strong key={i}>{part.text}</strong>
-        ) : part.kind === 'code' ? (
-          <code key={i}>{part.text}</code>
-        ) : (
-          <span key={i}>{part.text}</span>
-        ),
-      )}
-    </>
   );
 }

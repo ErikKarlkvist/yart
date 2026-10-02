@@ -221,6 +221,11 @@
   line-height: 1.5;
 }
 
+/* Agentens svar är markdown; radbrytningar kommer från styckena, inte från texten */
+.agent__text--rich {
+  white-space: normal;
+}
+
 .agent__compose {
   padding: 10px 14px 12px;
   border-top: 1px solid var(--border);
