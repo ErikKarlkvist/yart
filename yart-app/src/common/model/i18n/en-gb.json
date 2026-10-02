@@ -11,6 +11,7 @@
   "side.copied": "Copied",
   "panel.code": "Code",
   "panel.review": "Review",
+  "panel.paths": "Paths",
   "panel.log": "Log",
   "repo.none": "No repository selected. Use Folder in the window bar.",
   "repo.folder": "Folder",

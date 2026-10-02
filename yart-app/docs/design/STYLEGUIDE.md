@@ -114,7 +114,9 @@ på fält: accentkant, ingen outline.
   (`trigger`-ikonen) i en ruta med `--fg`-kant och en pil in i noden. Grafens `fitView`
   lämnar plats för den till vänster.
 - Uppspelning: knappgrupp, ett segment per steg (spelade i accent), räknare `03/10`.
-  Under raden står flödets vägval (alt) som frågan i muted och en grupperad knapp per gren.
+- Vägvalen (alt) har en egen panel, Paths: en rad per alternativ med frågan till vänster
+  och grenarna som grupperade knappar högerställda, vald gren fylld. Panelen finns bara när
+  flödet har alt och kan stängas som andra flikar.
 
 ## Sekvensdiagrammet
 

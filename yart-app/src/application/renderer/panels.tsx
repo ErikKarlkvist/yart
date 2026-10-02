@@ -3,7 +3,7 @@ import { t } from '@/common/model/i18n';
 import { type ReviewFinding } from '@/common/model/review';
 import { AgentPanel } from '@/features/agent';
 import { DeliveryLog, type SavedFlowAnalysis } from '@/features/analysis';
-import { ReviewPanel } from '@/features/flow-graph';
+import { type FlowPaths, PathsPanel, ReviewPanel } from '@/features/flow-graph';
 import { type DockLayoutState, type DockPanel } from '@/features/layout';
 import { ConnectPanel, type McpState } from '@/features/mcp';
 import { SourceView } from '@/features/repo';
@@ -14,13 +14,13 @@ import { AnalysesPanel } from './AnalysesPanel';
  * standardlayouten och en definition i usePanels. Sparade layouter får nya
  * paneler i sin standarddocka.
  */
-const PANEL_IDS = ['analyses', 'code', 'flowReview', 'log', 'agent', 'connect'] as const;
+const PANEL_IDS = ['analyses', 'code', 'paths', 'flowReview', 'log', 'agent', 'connect'] as const;
 export type PanelId = (typeof PANEL_IDS)[number];
 
 export const DEFAULT_LAYOUT: DockLayoutState = {
   left: { panels: ['analyses'], closed: [], active: 'analyses', open: true, size: 300 },
   bottom: {
-    panels: ['code', 'flowReview', 'log'],
+    panels: ['code', 'paths', 'flowReview', 'log'],
     closed: [],
     active: 'code',
     open: true,
@@ -47,6 +47,8 @@ interface PanelContext {
   /** Koden för steget som spelas eller klickats, bara när ett flöde är valt */
   source: SourceRef | null;
   focusedFindingId: string | null;
+  /** Vägvalen i flödet som spelas, null när det saknar alt */
+  paths: FlowPaths | null;
   /** Fokuserar ett fynd i det valda flödet */
   onFocusFinding: (findingId: string | null) => void;
 }
@@ -58,6 +60,7 @@ export function usePanels({
   findings,
   source,
   focusedFindingId,
+  paths,
   onFocusFinding,
 }: PanelContext): DockPanel[] {
   const panels: Record<PanelId, Omit<DockPanel, 'id'>> = {
@@ -69,6 +72,11 @@ export function usePanels({
       title: t('panel.code'),
       available: source !== null,
       content: source && <SourceView source={source} commit={flow?.ref?.commit} />,
+    },
+    paths: {
+      title: t('panel.paths'),
+      available: paths !== null,
+      content: paths && <PathsPanel paths={paths} />,
     },
     flowReview: {
       title: t('panel.review'),

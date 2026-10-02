@@ -9,7 +9,7 @@ import {
   type SavedAnalysis,
   type SavedFlowAnalysis,
 } from '@/features/analysis';
-import { FlowPlayer } from '@/features/flow-graph';
+import { type FlowPaths, FlowPlayer } from '@/features/flow-graph';
 
 interface Props {
   analysis: SavedAnalysis | null;
@@ -20,6 +20,7 @@ interface Props {
   hasRepo: boolean;
   onAsk: (prompt: string) => void;
   onActiveEdgeChange: (edge: FlowEdge | null) => void;
+  onPathsChange: (paths: FlowPaths | null) => void;
   onSelectSource: (source: SourceRef) => void;
   /** Valt fynd, ägs av skalet så reviewdokumentet kan sätta det */
   focusedFindingId: string | null;
@@ -43,6 +44,7 @@ export function Workspace({
   hasRepo,
   onAsk,
   onActiveEdgeChange,
+  onPathsChange,
   onSelectSource,
   focusedFindingId,
   focusSeq,
@@ -60,6 +62,7 @@ export function Workspace({
           key={analysis.id}
           flow={analysis.flow}
           onActiveEdgeChange={onActiveEdgeChange}
+          onPathsChange={onPathsChange}
           onSelectSource={onSelectSource}
           flowName={analysis.name}
           onAsk={onAsk}

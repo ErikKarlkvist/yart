@@ -10,6 +10,7 @@ import {
 } from '@/common/model/review';
 import {
   type AltChoices,
+  type PlayedAlt,
   choicesFor,
   choicesForBranch,
   playedAlts,
@@ -57,6 +58,13 @@ interface Props {
   /** Räknas upp vid varje fokusering, uppspelningen spolar då till fyndets steg */
   focusSeq?: number | undefined;
   onFocusFinding?: ((findingId: string) => void) | undefined;
+  /** Vägvalen i flödet och hur man väljer gren, för panelen Paths. null när flödet saknar alt. */
+  onPathsChange?: ((paths: FlowPaths | null) => void) | undefined;
+}
+
+export interface FlowPaths {
+  alts: readonly PlayedAlt[];
+  choose: (key: string, branch: number) => void;
 }
 
 /**
@@ -75,6 +83,7 @@ export function FlowPlayer({
   focusedFindingId = null,
   focusSeq = 0,
   onFocusFinding,
+  onPathsChange,
 }: Props): JSX.Element {
   const [view, setView] = useState<GraphView>({ kind: 'system' });
   const [layout, setLayout] = useStoredChoice<FlowLayout>('yart.flowLayout', LAYOUTS, 'sequence');
@@ -202,6 +211,25 @@ export function FlowPlayer({
     },
     [choices, graphFlow, layout, view, annotations, playback],
   );
+
+  // Panelen får en stabil väljare; den senaste chooseBranch nås via en ref.
+  const chooseRef = useRef(chooseBranch);
+  useEffect(() => {
+    chooseRef.current = chooseBranch;
+  }, [chooseBranch]);
+  useEffect(() => {
+    onPathsChange?.(
+      alts.length > 0
+        ? {
+            alts,
+            choose: (key, branch) => {
+              chooseRef.current(key, branch);
+            },
+          }
+        : null,
+    );
+  }, [alts, onPathsChange]);
+  useEffect(() => () => onPathsChange?.(null), [onPathsChange]);
 
   /** Klick på ett meddelande hoppar dit, via grenen det ligger i om den inte spelas. */
   const selectMessage = useCallback(
@@ -442,13 +470,7 @@ export function FlowPlayer({
         />
       )}
       <div className="player__divider">{beforeControls}</div>
-      <PlaybackControls
-        steps={steps}
-        playback={playback}
-        highlights={highlights}
-        alts={alts}
-        onChooseBranch={chooseBranch}
-      />
+      <PlaybackControls steps={steps} playback={playback} highlights={highlights} />
     </div>
   );
 }

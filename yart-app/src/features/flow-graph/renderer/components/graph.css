@@ -1365,55 +1365,6 @@ button.crumb:hover:not(:disabled) {
   font-variant-numeric: tabular-nums;
 }
 
-/* Vägval: ett alternativ per grupp, frågan och en knapp per gren */
-.playback__alts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.playback__alt {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.playback__alt-label {
-  color: var(--fg-muted);
-}
-
-.playback__alt-branches {
-  display: flex;
-  border: 1px solid var(--border-strong);
-}
-
-.playback__alt-branch {
-  height: 22px;
-  padding: 0 8px;
-  border: none;
-  background: none;
-  color: var(--fg-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.playback__alt-branch + .playback__alt-branch {
-  border-left: 1px solid var(--border-strong);
-}
-
-.playback__alt-branch:hover:not(.is-selected) {
-  color: var(--fg);
-}
-
-.playback__alt-branch.is-selected {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-
 .playback__text {
   display: flex;
   gap: 10px;
@@ -1581,4 +1532,61 @@ button.crumb:hover:not(:disabled) {
   width: 14px;
   height: 3px;
   background: var(--highlight-color);
+}
+
+/* Panelen Paths: frågan till vänster, en flik per gren högerställd */
+.paths {
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.paths__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  padding: 4px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.paths__question {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--fg-body);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paths__branches {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+  border: 1px solid var(--border-strong);
+}
+
+.paths__branch {
+  height: 24px;
+  padding: 0 10px;
+  border: none;
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.paths__branch + .paths__branch {
+  border-left: 1px solid var(--border-strong);
+}
+
+.paths__branch:hover:not(.is-selected) {
+  color: var(--fg);
+}
+
+.paths__branch.is-selected {
+  background: var(--accent);
+  color: var(--on-accent);
 }
