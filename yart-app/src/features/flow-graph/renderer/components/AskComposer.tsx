@@ -5,25 +5,34 @@ import { askLabel, askSource, type AskTarget } from '../../model/ask';
 
 interface Props {
   target: AskTarget;
-  onSend: (question: string) => void;
-  onCopy: (question: string) => Promise<void>;
+  /** Utkastet ägs av spelaren, så det överlever att målet byts */
+  question: string;
+  onChange: (question: string) => void;
+  onSend: () => void;
+  onCopy: () => Promise<void>;
   onCancel: () => void;
 }
 
 /** Frågerutan som ligger över grafen när något pekats ut. Enter skickar, Escape stänger. */
-export function AskComposer({ target, onSend, onCopy, onCancel }: Props): JSX.Element {
-  const [question, setQuestion] = useState('');
+export function AskComposer({
+  target,
+  question,
+  onChange,
+  onSend,
+  onCopy,
+  onCancel,
+}: Props): JSX.Element {
   const [copied, setCopied] = useState(false);
   const label = askLabel(target);
   const source = askSource(target);
   const ready = question.trim().length > 0;
 
   const send = (): void => {
-    if (ready) onSend(question);
+    if (ready) onSend();
   };
   const copy = (): void => {
     if (!ready) return;
-    onCopy(question)
+    onCopy()
       .then(() => {
         setCopied(true);
       })
@@ -61,7 +70,7 @@ export function AskComposer({ target, onSend, onCopy, onCancel }: Props): JSX.El
         value={question}
         placeholder={t('ask.placeholder', { label })}
         onChange={(event) => {
-          setQuestion(event.target.value);
+          onChange(event.target.value);
           setCopied(false);
         }}
         onKeyDown={onKeyDown}

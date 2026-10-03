@@ -7,6 +7,8 @@ import { AGENT_PERMISSIONS, DEFAULT_CHOICE } from '@/common/model/agent';
 import { useAgent } from '../AgentContext';
 import { useAgentModels } from '../useAgentModels';
 import { groupEntries } from '../../model/groupEntries';
+import { type AgentQuestion } from '../../model/approval';
+import { type AgentEntry } from '../../model/protocol';
 import { useSetup } from '@/features/mcp';
 import { defaultBaseBranch, listBranchesChannel, useRepo } from '@/features/repo';
 import './agent.css';
@@ -37,6 +39,9 @@ export function AgentPanel(): JSX.Element {
     lastPrompt,
     ask,
     stop,
+    queued,
+    sendNow,
+    removeQueued,
     choose,
     startNew,
     selectMode,
@@ -94,7 +99,8 @@ export function AgentPanel(): JSX.Element {
       !activeId && mode === 'review' && !draft.trim()
         ? t('agent.reviewDefaultPrompt', { head, base })
         : draft.trim();
-    if (!prompt || !hasRepo || state === 'busy') return;
+    // Medan agenten arbetar köas frågan i stället
+    if (!prompt || !hasRepo) return;
     if (
       !activeId &&
       mode === 'review' &&
@@ -332,14 +338,13 @@ export function AgentPanel(): JSX.Element {
           className="button--primary agent__send"
           disabled={
             !hasRepo ||
-            busy ||
             (!activeId && mode === 'review'
               ? !branches.includes(head) || !branches.includes(base) || head === base
               : draft.trim() === '')
           }
           onClick={send}
         >
-          {t('agent.send')}
+          {busy ? t('agent.queue') : t('agent.send')}
         </button>
       </div>
     </div>
@@ -381,37 +386,79 @@ export function AgentPanel(): JSX.Element {
               </li>
             ),
           )}
-          {approvals.map((approval) => (
-            <li key={approval.id} className="agent__entry agent__entry--approval">
-              <p className="agent__approval-title">
-                {t('agent.approvalAsk', { tool: approval.tool })}
-              </p>
-              <code className="agent__approval-detail">{approval.detail}</code>
-              <div className="agent__approval-actions">
+          {approvals.map((approval) =>
+            approval.questions ? (
+              <QuestionCard
+                key={approval.id}
+                questions={approval.questions}
+                onAnswer={(answers) => {
+                  answer(approval.id, true, answers);
+                }}
+                onSkip={() => {
+                  answer(approval.id, false, {});
+                }}
+              />
+            ) : (
+              <li key={approval.id} className="agent__entry agent__entry--approval">
+                <p className="agent__approval-title">
+                  {t('agent.approvalAsk', { tool: approval.tool })}
+                </p>
+                <code className="agent__approval-detail">{approval.detail}</code>
+                <div className="agent__approval-actions">
+                  <button
+                    type="button"
+                    className="button--primary agent__allow"
+                    onClick={() => {
+                      answer(approval.id, true);
+                    }}
+                  >
+                    {t('agent.allow')}
+                  </button>
+                  <button
+                    type="button"
+                    className="button agent__deny"
+                    onClick={() => {
+                      answer(approval.id, false);
+                    }}
+                  >
+                    {t('agent.deny')}
+                  </button>
+                </div>
+              </li>
+            ),
+          )}
+          {busy && approvals.length === 0 && (
+            <WorkingStatus since={turnStart(entries)} tool={latestTool(entries)} />
+          )}
+          {queued.map((text, index) => (
+            <li key={index} className="agent__entry agent__entry--queued">
+              <span className="agent__queued-label">{t('agent.queued')}</span>
+              <p className="agent__text">{text}</p>
+              <div className="agent__queued-actions">
                 <button
                   type="button"
-                  className="button--primary agent__allow"
+                  className="button agent__send-now"
+                  title={t('agent.sendNowHint')}
                   onClick={() => {
-                    answer(approval.id, true);
+                    sendNow(index);
                   }}
                 >
-                  {t('agent.allow')}
+                  {t('agent.sendNow')}
                 </button>
                 <button
                   type="button"
-                  className="button agent__deny"
+                  className="icon-button icon-button--quiet"
+                  title={t('agent.removeQueued')}
+                  aria-label={t('agent.removeQueued')}
                   onClick={() => {
-                    answer(approval.id, false);
+                    removeQueued(index);
                   }}
                 >
-                  {t('agent.deny')}
+                  <Icon name="close" size="sm" />
                 </button>
               </div>
             </li>
           ))}
-          {busy && approvals.length === 0 && (
-            <li className="agent__entry agent__entry--busy">{t('agent.working')}</li>
-          )}
         </ol>
       </div>
       {composer}
@@ -430,8 +477,8 @@ function capitalise(text: string): string {
  */
 function ToolGroup({ names }: { names: string[] }): JSX.Element {
   const [open, setOpen] = useState(false);
-  // Varje verktyg en gång, i den ordning de först anropades
-  const unique = [...new Set(names)].join(' · ');
+  // Bara det senaste anropet syns; resten fälls ut vid klick
+  const latest = names[names.length - 1] ?? '';
   return (
     <li className="agent__entry agent__entry--tool">
       <button
@@ -444,7 +491,7 @@ function ToolGroup({ names }: { names: string[] }): JSX.Element {
         }}
       >
         {names.length > 1 && <Icon name={open ? 'chevronDown' : 'chevronRight'} size="sm" />}
-        <span className="agent__tool-names">{unique}</span>
+        <span className="agent__tool-names">{toolLabel(latest)}</span>
         {names.length > 1 && (
           <span className="agent__tool-count">{t('agent.toolCalls', { count: names.length })}</span>
         )}
@@ -452,10 +499,161 @@ function ToolGroup({ names }: { names: string[] }): JSX.Element {
       {open && (
         <ol className="agent__tool-list">
           {names.map((name, i) => (
-            <li key={i}>{name}</li>
+            <li key={i}>{toolLabel(name)}</li>
           ))}
         </ol>
       )}
+    </li>
+  );
+}
+
+/** När turen började: den senaste frågan, så räknaren stämmer även efter byte av konversation. */
+function turnStart(entries: readonly AgentEntry[]): number {
+  const last = [...entries].reverse().find((entry) => entry.kind === 'user');
+  return last ? Date.parse(last.at) : Date.now();
+}
+
+/** Det senaste verktyget i pågående tur, om agenten anropat något. */
+function latestTool(entries: readonly AgentEntry[]): string | null {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const entry = entries[i];
+    if (!entry || entry.kind === 'user') return null;
+    if (entry.kind === 'tool') return entry.name;
+  }
+  return null;
+}
+
+/** MCP-verktyg heter mcp__server__verktyg; servern är brus i en statusrad. */
+function toolLabel(name: string): string {
+  const parts = name.split('__');
+  return parts.length >= 3 && parts[0] === 'mcp' ? parts.slice(2).join('__') : name;
+}
+
+/** 0:07, 1:23, 1:02:03 */
+function formatElapsed(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = String(total % 60).padStart(2, '0');
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}`
+    : `${minutes}:${seconds}`;
+}
+
+/** Snurra, text och en räknare som tickar medan agenten arbetar, med det senaste verktyget. */
+function WorkingStatus({ since, tool }: { since: number; tool: string | null }): JSX.Element {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => {
+      clearInterval(id);
+    };
+  }, []);
+  return (
+    <li className="agent__entry agent__entry--busy" aria-live="polite">
+      <span className="agent__spinner" aria-hidden="true" />
+      <span className="agent__working">{t('agent.working')}</span>
+      {tool && <span className="agent__working-tool">{toolLabel(tool)}</span>}
+      <span className="agent__elapsed">{formatElapsed(now - since)}</span>
+    </li>
+  );
+}
+
+/**
+ * Agentens frågor: ett val per fråga bland alternativen, eller ett eget svar.
+ * Svaren går tillbaka till agenten som om användaren svarat i terminalen.
+ */
+function QuestionCard({
+  questions,
+  onAnswer,
+  onSkip,
+}: {
+  questions: readonly AgentQuestion[];
+  onAnswer: (answers: Record<string, string>) => void;
+  onSkip: () => void;
+}): JSX.Element {
+  const [chosen, setChosen] = useState<Record<string, string[]>>({});
+  const [other, setOther] = useState<Record<string, string>>({});
+  const answerFor = (question: AgentQuestion): string => {
+    const custom = other[question.question]?.trim() ?? '';
+    const picked = chosen[question.question] ?? [];
+    return [...picked, ...(custom ? [custom] : [])].join(', ');
+  };
+  const complete = questions.every((question) => answerFor(question) !== '');
+  const toggle = (question: AgentQuestion, label: string): void => {
+    setChosen((current) => {
+      const picked = current[question.question] ?? [];
+      const next = question.multiSelect
+        ? picked.includes(label)
+          ? picked.filter((item) => item !== label)
+          : [...picked, label]
+        : picked.includes(label)
+          ? []
+          : [label];
+      return { ...current, [question.question]: next };
+    });
+  };
+  return (
+    <li className="agent__entry agent__entry--approval agent__entry--question">
+      <p className="agent__approval-title">{t('agent.questionTitle')}</p>
+      {questions.map((question) => (
+        <div key={question.question} className="agent__question">
+          {question.header && <span className="agent__question-header">{question.header}</span>}
+          <p className="agent__question-text">{question.question}</p>
+          <div className="agent__question-options">
+            {question.options.map((option) => {
+              const selected = (chosen[question.question] ?? []).includes(option.label);
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  className={`agent__question-option${selected ? ' is-selected' : ''}`}
+                  aria-pressed={selected}
+                  title={option.description}
+                  onClick={() => {
+                    toggle(question, option.label);
+                  }}
+                >
+                  <span className="agent__question-label">{option.label}</span>
+                  {option.description && (
+                    <span className="agent__question-description">{option.description}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            className="agent__question-other"
+            placeholder={t('agent.otherAnswer')}
+            value={other[question.question] ?? ''}
+            onChange={(event) => {
+              const value = event.target.value;
+              setOther((current) => ({ ...current, [question.question]: value }));
+            }}
+          />
+        </div>
+      ))}
+      <div className="agent__approval-actions">
+        <button
+          type="button"
+          className="button--primary agent__allow"
+          disabled={!complete}
+          onClick={() => {
+            onAnswer(
+              Object.fromEntries(
+                questions.map((question) => [question.question, answerFor(question)]),
+              ),
+            );
+          }}
+        >
+          {t('agent.answerQuestions')}
+        </button>
+        <button type="button" className="button agent__deny" onClick={onSkip}>
+          {t('agent.skipQuestions')}
+        </button>
+      </div>
     </li>
   );
 }

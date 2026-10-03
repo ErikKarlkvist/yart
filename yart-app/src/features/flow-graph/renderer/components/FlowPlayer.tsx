@@ -151,16 +151,17 @@ export function FlowPlayer({
   const playback = useFlowPlayback(steps.length);
   const hiddenCount = hiddenNodes.size + hiddenEdges.size;
   const [asking, setAsking] = useState<AskTarget | null>(null);
+  // Utkastet ligger här, inte i frågerutan, så texten överlever byte av mål och vy
+  const [question, setQuestion] = useState('');
   const cancelAsk = useCallback(() => {
     setAsking(null);
+    setQuestion('');
   }, []);
-  const sendAsk = useCallback(
-    (question: string) => {
-      if (asking) onAsk?.(buildAskPrompt(flow, asking, question, flowName));
-      setAsking(null);
-    },
-    [asking, flow, flowName, onAsk],
-  );
+  const sendAsk = useCallback(() => {
+    if (asking) onAsk?.(buildAskPrompt(flow, asking, question, flowName));
+    setAsking(null);
+    setQuestion('');
+  }, [asking, flow, flowName, onAsk, question]);
 
   useEffect(() => {
     const step = steps[playback.stepIndex];
@@ -328,10 +329,11 @@ export function FlowPlayer({
   const overlay =
     onAsk && asking ? (
       <AskComposer
-        key={askKey(asking)}
         target={asking}
+        question={question}
+        onChange={setQuestion}
         onSend={sendAsk}
-        onCopy={(question) =>
+        onCopy={() =>
           navigator.clipboard.writeText(buildAskPrompt(flow, asking, question, flowName))
         }
         onCancel={cancelAsk}
@@ -473,8 +475,4 @@ export function FlowPlayer({
       <PlaybackControls steps={steps} playback={playback} highlights={highlights} />
     </div>
   );
-}
-
-function askKey(target: AskTarget): string {
-  return target.kind === 'node' ? `node:${target.node.id}` : `edge:${target.edge.id}`;
 }

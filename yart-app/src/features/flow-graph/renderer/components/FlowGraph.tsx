@@ -32,6 +32,7 @@ import {
 } from '../../model/layout';
 import { type StepStatus, stepView } from '../../model/playback';
 import { combinedHighlight, edgeHighlight } from '../../model/highlight';
+import { useLingeringHover } from '../hooks/useLingeringHover';
 import { type EdgeMemberData, FlowEdgeView, type GraphEdge } from './FlowEdgeView';
 import { FlowNodeView, type GraphNode } from './FlowNodeView';
 import { GraphStateContext } from './GraphStateContext';
@@ -99,7 +100,8 @@ export function FlowGraph({
   onFocusFinding,
   overlay,
 }: Props): JSX.Element {
-  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
+  // Hovern dröjer kvar så musen hinner från linjen upp till etiketten, som ritas i ett eget lager
+  const [hoveredEdge, hoverEdge] = useLingeringHover();
   const [pinnedEdge, setPinnedEdge] = useState<string | null>(null);
   const togglePinned = useCallback((edgeId: string) => {
     setPinnedEdge((current) => (current === edgeId ? null : edgeId));
@@ -260,6 +262,7 @@ export function FlowGraph({
           offset: placement?.offset ?? 0,
           direction: placement?.direction ?? 'forward',
           hovered: open,
+          onHover: hoverEdge,
           askingId,
           onAsk: askEdge,
           pinned: pinnedEdge === edge.id,
@@ -279,6 +282,7 @@ export function FlowGraph({
     layout,
     view,
     hoveredEdge,
+    hoverEdge,
     selected,
     asking,
     askEdge,
@@ -319,12 +323,15 @@ export function FlowGraph({
     [visualEdges, onHideEdges],
   );
 
-  const onEdgeMouseEnter = useCallback<EdgeMouseHandler<AnyEdge>>((_, edge) => {
-    if (edge.type === 'flow') setHoveredEdge(edge.id);
-  }, []);
+  const onEdgeMouseEnter = useCallback<EdgeMouseHandler<AnyEdge>>(
+    (_, edge) => {
+      if (edge.type === 'flow') hoverEdge(edge.id);
+    },
+    [hoverEdge],
+  );
   const onEdgeMouseLeave = useCallback<EdgeMouseHandler<AnyEdge>>(() => {
-    setHoveredEdge(null);
-  }, []);
+    hoverEdge(null);
+  }, [hoverEdge]);
   const onNodeMouseEnter = useCallback<NodeMouseHandler<Node>>((_, node) => {
     setHoveredNode(node.id);
   }, []);

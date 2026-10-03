@@ -19,6 +19,7 @@ import { type GraphNode } from '../../model/graph';
 import { edgeHighlight, type FlowHighlight } from '../../model/highlight';
 import { type StepStatus } from '../../model/playback';
 import { SEQUENCE, type Sequence, type SequenceMessage } from '../../model/sequence';
+import { useLingeringHover } from '../hooks/useLingeringHover';
 import { AskButton } from './AskButton';
 import { FindingFlag } from './FindingFlag';
 import { GraphStateContext } from './GraphStateContext';
@@ -88,7 +89,8 @@ export function SequenceDiagram({
 }: Props): JSX.Element {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<Viewport | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
+  // Hovern dröjer kvar så musen hinner från etiketten in i detaljrutan under den
+  const [hovered, hover] = useLingeringHover();
   // Uppspelningen flyttar vyn mjukt; drag och hjul flyttar den direkt
   const [gliding, setGliding] = useState(false);
 
@@ -536,10 +538,10 @@ export function SequenceDiagram({
                   className={`sequence-message is-${status}${message.self ? ' is-self' : ''}${highlight ? ` is-highlight-${highlight}` : ''}${open ? ' is-open' : ''}${focused ? ' is-focused' : ''}`}
                   style={position}
                   onMouseEnter={() => {
-                    setHovered(message.id);
+                    hover(message.id);
                   }}
                   onMouseLeave={() => {
-                    setHovered((current) => (current === message.id ? null : current));
+                    hover(null);
                   }}
                 >
                   <button

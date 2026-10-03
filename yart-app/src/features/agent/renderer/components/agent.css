@@ -163,10 +163,92 @@
 }
 
 .agent__entry--busy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border: none;
-  color: var(--fg-muted);
-  font-style: italic;
   background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* Snurran: en fyrkant som roterar, raka hörn som allt annat */
+.agent__spinner {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--accent);
+  border-right-color: transparent;
+  animation: agent-spin 800ms linear infinite;
+}
+
+@keyframes agent-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Texten glimmar så det syns att något pågår även när räknaren står still */
+.agent__working {
+  color: var(--fg);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  animation: agent-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes agent-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.agent__working-tool {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent__elapsed {
+  margin-left: auto;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Köade meddelanden väntar under konversationen med Send now */
+.agent__entry--queued {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px dashed var(--border-strong);
+  background: none;
+  color: var(--fg-muted);
+}
+
+.agent__queued-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.agent__queued-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.agent__queued-actions .button {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.agent__queued-actions .icon-button {
+  width: 26px;
+  height: 26px;
 }
 
 .agent__tool {
@@ -343,4 +425,75 @@
 
 .agent__send::after {
   content: '↵';
+}
+
+/* Agentens frågor: ett kort per fråga med alternativ att välja och ett eget svar */
+.agent__question {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agent__question-header {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.agent__question-text {
+  margin: 0;
+}
+
+.agent__question-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agent__question-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--fg);
+  text-align: left;
+}
+
+.agent__question-option:hover {
+  border-color: var(--accent);
+}
+
+.agent__question-option.is-selected {
+  border-color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+  background: var(--bg-hover);
+}
+
+.agent__question-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.agent__question-description {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.agent__question-other {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.agent__question-other:focus {
+  border-color: var(--accent);
+  outline: none;
 }
