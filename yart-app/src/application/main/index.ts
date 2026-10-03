@@ -44,6 +44,15 @@ void app.whenReady().then(() => {
   });
 });
 
+// Under utveckling startas appen av electron-vite. Avslutas den utan att stänga appen
+// blir Electron kvar som föräldralös process med en egen Dock-ikon; sluta då själv.
+if (process.env.ELECTRON_RENDERER_URL) {
+  const parent = process.ppid;
+  setInterval(() => {
+    if (process.ppid !== parent) app.quit();
+  }, 2000).unref();
+}
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
