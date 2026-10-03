@@ -23,7 +23,12 @@ import {
   type ApprovalRequest,
   type RunnableAgent,
 } from '@/common/model/agent';
-import { describeApproval } from '../model/approval';
+import {
+  answeredInput,
+  ASK_QUESTION_TOOL,
+  describeApproval,
+  parseQuestions,
+} from '../model/approval';
 import { RUNNERS } from '../model/protocol';
 import { checkAgent } from './check';
 import { listModels } from './models';
@@ -52,6 +57,8 @@ export interface AgentHandle {
 interface Waiting {
   repoPath: string;
   conversationId: string;
+  /** Verktygets indata, som svaren på frågor läggs till i */
+  input: unknown;
   resolve: (decision: ApprovalDecision) => void;
 }
 
@@ -172,8 +179,22 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
     denyWaiting(conversationId);
     sessions.get(conversationId)?.stop();
   });
-  handleChannel(answerApprovalChannel, ({ id, allow }) => {
-    settle(id, allow ? { allow: true } : { allow: false, message: t('agent.approvalDenied') });
+  handleChannel(answerApprovalChannel, ({ id, allow, answers }) => {
+    const entry = waiting.get(id);
+    if (!entry) return;
+    if (!allow) {
+      settle(id, {
+        allow: false,
+        message: t(answers ? 'agent.questionDeclined' : 'agent.approvalDenied'),
+      });
+      return;
+    }
+    settle(
+      id,
+      answers
+        ? { allow: true, updatedInput: answeredInput(entry.input, answers) }
+        : { allow: true },
+    );
   });
   handleChannel(checkAgentChannel, ({ agent }) => checkAgent(agent));
   handleChannel(listModelsChannel, ({ agent }) => listModels(agent));
@@ -195,12 +216,18 @@ export function registerAgentHandlers(deps: AgentDeps): AgentHandle {
         return Promise.resolve({ allow: false, message: t('agent.approvalUnknown') });
       const id = randomUUID();
       return new Promise((resolve) => {
-        waiting.set(id, { repoPath, conversationId, resolve });
+        waiting.set(id, { repoPath, conversationId, input: request.input, resolve });
+        const questions = request.tool === ASK_QUESTION_TOOL ? parseQuestions(request.input) : null;
         emitEvent(agentEvent, {
           type: 'approval',
           repoPath,
           conversationId,
-          approval: { id, tool: request.tool, detail: describeApproval(request.input) },
+          approval: {
+            id,
+            tool: request.tool,
+            detail: describeApproval(request.input),
+            ...(questions ? { questions } : {}),
+          },
         });
       });
     },

@@ -332,7 +332,7 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
         return text(
           JSON.stringify(
             decision.allow
-              ? { behavior: 'allow', updatedInput: input }
+              ? { behavior: 'allow', updatedInput: decision.updatedInput ?? input }
               : { behavior: 'deny', message: decision.message },
           ),
         );
