@@ -64,4 +64,10 @@ export interface ApprovalRequest {
   input: unknown;
 }
 
-export type ApprovalDecision = { allow: true } | { allow: false; message: string };
+export type ApprovalDecision =
+  | {
+      allow: true;
+      /** Ersätter verktygets indata, t.ex. med användarens svar på agentens frågor */
+      updatedInput?: Record<string, unknown>;
+    }
+  | { allow: false; message: string };

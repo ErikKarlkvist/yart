@@ -1,3 +1,4 @@
+import { type AgentQuestion } from '../model/approval';
 import { defineChannel, defineEvent } from '@/common/ipc/channel';
 import {
   type AgentKind,
@@ -57,12 +58,17 @@ export interface PendingApproval {
   tool: string;
   /** Kommandot, filen eller annan kort beskrivning */
   detail: string;
+  /** När agenten ställer frågor i stället för att be om lov: frågorna att svara på */
+  questions?: AgentQuestion[];
 }
 
 /** Användarens svar på ett godkännande. Agenten fortsätter direkt. */
-export const answerApprovalChannel = defineChannel<{ id: string; allow: boolean }>(
-  'agent:answer-approval',
-);
+export const answerApprovalChannel = defineChannel<{
+  id: string;
+  allow: boolean;
+  /** Svaren på agentens frågor, per frågetext */
+  answers?: Record<string, string>;
+}>('agent:answer-approval');
 
 export type AgentEvent =
   | { type: 'entry'; repoPath: string; conversationId: string; entry: AgentEntry }
