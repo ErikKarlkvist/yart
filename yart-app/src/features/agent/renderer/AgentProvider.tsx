@@ -74,7 +74,11 @@ export function AgentProvider({
   const [approvals, setApprovals] = useState<Tagged<Record<string, PendingApproval[]>> | null>(
     null,
   );
+  // Meddelanden som väntar på att agenten blir klar, per konversation
+  const [queues, setQueues] = useState<Tagged<Record<string, string[]>> | null>(null);
   const selectedRef = useRef<{ repoPath: string; id: string } | null>(null);
+  const dequeueRef = useRef<(conversationId: string) => void>(() => undefined);
+
   const newDraftRepoRef = useRef<string | null>(null);
   const creatingRef = useRef(false);
   const activeId = selected?.repoPath === repoPath ? selected.value : null;
@@ -265,6 +269,7 @@ export function AgentProvider({
             [event.conversationId]: event.state,
           },
         }));
+        if (event.state === 'idle') dequeueRef.current(event.conversationId);
       }
     },
     [repoPath],
@@ -294,10 +299,70 @@ export function AgentProvider({
     [repoPath, agent, choose],
   );
 
+  /** Skickar till en befintlig konversation och visar den som upptagen direkt. */
+  const sendTo = useCallback(
+    (conversationId: string, prompt: string) => {
+      if (!repoPath) return;
+      const currentAgent =
+        conversations?.repoPath === repoPath
+          ? (conversations.value.find((item) => item.id === conversationId)?.agent ?? agent)
+          : agent;
+      setStates((current) => ({
+        repoPath,
+        value: {
+          ...(current?.repoPath === repoPath ? current.value : {}),
+          [conversationId]: 'busy',
+        },
+      }));
+      void invokeChannel(askAgentChannel, {
+        repoPath,
+        agent: currentAgent,
+        settings: settingsFor(currentAgent),
+        prompt,
+        conversationId,
+      }).catch(console.error);
+    },
+    [repoPath, conversations, agent, settingsFor],
+  );
+
+  const updateQueue = useCallback(
+    (conversationId: string, change: (queue: string[]) => string[]) => {
+      if (!repoPath) return;
+      setQueues((current) => {
+        const value = current?.repoPath === repoPath ? current.value : {};
+        return {
+          repoPath,
+          value: { ...value, [conversationId]: change(value[conversationId] ?? []) },
+        };
+      });
+    },
+    [repoPath],
+  );
+
+  // Nästa meddelande i kön skickas när agenten blivit klar och inte väntar på svar.
+  // Händelsen från main läser den senaste kön via en ref.
+  useEffect(() => {
+    dequeueRef.current = (conversationId) => {
+      if (!repoPath || queues?.repoPath !== repoPath) return;
+      const next = queues.value[conversationId]?.[0];
+      if (next === undefined) return;
+      if (approvals?.repoPath === repoPath && (approvals.value[conversationId]?.length ?? 0) > 0)
+        return;
+      updateQueue(conversationId, (list) => list.slice(1));
+      sendTo(conversationId, next);
+    };
+  }, [repoPath, queues, approvals, updateQueue, sendTo]);
+
   const ask = useCallback(
     (prompt: string, reviewBranches?: ReviewBranches) => {
       if (!repoPath) return;
       if (creatingRef.current) return;
+      // Medan agenten arbetar köas frågan och skickas när den är klar
+      const busyId = selectedRef.current?.repoPath === repoPath ? selectedRef.current.id : null;
+      if (busyId && states?.repoPath === repoPath && states.value[busyId] === 'busy') {
+        updateQueue(busyId, (list) => [...list, prompt]);
+        return;
+      }
       void (async () => {
         const currentId =
           selectedRef.current?.repoPath === repoPath ? selectedRef.current.id : null;
@@ -324,7 +389,7 @@ export function AgentProvider({
         }
       })().catch(console.error);
     },
-    [repoPath, agent, settingsFor, conversations, create, draftMode],
+    [repoPath, agent, settingsFor, conversations, create, draftMode, states, updateQueue],
   );
   // En ny konversation i läget, med frågan som första meddelande. För planer som skickas från ett dokument.
   const askNew = useCallback(
@@ -356,6 +421,29 @@ export function AgentProvider({
       );
   }, [repoPath, activeId]);
 
+  /** Avbryter det agenten gör och skickar ett köat meddelande direkt. */
+  const sendNow = useCallback(
+    (index: number) => {
+      if (!repoPath || !activeId || queues?.repoPath !== repoPath) return;
+      const prompt = queues.value[activeId]?.[index];
+      if (prompt === undefined) return;
+      updateQueue(activeId, (list) => list.filter((_, i) => i !== index));
+      const conversationId = activeId;
+      void invokeChannel(stopAgentChannel, { repoPath, conversationId })
+        .then(() => {
+          sendTo(conversationId, prompt);
+        })
+        .catch(console.error);
+    },
+    [repoPath, activeId, queues, updateQueue, sendTo],
+  );
+  const removeQueued = useCallback(
+    (index: number) => {
+      if (activeId) updateQueue(activeId, (list) => list.filter((_, i) => i !== index));
+    },
+    [activeId, updateQueue],
+  );
+
   const list = conversations?.repoPath === repoPath ? conversations.value : [];
   // En ny konversation börjar i Analyse tills användaren väljer annat
   const mode: ConversationMode = activeId
@@ -381,10 +469,17 @@ export function AgentProvider({
     ask,
     askNew,
     stop,
+    queued: activeId && queues?.repoPath === repoPath ? (queues.value[activeId] ?? []) : [],
+    sendNow,
+    removeQueued,
     approvals:
       activeId && approvals?.repoPath === repoPath ? (approvals.value[activeId] ?? []) : [],
-    answer: (id: string, allow: boolean) => {
-      void invokeChannel(answerApprovalChannel, { id, allow }).catch(console.error);
+    answer: (id: string, allow: boolean, answers?: Record<string, string>) => {
+      void invokeChannel(answerApprovalChannel, {
+        id,
+        allow,
+        ...(answers ? { answers } : {}),
+      }).catch(console.error);
     },
   };
   return <AgentContext.Provider value={api}>{children}</AgentContext.Provider>;

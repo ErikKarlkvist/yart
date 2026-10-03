@@ -37,6 +37,8 @@ type GraphEdgeData = {
   offset: number;
   direction: Direction;
   hovered: boolean;
+  /** Håller linjen hovrad medan musen är över etiketten, som ritas i ett eget lager */
+  onHover: (edgeId: string | null) => void;
   /** Anropet som är utpekat i frågerutan, om det ligger på den här linjen */
   askingId: string | null;
   onAsk: (memberId: string) => void;
@@ -137,6 +139,12 @@ export const FlowEdgeView = memo(function FlowEdgeView({
             className={`graph-edge-badge is-${data.status}${data.pinned ? ' is-pinned' : ''} nodrag nopan`}
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
             title={t('graph.callsOnLine', { count: data.members.length })}
+            onMouseEnter={() => {
+              data.onHover(id);
+            }}
+            onMouseLeave={() => {
+              data.onHover(null);
+            }}
             onClick={(event) => {
               event.stopPropagation();
               data.onTogglePinned(id);
@@ -150,6 +158,12 @@ export const FlowEdgeView = memo(function FlowEdgeView({
             className={`graph-edge-label is-${data.status}${data.highlight ? ` is-highlight-${data.highlight}` : ''}${open ? ' is-open' : ''}${data.pinned ? ' is-pinned' : ''} graph-edge-label--${data.direction}`}
             style={{
               transform: `translate(-50%, ${side < 0 ? '-100%' : '0'}) translate(${labelX}px, ${labelOffsetY}px)`,
+            }}
+            onMouseEnter={() => {
+              data.onHover(id);
+            }}
+            onMouseLeave={() => {
+              data.onHover(null);
             }}
           >
             {shown.map((member) => (

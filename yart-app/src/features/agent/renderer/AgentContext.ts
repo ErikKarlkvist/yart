@@ -19,9 +19,15 @@ export interface AgentApi {
   /** Startar en ny konversation i läget och skickar frågan där */
   askNew: (prompt: string, mode: ConversationMode) => void;
   stop: () => void;
+  /** Frågor som väntar på att agenten blir klar, i den öppna konversationen */
+  queued: string[];
+  /** Avbryter agenten och skickar det köade meddelandet direkt */
+  sendNow: (index: number) => void;
+  removeQueued: (index: number) => void;
   /** Det agenten i den öppna konversationen väntar på lov för */
   approvals: PendingApproval[];
-  answer: (id: string, allow: boolean) => void;
+  /** Svar på ett godkännande; `answers` är svaren när agenten ställt frågor */
+  answer: (id: string, allow: boolean, answers?: Record<string, string>) => void;
   choose: (id: string) => void;
   startNew: () => void;
   selectMode: (mode: ConversationMode) => void;
