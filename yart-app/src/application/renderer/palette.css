@@ -27,6 +27,8 @@
   --danger: oklch(0.68 0.21 25);
   --danger-bg: color-mix(in oklch, var(--danger) 12%, transparent);
   --plan: oklch(0.76 0.16 320);
+  /* Nytt i en plan eller review: blått, så det inte blandas ihop med det aktiva steget */
+  --added: oklch(0.74 0.14 232);
 
   /* Nodtyper */
   --node-app: oklch(0.7 0.2 290);
@@ -40,7 +42,7 @@
   --node-primary-key: var(--warn);
 
   /* Flöden och lägen */
-  --flow-added: var(--ok);
+  --flow-added: var(--added);
   --flow-changed: var(--warn);
   --flow-removed: var(--danger);
   --flow-problem: var(--danger);

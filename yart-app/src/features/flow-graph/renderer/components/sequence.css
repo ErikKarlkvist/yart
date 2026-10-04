@@ -298,6 +298,23 @@
   color: var(--highlight-color);
 }
 
+/* Det aktiva steget är ifyllt, så det syns även bland färgade ändringar */
+.sequence-message.is-active .sequence-message__label {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.sequence-message.is-active[class*='is-highlight-'] .sequence-message__label {
+  background: var(--highlight-color);
+  border-color: var(--highlight-color);
+  color: var(--bg);
+}
+
+.sequence-message.is-active .graph-node__change {
+  color: inherit;
+}
+
 .sequence-message.is-focused .sequence-message__label {
   box-shadow: 3px 3px 0 color-mix(in oklch, var(--danger) 45%, transparent);
 }

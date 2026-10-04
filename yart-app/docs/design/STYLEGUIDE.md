@@ -32,7 +32,8 @@ mönster: variabler i `palette.css`, BEM-klasser i respektive features `*.css`, 
 - **Typsnitt** ligger lokalt via `@fontsource` (importeras i `main.tsx`), aldrig från
   Google Fonts.
 - **Bara befintliga animationer.** Övergångar på opacity/border 200 ms, splitter 120 ms.
-  Det enda rörliga är strecken på den aktiva kanten.
+  Det rörliga är strecken på den aktiva kanten och laddningsikonen (`FlowSpinner`): märket
+  där datan pendlar mellan de två systemen.
 
 ## Färger
 
@@ -47,8 +48,8 @@ mönster: variabler i `palette.css`, BEM-klasser i respektive features `*.css`, 
 | Status | `--ok` (= accent), `--warn`, `--danger`, `--plan` | fynd, ändringar, lägen                          |
 | Noder  | `--node-*`                                        | nodtypens färg, sätts som `--node-color`        |
 
-Lägen: Analyse = accent, Review = warn, Plan = plan. Ändringar: added = ok, changed = warn,
-removed = danger. Allvarsgrad: error = danger, warning = warn, info = accent.
+Lägen: Analyse = accent, Review = warn, Plan = plan. Ändringar: added = `--added` (blå, så det nya skiljer sig från det aktiva steget i
+accent), changed = warn, removed = danger. Allvarsgrad: error = danger, warning = warn, info = accent.
 
 ## Typografi
 
