@@ -1,6 +1,7 @@
 import { type JSX, useEffect, useId, useRef, useState } from 'react';
 import { LOCALE, t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
+import { FlowSpinner } from '@/common/renderer/FlowSpinner';
 import { Markdown } from '@/common/renderer/Markdown';
 import { invokeChannel } from '@/common/renderer/ipc';
 import { AGENT_PERMISSIONS, DEFAULT_CHOICE } from '@/common/model/agent';
@@ -553,7 +554,7 @@ function WorkingStatus({ since, tool }: { since: number; tool: string | null }):
   }, []);
   return (
     <li className="agent__entry agent__entry--busy" aria-live="polite">
-      <span className="agent__spinner" aria-hidden="true" />
+      <FlowSpinner size={16} />
       <span className="agent__working">{t('agent.working')}</span>
       {tool && <span className="agent__working-tool">{toolLabel(tool)}</span>}
       <span className="agent__elapsed">{formatElapsed(now - since)}</span>

@@ -173,22 +173,6 @@
   font-size: 11px;
 }
 
-/* Snurran: en fyrkant som roterar, raka hörn som allt annat */
-.agent__spinner {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border: 1.5px solid var(--accent);
-  border-right-color: transparent;
-  animation: agent-spin 800ms linear infinite;
-}
-
-@keyframes agent-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* Texten glimmar så det syns att något pågår även när räknaren står still */
 .agent__working {
   color: var(--fg);

@@ -1,0 +1,50 @@
+/* Märket i miniatyr: blått system, orange system och data som pendlar mellan dem */
+.flow-spinner {
+  flex: none;
+  overflow: visible;
+}
+
+.flow-spinner__from,
+.flow-spinner__to {
+  fill: var(--bg);
+  stroke-width: 7;
+}
+
+.flow-spinner__from {
+  stroke: var(--node-api);
+}
+
+.flow-spinner__from-head {
+  fill: var(--node-api);
+}
+
+.flow-spinner__to {
+  stroke: var(--node-db);
+}
+
+.flow-spinner__to-head {
+  fill: var(--node-db);
+}
+
+/* Strecken rör sig fram och tillbaka i samma takt som paketet */
+.flow-spinner__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 7;
+  stroke-dasharray: 9 6;
+  animation: flow-spinner-dash 0.8s ease-in-out infinite alternate;
+}
+
+.flow-spinner__packet {
+  fill: var(--fg);
+}
+
+@keyframes flow-spinner-dash {
+  from {
+    stroke-dashoffset: 15;
+  }
+
+  to {
+    stroke-dashoffset: -15;
+  }
+}
