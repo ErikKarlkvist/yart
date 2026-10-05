@@ -37,8 +37,8 @@ som enda server, skillen och lägets instruktioner
   Flöden, dokument och reviewer sparas när användaren ber om dem eller när en separat
   artefakt behövs för uppgiften. Varje fråga får en dold instruktion att välja rätt form.
 
-Guiden vid första starten väljer mellan Claude Code, Codex och extern AI. Externa agenter
-levererar via MCP som vanligt.
+Guiden vid första starten har två steg: först Claude Code, Codex eller Skip (ingen agent i
+appen), sedan hur en extern AI kopplas via MCP. Externa agenter levererar via MCP som vanligt.
 
 ## Innehåll: kort för människor, detaljer för AI
 
