@@ -74,6 +74,30 @@ describe('intakeAnalysis', () => {
     expect(await store.list(repo)).toHaveLength(1);
   });
 
+  it('behåller användarens utfällda system när en agent sparar om flödet utan dem', async () => {
+    const first = await intakeAnalysis(store, repo, 'flow', 'click', flow);
+    if (first.type !== 'imported') throw new Error('expected import');
+    await store.setExpanded(repo, first.analysis.id, ['api']);
+    await intakeAnalysis(store, repo, 'flow', 'click', { ...flow, title: 'Click again' });
+    const saved = await store.get(repo, 'flow', 'click');
+    expect(saved?.kind === 'flow' ? saved.flow.expanded : null).toEqual(['api']);
+    // Anger agenten själv en vy gäller den
+    await intakeAnalysis(store, repo, 'flow', 'click', { ...flow, expanded: ['web'] });
+    const again = await store.get(repo, 'flow', 'click');
+    expect(again?.kind === 'flow' ? again.flow.expanded : null).toEqual(['web']);
+  });
+
+  it('avvisar utfällda system som inte finns', async () => {
+    const result = await intakeAnalysis(store, repo, 'flow', 'click', {
+      ...flow,
+      expanded: ['nope'],
+    });
+    expect(result).toEqual({
+      type: 'rejected',
+      errors: ['expanded.0: expanded: no system with id "nope"'],
+    });
+  });
+
   it('sparar ett dokument som länkar flöden per namn', async () => {
     const result = await intakeAnalysis(store, repo, 'document', 'overview', {
       title: 'Overview',

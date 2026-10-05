@@ -12,7 +12,7 @@ import {
   PERMISSION_PROMPT_TOOL,
 } from '@/common/model/agent';
 import { APP_NAME, brandText } from '@/common/model/brand';
-import { documentSchema } from '@/common/model/document';
+import { applyDocumentPatch, documentPatchSchema, documentSchema } from '@/common/model/document';
 import { flowSchema } from '@/common/model/flow';
 import { t } from '@/common/model/i18n';
 import { analysisNameSchema } from '@/common/model/name';
@@ -274,6 +274,31 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
     }
   }
 
+  /** Sparar innehållet via appen och gör om utfallet till verktygssvar och loggrad. */
+  const store = async (
+    tool: ToolName,
+    kind: 'flow' | 'review' | 'document',
+    repoPath: string,
+    name: string,
+    content: unknown,
+  ): Promise<{ result: ToolResult; summary: string }> => {
+    const result = await deps.deliver(repoPath, kind, name, content, {
+      tool,
+      client: client(),
+      ...(conversationId !== null ? { conversationId } : {}),
+    });
+    if (!result.ok) {
+      const errors = result.errors.map((e) => `- ${e}`).join('\n');
+      return {
+        result: text(t('mcp.rejected', { kind, errors }), true),
+        summary: t('mcp.rejectedSummary', { kind, name, count: result.errors.length }),
+      };
+    }
+    const key = result.changed ? 'mcp.saved' : 'mcp.unchanged';
+    const summary = t(key, { kind, name, title: result.title });
+    return { result: text(summary), summary };
+  };
+
   const deliver = (
     tool: ToolName,
     kind: 'flow' | 'review' | 'document',
@@ -281,23 +306,7 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
     name: string,
     content: unknown,
   ): Promise<ToolResult> =>
-    run(tool, repo, async (repoPath) => {
-      const result = await deps.deliver(repoPath ?? repo, kind, name, content, {
-        tool,
-        client: client(),
-        ...(conversationId !== null ? { conversationId } : {}),
-      });
-      if (!result.ok) {
-        const errors = result.errors.map((e) => `- ${e}`).join('\n');
-        return {
-          result: text(t('mcp.rejected', { kind, errors }), true),
-          summary: t('mcp.rejectedSummary', { kind, name, count: result.errors.length }),
-        };
-      }
-      const key = result.changed ? 'mcp.saved' : 'mcp.unchanged';
-      const summary = t(key, { kind, name, title: result.title });
-      return { result: text(summary), summary };
-    });
+    run(tool, repo, (repoPath) => store(tool, kind, repoPath ?? repo, name, content));
 
   const nameConversation = deps.nameConversation;
   if (conversationId !== null && nameConversation) {
@@ -430,6 +439,41 @@ function createSession(deps: McpDeps, { conversationId, permissions }: OwnSessio
       annotations: { idempotentHint: true },
     },
     ({ repo, name, document }) => deliver('save_document', 'document', repo, name, document),
+  );
+
+  server.registerTool(
+    'edit_document',
+    {
+      description: TOOL_DESCRIPTIONS.edit_document,
+      inputSchema: { repo: repoParam, name: analysisNameSchema, ...documentPatchSchema.shape },
+      annotations: { idempotentHint: false },
+    },
+    ({ repo, name, ...patch }) =>
+      run('edit_document', repo, async (repoPath) => {
+        const saved = await deps.getAnalysis(repoPath ?? repo, 'document', name);
+        const parsed = documentSchema.safeParse(
+          typeof saved === 'object' && saved !== null && 'document' in saved
+            ? saved.document
+            : undefined,
+        );
+        if (!parsed.success) {
+          const message = t('mcp.noSuchAnalysis', { kind: 'document', name });
+          return { result: text(message, true), summary: message };
+        }
+        const patched = applyDocumentPatch(parsed.data, patch);
+        if (!patched.ok) {
+          const errors = patched.errors.map((e) => `- ${e}`).join('\n');
+          return {
+            result: text(t('mcp.rejected', { kind: 'document', errors }), true),
+            summary: t('mcp.rejectedSummary', {
+              kind: 'document',
+              name,
+              count: patched.errors.length,
+            }),
+          };
+        }
+        return store('edit_document', 'document', repoPath ?? repo, name, patched.document);
+      }),
   );
 
   server.registerTool(

@@ -4,7 +4,7 @@ import { buildModel, groupEdges, visualEdgeId } from './graph';
 import { layoutFlow, NODE_SIZES } from './layout';
 
 describe('layoutFlow', () => {
-  const detail = buildModel(addTodoFlow, { kind: 'detail' });
+  const detail = buildModel(addTodoFlow, { expanded: 'all' });
 
   it('ger varje nod en position', () => {
     const { positions } = layoutFlow(detail);
@@ -28,7 +28,7 @@ describe('layoutFlow', () => {
   });
 
   it('förskjuter linjerna fram och tillbaka mellan samma noder', () => {
-    const model = buildModel(listTodosFlow, { kind: 'detail' });
+    const model = buildModel(listTodosFlow, { expanded: 'all' });
     const { placements } = layoutFlow({ ...model, edges: groupEdges(model.edges) });
     const forward = placements.get(visualEdgeId('todos-api', 'get-route'))?.offset ?? 0;
     const back = placements.get(visualEdgeId('get-route', 'todos-api'))?.offset ?? 0;
@@ -54,7 +54,7 @@ describe('layoutFlow', () => {
   });
 
   it('klarar systemvyn med självkanter', () => {
-    const system = buildModel(addTodoFlow, { kind: 'system' });
+    const system = buildModel(addTodoFlow, { expanded: [] });
     const { positions } = layoutFlow(system);
     expect(positions.size).toBe(system.nodes.length);
     const frontend = positions.get('frontend');

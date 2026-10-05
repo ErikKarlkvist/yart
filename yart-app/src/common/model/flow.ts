@@ -275,6 +275,14 @@ export const flowSchema = z
       .array(flowStepEntrySchema)
       .min(1)
       .describe('Playback order. An entry is a step or an alt with a branch per path.'),
+    expanded: z
+      .array(z.string().min(1))
+      .optional()
+      .describe(
+        brandText(
+          "systems[].id of the systems to show in full detail when the flow opens, one lifeline per node: the ones where the interesting part of the flow happens. The other systems start as one lifeline each and the user expands them as needed. {appName} saves the user's own choice here; keep it when you update a flow unless the user asks for a different view.",
+        ),
+      ),
   })
   .superRefine((flow, ctx) => {
     const systemIds = new Set<string>();
@@ -382,6 +390,16 @@ export const flowSchema = z
             message: t('validation.unknownNode', { id: edge.id, node: edge[end] }),
           });
         }
+      }
+    });
+
+    flow.expanded?.forEach((id, i) => {
+      if (!systemIds.has(id)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['expanded', i],
+          message: t('validation.unknownExpanded', { system: id }),
+        });
       }
     });
 

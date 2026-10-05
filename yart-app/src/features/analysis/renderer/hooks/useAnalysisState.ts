@@ -8,6 +8,7 @@ import {
   type DeliveryEvent,
   deliveryEvent,
   listAnalysesChannel,
+  setExpandedChannel,
 } from '../../ipc/channels';
 import { t } from '@/common/model/i18n';
 import { analysisTitle, type SavedAnalysis } from '../../model/analysis';
@@ -33,6 +34,8 @@ export interface AnalysisState {
   rejection: DeliveryEntry | null;
   select: (id: string | null) => void;
   remove: (id: string) => Promise<void>;
+  /** Sparar vilka system som är utfällda i ett flöde */
+  setExpanded: (id: string, expanded: string[]) => void;
   dismissRejection: () => void;
 }
 
@@ -155,10 +158,34 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
     [repoPath],
   );
 
+  const setExpanded = useCallback(
+    (id: string, expanded: string[]) => {
+      if (!repoPath) return;
+      invokeChannel(setExpandedChannel, { repoPath, id, expanded })
+        .then((list) => {
+          setLoaded({ repoPath, list });
+        })
+        .catch((e: unknown) => {
+          console.error(e);
+        });
+    },
+    [repoPath],
+  );
+
   const dismissRejection = useCallback(() => {
     setRejection(null);
   }, []);
 
   const current = analyses.find((a) => a.id === currentId) ?? null;
-  return { analyses, current, error, deliveries, rejection, select, remove, dismissRejection };
+  return {
+    analyses,
+    current,
+    error,
+    deliveries,
+    rejection,
+    select,
+    remove,
+    setExpanded,
+    dismissRejection,
+  };
 }

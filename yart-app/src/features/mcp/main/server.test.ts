@@ -20,6 +20,13 @@ function textOf(result: unknown): string {
   return content.map((c) => c.text ?? '').join('\n');
 }
 
+const overview = {
+  title: 'Overview',
+  summary: 'How todos work.',
+  content: '## Adding\n\nThe form posts the todo.\n\n## Listing\n\nThe list is cached.',
+  flows: ['add-todo'],
+};
+
 function fakeDeps(activity: McpActivity[], delivered: Delivered[]): McpDeps {
   return {
     version: '0.0.0',
@@ -29,7 +36,13 @@ function fakeDeps(activity: McpActivity[], delivered: Delivered[]): McpDeps {
     listAnalyses: () =>
       Promise.resolve([{ name: 'add-todo', kind: 'flow', title: 'Add todo', summary: 'Adds.' }]),
     getAnalysis: (_repo, kind, name) =>
-      Promise.resolve(kind === 'flow' && name === 'add-todo' ? { flow: addTodoFlow } : null),
+      Promise.resolve(
+        kind === 'flow' && name === 'add-todo'
+          ? { flow: addTodoFlow }
+          : kind === 'document' && name === 'overview'
+            ? { document: overview }
+            : null,
+      ),
     deliver: (_repo, kind, name, content, via) => {
       delivered.push({
         kind,
@@ -73,6 +86,7 @@ describe('startMcpServer', () => {
   it('visar verktygen med flödesschemat som JSON-schema', async () => {
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name).sort()).toEqual([
+      'edit_document',
       'get_analysis',
       'get_guide',
       'list_analyses',
@@ -172,6 +186,44 @@ describe('startMcpServer', () => {
     const missing = await client.callTool({
       name: 'get_analysis',
       arguments: { repo: '/repo', kind: 'document', name: 'nothing' },
+    });
+    expect(missing.isError).toBe(true);
+  });
+
+  it('ändrar ett sparat dokument utan att skriva om resten', async () => {
+    const result = await client.callTool({
+      name: 'edit_document',
+      arguments: {
+        repo: '/repo',
+        name: 'overview',
+        edits: [{ oldText: 'The list is cached.', newText: 'The list is cached in Redis.' }],
+        append: '## Risks\n\n- The cache can go stale.',
+      },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(delivered[0]).toMatchObject({ kind: 'document', name: 'overview' });
+    expect(delivered[0]?.content).toEqual({
+      ...overview,
+      content:
+        '## Adding\n\nThe form posts the todo.\n\n## Listing\n\nThe list is cached in Redis.\n\n## Risks\n\n- The cache can go stale.',
+    });
+  });
+
+  it('avvisar en ändring vars text inte finns', async () => {
+    const result = await client.callTool({
+      name: 'edit_document',
+      arguments: {
+        repo: '/repo',
+        name: 'overview',
+        edits: [{ oldText: 'Not there', newText: 'x' }],
+      },
+    });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('was not found');
+    expect(delivered).toEqual([]);
+    const missing = await client.callTool({
+      name: 'edit_document',
+      arguments: { repo: '/repo', name: 'nothing', edits: [] },
     });
     expect(missing.isError).toBe(true);
   });

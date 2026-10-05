@@ -90,8 +90,22 @@ export interface GraphModel {
   relations: GraphRelation[];
 }
 
-export type GraphView =
-  { kind: 'system' } | { kind: 'focus'; systemId: string } | { kind: 'detail' };
+/** Vilka system som är utfällda, med en nod per del; resten är en nod per system. */
+export interface GraphView {
+  expanded: 'all' | readonly string[];
+}
+
+/** Vyn ett flöde öppnas i: de system flödet säger ska vara utfällda, som finns. */
+export function initialView(flow: Flow): GraphView {
+  const ids = new Set(flow.systems.map((s) => s.id));
+  return { expanded: (flow.expanded ?? []).filter((id) => ids.has(id)) };
+}
+
+/** De utfällda systemens id:n, i flödets ordning. */
+export function expandedSystems(flow: Flow, view: GraphView): string[] {
+  const ids = flow.systems.map((s) => s.id);
+  return view.expanded === 'all' ? ids : ids.filter((id) => view.expanded.includes(id));
+}
 
 export interface BuildOptions {
   /** Grenarna som spelas i flödets alternativ */
@@ -110,14 +124,8 @@ export function buildModel(
   annotations: ReviewAnnotations = NO_ANNOTATIONS,
   options: BuildOptions = {},
 ): GraphModel {
-  switch (view.kind) {
-    case 'system':
-      return collapse(flow, () => true, annotations, options);
-    case 'focus':
-      return collapse(flow, (systemId) => systemId !== view.systemId, annotations, options);
-    case 'detail':
-      return collapse(flow, () => false, annotations, options);
-  }
+  const expanded = new Set(expandedSystems(flow, view));
+  return collapse(flow, (systemId) => !expanded.has(systemId), annotations, options);
 }
 
 /** Slår ihop noderna i de system `shouldCollapse` säger ja till, till en nod per system. */

@@ -21,6 +21,8 @@ interface Props {
   onAsk: (prompt: string) => void;
   onActiveEdgeChange: (edge: FlowEdge | null) => void;
   onPathsChange: (paths: FlowPaths | null) => void;
+  /** Sparar vilka system användaren fällt ut i ett flöde */
+  onExpandedChange: (analysisId: string, expanded: string[]) => void;
   onSelectSource: (source: SourceRef) => void;
   /** Valt fynd, ägs av skalet så reviewdokumentet kan sätta det */
   focusedFindingId: string | null;
@@ -45,6 +47,7 @@ export function Workspace({
   onAsk,
   onActiveEdgeChange,
   onPathsChange,
+  onExpandedChange,
   onSelectSource,
   focusedFindingId,
   focusSeq,
@@ -63,6 +66,9 @@ export function Workspace({
           flow={analysis.flow}
           onActiveEdgeChange={onActiveEdgeChange}
           onPathsChange={onPathsChange}
+          onExpandedChange={(expanded) => {
+            onExpandedChange(analysis.id, expanded);
+          }}
           onSelectSource={onSelectSource}
           flowName={analysis.name}
           onAsk={onAsk}

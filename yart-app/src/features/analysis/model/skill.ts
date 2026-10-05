@@ -61,9 +61,15 @@ const HOW_TO_BUILD = `## How to build a good flow
 7. If the user asks about a failure or an alternative path, model that path as a branch
    of an \`alt\`: the edge that fails, what catches it, what is rolled back or retried, and
    what the caller sees.
-8. Use \`role\` to name a handler more specifically when useful, such as \`Hook\`, \`Action\` or
+8. Set \`expanded\` to the ids of the systems where the interesting part of the flow
+   happens, usually one or two. They open in full detail, one lifeline per node, and the
+   rest start as one lifeline per system so the reader sees the whole path without noise.
+   Leave it out when every system matters equally little. The user's own choice of
+   expanded systems is saved in the same field: when you update a flow, keep the
+   \`expanded\` you got from \`get_analysis\` unless the user asks for a different view.
+9. Use \`role\` to name a handler more specifically when useful, such as \`Hook\`, \`Action\` or
    \`Event\`. Use node kind \`queue\` for a queue, topic or event bus.
-9. When the user asks to save a proposed plan, use a document with a short human \`content\` and a detailed
+10. When the user asks to save a proposed plan, use a document with a readable human \`content\` and a detailed
    \`plan\` for an AI agent: ordered steps with files, functions, data changes, edge cases
    and how to verify each step. In the proposed flows, put \`highlight: 'added'\` on new nodes and calls and
    \`highlight: 'changed'\` on existing ones that need updating. These colours
@@ -84,6 +90,7 @@ interface Flow {
   nodes: Node[];      // at least one
   edges: Edge[];      // at least one
   steps: (Step | Alt)[]; // playback order, at least one
+  expanded?: string[]; // System.id of the systems shown in full detail when the flow opens
 }
 
 interface Trigger {
@@ -101,7 +108,7 @@ interface Trigger {
 interface Document {
   title: string;
   summary: string;      // one or two sentences for the analyses list
-  content: string;      // short Markdown for people: ## headings and - bullets, about 150 words
+  content: string;      // Markdown for people: ## headings, short paragraphs and bullets, usually 300-800 words
   plan?: string;        // for a proposed change: detailed Markdown plan for an AI agent, not shown
   flows: string[];      // names of saved flows, e.g. add-todo
 }
@@ -269,7 +276,7 @@ ${JSON.stringify(listTodosFlow, null, 2)}
  * reglerna, schemat och exemplet ligger i guiden som MCP-servern serverar, så de kan
  * ändras utan att någon behöver installera om skillen.
  */
-export const SKILL_VERSION = 15;
+export const SKILL_VERSION = 16;
 
 /** Den installerade skillen: när {appName} ska användas och var reglerna finns. */
 export function buildSkill(): string {
@@ -284,7 +291,7 @@ description: Deliver data-flow diagrams, architecture documents and change revie
 diagrams of data flows through a codebase, and reviews of changes against them.
 It is running on the user's machine and you reach it through the MCP server
 \`yart\` with the tools \`get_guide\`, \`list_repos\`, \`list_analyses\`,
-\`get_analysis\`, \`save_flow\`, \`save_document\` and \`save_review\`. The user sees
+\`get_analysis\`, \`save_flow\`, \`save_document\`, \`edit_document\` and \`save_review\`. The user sees
 what you save as soon as the tool returns. If the tools are missing, ask the user to
 start {appName} and connect it with the command shown in its Connect panel.
 
@@ -306,7 +313,8 @@ enough detail to be useful.
    holds the rules for good flows, documents and reviews, the schema and an example, and
    {appName} keeps it up to date.
 2. Pass the repository root from \`git rev-parse --show-toplevel\` as \`repo\` to every tool.
-3. Save with \`save_flow\`, \`save_document\` or \`save_review\`. If a tool returns an
+3. Save with \`save_flow\`, \`save_document\` or \`save_review\`, and change an existing
+   document with \`edit_document\` instead of saving it again. If a tool returns an
    error, fix the content and call it again with the same name.
 `.replaceAll('{appName}', APP_NAME);
 }
@@ -319,10 +327,14 @@ enough detail to be useful.
 export function buildGuide(): string {
   return `# {appName} guide
 
-**Write for people, keep the detail for AI.** Everything a person reads (\`content\`
-on documents and reviews, finding descriptions) is short and easy to skim: Markdown with
-\`## \` headings, \`- \` bullet lists, **bold** for the key point and \`code\` for names.
-Around 150 words, mostly bullets, no walls of text. Put the detail an AI agent needs in
+**Write for people, keep the detail for AI.** Everything a person reads is Markdown with
+\`## \` headings, short paragraphs, \`- \` bullet lists, **bold** for the key point and
+\`code\` for names. A document's \`content\` explains its subject properly, so a developer
+new to the area understands it without reading the code first: the purpose, the main
+parts and how they work together, how the linked flows fit in, important decisions and
+constraints, edge cases and risks. Usually 300 to 800 words, longer when the subject needs
+it, but never a repetition of every flow step. Review \`content\` and finding descriptions
+stay short and easy to skim, mostly bullets. Put the detail an AI agent needs in
 the fields meant for it: \`plan\` on a document that proposes a change, \`fix\` on a
 finding, and \`description\`, \`payload\`, \`response\` and \`source\` on nodes and edges.
 {appName} combines them into an implementation plan or a fix plan the user copies or
@@ -344,7 +356,14 @@ document can be this companion; flows made only to support a review do not need 
 1. Find the repository root with \`git rev-parse --show-toplevel\` and pass it as
    \`repo\` to every {appName} tool.
 2. Call \`list_analyses\` to see what is already saved. Reuse a name to update an
-   existing flow or document, and \`get_analysis\` to start from its content.
+   existing flow, and \`get_analysis\` to start from its content.
+   **Adjust, do not rewrite.** When the user asks to change, extend or correct an
+   existing document, read it with \`get_analysis\` and change only what they asked for
+   with \`edit_document\`: replace exact pieces of text, append a section, or update the
+   title, summary or linked flows. Keep everything else word for word, including what the
+   user may have relied on. Use \`save_document\` on an existing name only when the user
+   asks for a full rewrite. The same goes for flows: start from the saved flow and change
+   the parts that need it.
 3. Read the code and build the content following the rules below. The tool's
    input schema describes every field.
 4. Call \`save_flow\`, \`save_document\` or \`save_review\` with a short kebab-case

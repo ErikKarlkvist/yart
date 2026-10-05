@@ -35,7 +35,8 @@ interface Props {
   asking: AskTarget | null;
   onAsk: (target: AskTarget) => void;
   onZoom?: ((systemId: string) => void) | undefined;
-  onZoomOut?: (() => void) | undefined;
+  /** Fäller ihop ett utfällt system, från förstoringsglaset i dess band */
+  onZoomOut?: ((systemId: string) => void) | undefined;
   diff: FlowDiff | null;
   findings: readonly ReviewFinding[];
   focusedFindingId: string | null;
@@ -294,7 +295,9 @@ export function SequenceDiagram({
                       className="sequence-band__zoom-out"
                       title={t('graph.zoomOut')}
                       aria-label={t('graph.zoomOut')}
-                      onClick={onZoomOut}
+                      onClick={() => {
+                        onZoomOut(band.systemId);
+                      }}
                     >
                       <Icon name="zoomOut" size="sm" />
                     </button>

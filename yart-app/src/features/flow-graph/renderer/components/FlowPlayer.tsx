@@ -20,9 +20,11 @@ import { Icon } from '@/common/renderer/Icon';
 import { useStoredChoice } from '@/common/renderer/useStored';
 import {
   buildModel,
+  expandedSystems,
   type GraphNode,
   type GraphView,
   hideElements,
+  initialView,
   mapStepIndex,
 } from '../../model/graph';
 import { buildSequence, type SequenceMessage } from '../../model/sequence';
@@ -60,6 +62,8 @@ interface Props {
   onFocusFinding?: ((findingId: string) => void) | undefined;
   /** Vägvalen i flödet och hur man väljer gren, för panelen Paths. null när flödet saknar alt. */
   onPathsChange?: ((paths: FlowPaths | null) => void) | undefined;
+  /** Användaren fällde ut eller ihop system; listan sparas i flödet som `expanded` */
+  onExpandedChange?: ((expanded: string[]) => void) | undefined;
 }
 
 export interface FlowPaths {
@@ -68,8 +72,9 @@ export interface FlowPaths {
 }
 
 /**
- * Graf med uppspelning. Börjar i systemvyn, klick på ett system zoomar in i
- * det. Montera om med `key` när flödet byts så uppspelningen börjar om.
+ * Graf med uppspelning. Börjar med de system flödet anger som utfällda,
+ * förstoringsglaset fäller ut eller ihop ett system i taget. Montera om med
+ * `key` när flödet byts så uppspelningen börjar om.
  */
 export function FlowPlayer({
   flow,
@@ -84,8 +89,9 @@ export function FlowPlayer({
   focusSeq = 0,
   onFocusFinding,
   onPathsChange,
+  onExpandedChange,
 }: Props): JSX.Element {
-  const [view, setView] = useState<GraphView>({ kind: 'system' });
+  const [view, setView] = useState<GraphView>(() => initialView(flow));
   const [layout, setLayout] = useStoredChoice<FlowLayout>('yart.flowLayout', LAYOUTS, 'sequence');
   // Grenen som spelas i varje alternativ; första grenen om inget valts
   const [choices, setChoices] = useState<AltChoices>(() => new Map());
@@ -178,8 +184,9 @@ export function FlowPlayer({
         playback.goTo(mapStepIndex(played, steps, playback.stepIndex, nextModel.steps));
       }
       setView(next);
+      onExpandedChange?.(expandedSystems(flow, next));
     },
-    [layout, graphFlow, annotations, choices, played, steps, playback],
+    [layout, graphFlow, flow, annotations, choices, played, steps, playback, onExpandedChange],
   );
   const changeLayout = useCallback(
     (next: FlowLayout) => {
@@ -259,15 +266,19 @@ export function FlowPlayer({
     },
     [onSelectSource],
   );
+  const expanded = useMemo(() => expandedSystems(flow, view), [flow, view]);
   const onZoom = useCallback(
     (systemId: string) => {
-      changeView({ kind: 'focus', systemId });
+      changeView({ expanded: [...expanded, systemId] });
     },
-    [changeView],
+    [changeView, expanded],
   );
-  const onZoomOut = useCallback(() => {
-    changeView({ kind: 'system' });
-  }, [changeView]);
+  const onZoomOut = useCallback(
+    (systemId: string) => {
+      changeView({ expanded: expanded.filter((id) => id !== systemId) });
+    },
+    [changeView, expanded],
+  );
   const focusFinding = useCallback(
     (findingId: string) => {
       onFocusFinding?.(findingId);
@@ -298,8 +309,8 @@ export function FlowPlayer({
     [onSelectSource],
   );
 
-  const focused = view.kind === 'focus' ? flow.systems.find((s) => s.id === view.systemId) : null;
-  const viewKey = view.kind === 'focus' ? `focus:${view.systemId}` : view.kind;
+  const allExpanded = expanded.length === flow.systems.length;
+  const viewKey = expanded.length === 0 ? 'system' : expanded.join(',');
 
   const movedInView = useMemo(() => {
     const prefix = `${viewKey}/`;
@@ -370,21 +381,30 @@ export function FlowPlayer({
         <nav className="player__crumbs" aria-label={t('graph.levelNav')}>
           <button
             type="button"
-            className={`crumb${view.kind === 'system' ? ' is-current' : ''}`}
+            className={`crumb${expanded.length === 0 ? ' is-current' : ''}`}
             onClick={() => {
-              changeView({ kind: 'system' });
+              changeView({ expanded: [] });
             }}
           >
             {t('graph.allSystems')}
           </button>
-          {focused && (
-            <>
-              <Icon name="chevronRight" size="sm" />
-              <span className="crumb is-current">
-                <Icon name={focused.kind} size="sm" /> {focused.label}
-              </span>
-            </>
-          )}
+          {!allExpanded &&
+            flow.systems
+              .filter((system) => expanded.includes(system.id))
+              .map((system) => (
+                <button
+                  key={system.id}
+                  type="button"
+                  className="crumb is-current"
+                  title={t('graph.collapse', { name: system.label })}
+                  onClick={() => {
+                    onZoomOut(system.id);
+                  }}
+                >
+                  <Icon name={system.kind} size="sm" /> {system.label}
+                  <Icon name="close" size="sm" />
+                </button>
+              ))}
           <span className="player__crumbs-spacer" />
           {layout === 'graph' && hiddenCount > 0 && (
             <button type="button" className="crumb" onClick={restoreHidden}>
@@ -393,10 +413,10 @@ export function FlowPlayer({
           )}
           <button
             type="button"
-            className={`crumb crumb--toggle${view.kind === 'detail' ? ' is-current' : ''}`}
+            className={`crumb crumb--toggle${allExpanded ? ' is-current' : ''}`}
             title={t('graph.allDetailsHint')}
             onClick={() => {
-              changeView(view.kind === 'detail' ? { kind: 'system' } : { kind: 'detail' });
+              changeView({ expanded: allExpanded ? [] : 'all' });
             }}
           >
             {t('graph.allDetails')}
@@ -441,7 +461,7 @@ export function FlowPlayer({
           asking={onAsk ? asking : null}
           onAsk={setAsking}
           onZoom={onZoom}
-          onZoomOut={view.kind === 'system' ? undefined : onZoomOut}
+          onZoomOut={onZoomOut}
           diff={diff}
           findings={findings}
           focusedFindingId={focusedFindingId}

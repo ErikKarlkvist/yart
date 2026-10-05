@@ -6,6 +6,7 @@ import {
   type DeliveredVia,
   deliveryEvent,
   listAnalysesChannel,
+  setExpandedChannel,
 } from '../ipc/channels';
 import { type SavedAnalysis } from '../model/analysis';
 import { builtinAnalyses } from './builtin';
@@ -38,6 +39,10 @@ export function registerAnalysisHandlers(): AnalysisApi {
   ];
 
   handleChannel(listAnalysesChannel, ({ repoPath }) => listAll(repoPath));
+  handleChannel(setExpandedChannel, async ({ repoPath, id, expanded }) => {
+    await store.setExpanded(repoPath, id, expanded);
+    return listAll(repoPath);
+  });
   handleChannel(deleteAnalysisChannel, async ({ repoPath, id }) => {
     await store.delete(repoPath, id);
     return listAll(repoPath);

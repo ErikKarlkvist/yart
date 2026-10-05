@@ -11,7 +11,7 @@ import { buildSequence } from './sequence';
 
 describe('buildSequence', () => {
   it('visar interna anrop som öglor på systemets livlinje', () => {
-    const sequence = buildSequence(addTodoFlow, { kind: 'system' }, undefined, new Map());
+    const sequence = buildSequence(addTodoFlow, { expanded: [] }, undefined, new Map());
     expect(sequence.participants.map((p) => p.node.id)).toEqual([
       'frontend',
       'backend',
@@ -27,7 +27,7 @@ describe('buildSequence', () => {
   });
 
   it('ritar svar tillbaka till anroparen streckade', () => {
-    const sequence = buildSequence(addTodoFlow, { kind: 'detail' }, undefined, new Map());
+    const sequence = buildSequence(addTodoFlow, { expanded: 'all' }, undefined, new Map());
     const byEdge = new Map(sequence.messages.map((m) => [m.edge.id, m]));
     expect(byEdge.get('post')?.isReturn).toBe(false);
     expect(byEdge.get('respond')?.isReturn).toBe(true);
@@ -35,7 +35,7 @@ describe('buildSequence', () => {
   });
 
   it('ordnar deltagarna efter flödet, startpunkten först och systemens noder ihop', () => {
-    const sequence = buildSequence(addTodoFlow, { kind: 'detail' }, undefined, new Map());
+    const sequence = buildSequence(addTodoFlow, { expanded: 'all' }, undefined, new Map());
     expect(sequence.participants.map((p) => p.node.id)).toEqual([
       'add-form',
       'use-todos',
@@ -54,7 +54,7 @@ describe('buildSequence', () => {
   });
 
   it('ritar alla grenar men spelar bara de valda', () => {
-    const sequence = buildSequence(toggleTodoFlow, { kind: 'detail' }, undefined, new Map());
+    const sequence = buildSequence(toggleTodoFlow, { expanded: 'all' }, undefined, new Map());
     expect(sequence.fragments.map((f) => f.key)).toEqual(['3', '3.0.3']);
     expect(sequence.messages).toHaveLength(14);
     const notFound = sequence.messages.find((m) => m.edge.id === 'not-found');
@@ -79,7 +79,7 @@ describe('buildSequence', () => {
   it('spelar den valda grenen', () => {
     const sequence = buildSequence(
       toggleTodoFlow,
-      { kind: 'system' },
+      { expanded: [] },
       undefined,
       new Map([['3', 1]]),
     );
@@ -95,7 +95,7 @@ describe('buildSequence', () => {
     const removedEdgeIds = new Set(
       [...diff.edges].filter(([, change]) => change === 'removed').map(([id]) => id),
     );
-    const sequence = buildSequence(merged, { kind: 'detail' }, { diff, findings: [] }, new Map(), {
+    const sequence = buildSequence(merged, { expanded: 'all' }, { diff, findings: [] }, new Map(), {
       baseSteps: resolveSteps(base.steps),
       removedEdgeIds,
     });
@@ -107,7 +107,7 @@ describe('buildSequence', () => {
 
 describe('tabeller i sekvensdiagrammet', () => {
   it('en utfälld databas får en livlinje per tabell som flödet rör', () => {
-    const sequence = buildSequence(addTodoFlow, { kind: 'detail' }, undefined, new Map());
+    const sequence = buildSequence(addTodoFlow, { expanded: 'all' }, undefined, new Map());
     const ids = sequence.participants.map((p) => p.node.id);
     expect(ids).toContain('table:postgres:todos');
     // lists rörs inte av flödet och ritas inte
@@ -118,12 +118,7 @@ describe('tabeller i sekvensdiagrammet', () => {
   });
 
   it('en hopslagen databas är en livlinje', () => {
-    const sequence = buildSequence(
-      addTodoFlow,
-      { kind: 'focus', systemId: 'backend' },
-      undefined,
-      new Map(),
-    );
+    const sequence = buildSequence(addTodoFlow, { expanded: ['backend'] }, undefined, new Map());
     const insert = sequence.messages.find((m) => m.edge.id === 'insert');
     expect(insert?.to).toBe('postgres');
     expect(insert?.alsoTo).toEqual([]);
@@ -150,7 +145,7 @@ describe('tabeller i sekvensdiagrammet', () => {
           : [step],
       ),
     };
-    const sequence = buildSequence(flow, { kind: 'detail' }, undefined, new Map());
+    const sequence = buildSequence(flow, { expanded: 'all' }, undefined, new Map());
     const insert = sequence.messages.find((m) => m.edge.id === 'insert');
     expect(insert?.to).toBe('table:postgres:todos');
     expect(insert?.alsoTo.map((t) => t.id)).toEqual(['table:postgres:lists']);
@@ -164,12 +159,7 @@ describe('tabeller i sekvensdiagrammet', () => {
 
 describe('deltagarnas höjd', () => {
   it('alla deltagare står i samma höjd, även när system och noder blandas', () => {
-    const sequence = buildSequence(
-      addTodoFlow,
-      { kind: 'focus', systemId: 'backend' },
-      undefined,
-      new Map(),
-    );
+    const sequence = buildSequence(addTodoFlow, { expanded: ['backend'] }, undefined, new Map());
     const levels = new Set(sequence.participants.map((p) => p.node.level));
     expect(levels).toEqual(new Set(['system', 'node']));
     expect(sequence.boxHeight).toBeGreaterThan(0);

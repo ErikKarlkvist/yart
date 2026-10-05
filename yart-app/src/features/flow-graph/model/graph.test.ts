@@ -8,11 +8,11 @@ import {
 } from '@/common/model/fixtures';
 import { diffFlows, mergeForReview } from '@/common/model/review';
 import { resolveSteps } from '@/common/model/steps';
-import { buildModel, groupEdges, hideElements, mapStepIndex } from './graph';
+import { buildModel, groupEdges, hideElements, initialView, mapStepIndex } from './graph';
 
 describe('buildModel', () => {
   it('systemvyn har en nod per system och kanterna pekar på system', () => {
-    const model = buildModel(addTodoFlow, { kind: 'system' });
+    const model = buildModel(addTodoFlow, { expanded: [] });
     expect(model.nodes.map((n) => n.id)).toEqual(addTodoFlow.systems.map((s) => s.id));
     expect(model.nodes.every((n) => n.level === 'system')).toBe(true);
     const post = model.edges.find((e) => e.id === 'post');
@@ -33,12 +33,12 @@ describe('buildModel', () => {
       ...addTodoFlow,
       systems: [...addTodoFlow.systems, { id: 'mars', kind: 'external' as const, label: 'Mars' }],
     };
-    const model = buildModel(flow, { kind: 'system' });
+    const model = buildModel(flow, { expanded: [] });
     expect(model.nodes.map((n) => n.id)).not.toContain('mars');
   });
 
   it('samlar tabeller med anropen som rör dem, även på systemnivå', () => {
-    const system = buildModel(addTodoFlow, { kind: 'system' });
+    const system = buildModel(addTodoFlow, { expanded: [] });
     const postgres = system.nodes.find((n) => n.id === 'postgres');
     expect(postgres?.tables.map((t) => t.name)).toEqual(['lists', 'todos']);
     const todos = postgres?.tables.find((t) => t.name === 'todos');
@@ -49,13 +49,13 @@ describe('buildModel', () => {
   });
 
   it('interna anrop blir självkanter i systemvyn', () => {
-    const model = buildModel(addTodoFlow, { kind: 'system' });
+    const model = buildModel(addTodoFlow, { expanded: [] });
     const internal = model.edges.find((e) => e.id === 'route-to-service');
     expect(internal).toMatchObject({ from: 'backend', to: 'backend' });
   });
 
   it('fokus på ett system visar dess noder och de andra som system', () => {
-    const model = buildModel(addTodoFlow, { kind: 'focus', systemId: 'backend' });
+    const model = buildModel(addTodoFlow, { expanded: ['backend'] });
     const backendNodes = model.nodes.filter((n) => n.systemId === 'backend');
     expect(backendNodes.every((n) => n.level === 'node')).toBe(true);
     expect(backendNodes.map((n) => n.id)).toEqual([
@@ -72,7 +72,7 @@ describe('buildModel', () => {
   });
 
   it('fokus spelar upp stegen i systemet och över gränsen, inte andras interna', () => {
-    const model = buildModel(addTodoFlow, { kind: 'focus', systemId: 'backend' });
+    const model = buildModel(addTodoFlow, { expanded: ['backend'] });
     expect(model.steps.map((s) => s.edgeId)).toEqual([
       'post',
       'route-to-service',
@@ -85,7 +85,7 @@ describe('buildModel', () => {
   });
 
   it('inzoomad databas visar tabeller som noder med relationer', () => {
-    const model = buildModel(addTodoFlow, { kind: 'focus', systemId: 'postgres' });
+    const model = buildModel(addTodoFlow, { expanded: ['postgres'] });
     const tables = model.nodes.filter((n) => n.level === 'table');
     expect(tables.map((n) => n.label)).toEqual(['lists', 'todos']);
     expect(model.nodes.find((n) => n.id === 'postgres')).toBeUndefined();
@@ -103,7 +103,7 @@ describe('buildModel', () => {
   });
 
   it('detaljvyn har alla noder, alla steg och en grupp per system med noder', () => {
-    const model = buildModel(addTodoFlow, { kind: 'detail' });
+    const model = buildModel(addTodoFlow, { expanded: 'all' });
     // Postgres-noden ersätts av sina två tabeller, Redis-noden av sin nyckel
     expect(model.nodes).toHaveLength(addTodoFlow.nodes.length + 1);
     expect(model.steps).toHaveLength(addTodoFlow.steps.length);
@@ -112,8 +112,8 @@ describe('buildModel', () => {
 });
 
 describe('mapStepIndex', () => {
-  const system = buildModel(addTodoFlow, { kind: 'system' });
-  const detail = buildModel(addTodoFlow, { kind: 'detail' });
+  const system = buildModel(addTodoFlow, { expanded: [] });
+  const detail = buildModel(addTodoFlow, { expanded: 'all' });
 
   it('behåller samma steg när det finns i båda vyerna', () => {
     // 'insert' är steg 5 i detaljvyn (index 5) och steg 1 i systemvyn
@@ -134,7 +134,7 @@ describe('mapStepIndex', () => {
 
 describe('groupEdges', () => {
   it('ritar alla anrop samma väg som en linje och svar som en linje tillbaka', () => {
-    const model = buildModel(listTodosFlow, { kind: 'detail' });
+    const model = buildModel(listTodosFlow, { expanded: 'all' });
     const visual = groupEdges(model.edges);
     const toCache = visual.find(
       (v) => v.from === 'todo-service' && v.to === 'table:todo-cache:todos:all',
@@ -147,14 +147,14 @@ describe('groupEdges', () => {
   });
 
   it('hoppar över självkanter', () => {
-    const model = buildModel(addTodoFlow, { kind: 'system' });
+    const model = buildModel(addTodoFlow, { expanded: [] });
     expect(groupEdges(model.edges).every((v) => v.from !== v.to)).toBe(true);
   });
 });
 
 describe('hideElements', () => {
   it('döljer noden, dess kanter och stegen som spelar upp dem', () => {
-    const model = buildModel(addTodoFlow, { kind: 'system' });
+    const model = buildModel(addTodoFlow, { expanded: [] });
     const hidden = hideElements(model, new Set(['webhook']), new Set());
     expect(hidden.nodes.some((n) => n.id === 'webhook')).toBe(false);
     expect(hidden.edges.some((e) => e.to === 'webhook')).toBe(false);
@@ -164,7 +164,7 @@ describe('hideElements', () => {
   });
 
   it('ett dolt system döljer dess noder och tabeller i detaljvyn', () => {
-    const model = buildModel(addTodoFlow, { kind: 'detail' });
+    const model = buildModel(addTodoFlow, { expanded: 'all' });
     const hidden = hideElements(model, new Set(['postgres']), new Set());
     expect(hidden.nodes.some((n) => n.systemId === 'postgres')).toBe(false);
     expect(hidden.groups.some((g) => g.id === 'postgres')).toBe(false);
@@ -172,14 +172,14 @@ describe('hideElements', () => {
   });
 
   it('en dold kant tar bara bort sitt steg', () => {
-    const model = buildModel(addTodoFlow, { kind: 'system' });
+    const model = buildModel(addTodoFlow, { expanded: [] });
     const hidden = hideElements(model, new Set(), new Set(['notify']));
     expect(hidden.nodes).toHaveLength(model.nodes.length);
     expect(hidden.steps.some((s) => s.edgeId === 'notify')).toBe(false);
   });
 
   it('returnerar samma modell när inget är dolt', () => {
-    const model = buildModel(addTodoFlow, { kind: 'system' });
+    const model = buildModel(addTodoFlow, { expanded: [] });
     expect(hideElements(model, new Set(), new Set())).toBe(model);
   });
 });
@@ -190,7 +190,7 @@ describe('buildModel med review', () => {
   const annotations = { diff, findings: addTodoReview.findings };
 
   it('märker noder med ändring och fynd i detaljvyn', () => {
-    const model = buildModel(merged, { kind: 'detail' }, annotations);
+    const model = buildModel(merged, { expanded: 'all' }, annotations);
     expect(model.nodes.find((n) => n.id === 'list-repository')?.change).toBe('added');
     expect(model.nodes.find((n) => n.id === 'add-form')?.change).toBe('changed');
     expect(model.nodes.find((n) => n.id === 'webhook')?.change).toBeUndefined();
@@ -200,7 +200,7 @@ describe('buildModel med review', () => {
   });
 
   it('systemet ärver sina noders ändringar och interna fynd', () => {
-    const model = buildModel(merged, { kind: 'system' }, annotations);
+    const model = buildModel(merged, { expanded: [] }, annotations);
     const backend = model.nodes.find((n) => n.id === 'backend');
     expect(backend?.change).toBe('changed');
     // Fyndet på det interna anropet check-list hamnar på systemet
@@ -209,7 +209,23 @@ describe('buildModel med review', () => {
   });
 
   it('utan review saknar noderna ändringar och fynd', () => {
-    const model = buildModel(addTodoFlow, { kind: 'detail' });
+    const model = buildModel(addTodoFlow, { expanded: 'all' });
     expect(model.nodes.every((n) => n.change === undefined && n.findings.length === 0)).toBe(true);
+  });
+});
+
+describe('initialView', () => {
+  it('fäller ut de system flödet anger och hoppar över okända', () => {
+    expect(initialView({ ...addTodoFlow, expanded: ['backend', 'gone'] })).toEqual({
+      expanded: ['backend'],
+    });
+    expect(initialView(addTodoFlow)).toEqual({ expanded: [] });
+  });
+
+  it('flera utfällda system ger noder i dem och ett system för resten', () => {
+    const model = buildModel(addTodoFlow, { expanded: ['backend', 'frontend'] });
+    expect(model.nodes.find((n) => n.id === 'backend')).toBeUndefined();
+    expect(model.nodes.find((n) => n.id === 'frontend')).toBeUndefined();
+    expect(model.nodes.find((n) => n.id === 'redis')?.level).toBe('system');
   });
 });

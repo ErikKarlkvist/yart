@@ -11,6 +11,12 @@ export const deleteAnalysisChannel = defineChannel<
   SavedAnalysis[]
 >('analysis:delete');
 
+/** Användaren fällde ut eller ihop system i ett flöde; valet sparas i flödet. */
+export const setExpandedChannel = defineChannel<
+  { repoPath: string; id: string; expanded: string[] },
+  SavedAnalysis[]
+>('analysis:set-expanded');
+
 /** Vem som levererade: MCP-verktyget och klienten som anropade det. */
 export interface DeliveredVia {
   tool: string;
