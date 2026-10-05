@@ -53,6 +53,8 @@
   "sequence.alt": "alt",
   "sequence.chooseBranch": "Play this path: {label}",
   "sequence.emptyBranch": "nothing more",
+  "sequence.table": "Table",
+  "sequence.tables": "Tables",
   "playback.paths": "Paths",
   "playback.restart": "From the start",
   "playback.previous": "Previous step",

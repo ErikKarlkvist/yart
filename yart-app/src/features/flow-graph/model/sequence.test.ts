@@ -43,8 +43,8 @@ describe('buildSequence', () => {
       'post-route',
       'todo-service',
       'todo-repository',
-      'postgres',
-      'todo-cache',
+      'table:postgres:todos',
+      'table:todo-cache:todos:all',
       'webhook',
     ]);
     const xs = sequence.participants.map((p) => p.x);
@@ -102,6 +102,63 @@ describe('buildSequence', () => {
     const ghosts = sequence.messages.filter((m) => m.removed);
     expect(ghosts.map((m) => m.edge.id)).toEqual(['invalidate']);
     expect(ghosts.every((m) => m.played === null)).toBe(true);
+  });
+});
+
+describe('tabeller i sekvensdiagrammet', () => {
+  it('en utfälld databas får en livlinje per tabell som flödet rör', () => {
+    const sequence = buildSequence(addTodoFlow, { kind: 'detail' }, undefined, new Map());
+    const ids = sequence.participants.map((p) => p.node.id);
+    expect(ids).toContain('table:postgres:todos');
+    // lists rörs inte av flödet och ritas inte
+    expect(ids).not.toContain('table:postgres:lists');
+    expect(ids).not.toContain('postgres');
+    const insert = sequence.messages.find((m) => m.edge.id === 'insert');
+    expect(insert?.to).toBe('table:postgres:todos');
+  });
+
+  it('en hopslagen databas är en livlinje', () => {
+    const sequence = buildSequence(
+      addTodoFlow,
+      { kind: 'focus', systemId: 'backend' },
+      undefined,
+      new Map(),
+    );
+    const insert = sequence.messages.find((m) => m.edge.id === 'insert');
+    expect(insert?.to).toBe('postgres');
+    expect(insert?.alsoTo).toEqual([]);
+  });
+
+  it('ett anrop som rör flera tabeller får en pil till var och en, och svaret kommer från den senaste', () => {
+    const flow = {
+      ...addTodoFlow,
+      edges: [
+        ...addTodoFlow.edges.map((e) =>
+          e.id === 'insert' ? { ...e, tables: ['todos', 'lists'] } : e,
+        ),
+        {
+          id: 'rows',
+          from: 'postgres',
+          to: 'todo-repository',
+          label: 'rows',
+          source: { file: 'x.ts', line: 1 },
+        },
+      ],
+      steps: addTodoFlow.steps.flatMap((step) =>
+        'edgeId' in step && step.edgeId === 'insert'
+          ? [step, { edgeId: 'rows', description: 'The rows come back.' }]
+          : [step],
+      ),
+    };
+    const sequence = buildSequence(flow, { kind: 'detail' }, undefined, new Map());
+    const insert = sequence.messages.find((m) => m.edge.id === 'insert');
+    expect(insert?.to).toBe('table:postgres:todos');
+    expect(insert?.alsoTo.map((t) => t.id)).toEqual(['table:postgres:lists']);
+    const lists = sequence.participants.find((p) => p.node.id === 'table:postgres:lists');
+    expect(insert?.alsoTo[0]?.x).toBe(lists?.x);
+    const rows = sequence.messages.find((m) => m.edge.id === 'rows');
+    expect(rows?.from).toBe('table:postgres:todos');
+    expect(rows?.isReturn).toBe(true);
   });
 });
 

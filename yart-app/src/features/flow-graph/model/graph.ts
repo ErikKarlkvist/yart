@@ -9,7 +9,7 @@ import {
   type SystemKind,
 } from '@/common/model/flow';
 import { type FlowChange, type FlowDiff, type ReviewFinding } from '@/common/model/review';
-import { type AltChoices, resolveSteps } from '@/common/model/steps';
+import { allSteps, type AltChoices, resolveSteps } from '@/common/model/steps';
 
 export type GraphKind = NodeKind | SystemKind;
 /** system: ett helt system. node: en nod i koden. table: en tabell i en inzoomad lagringsnod. */
@@ -96,8 +96,12 @@ export type GraphView =
 export interface BuildOptions {
   /** Grenarna som spelas i flödets alternativ */
   choices?: AltChoices;
-  /** Lagringsnoder med tabeller visas som en ruta per tabell. Av i sekvensdiagrammet. */
-  tables?: boolean;
+  /**
+   * Lagringsnoder med tabeller visas som en ruta per tabell. all: alla tabeller (grafen).
+   * touched: bara tabellerna flödets anrop namnger, och bara i noder där något anrop gör det
+   * (sekvensdiagrammet).
+   */
+  tables?: 'all' | 'touched';
 }
 
 export function buildModel(
@@ -121,7 +125,7 @@ function collapse(
   flow: Flow,
   shouldCollapse: (systemId: string) => boolean,
   annotations: ReviewAnnotations,
-  { choices, tables = true }: BuildOptions,
+  { choices, tables = 'all' }: BuildOptions,
 ): GraphModel {
   const { diff, findings } = annotations;
   const nodeFindings = (id: string): ReviewFinding[] => findings.filter((f) => f.nodeId === id);
@@ -129,7 +133,8 @@ function collapse(
   const nodes: GraphNode[] = [];
   const groups: GraphGroup[] = [];
   const relations: GraphRelation[] = [];
-  const expandedTables = new Set<string>();
+  /** Lagringsnoder som visas som tabeller, med den första tabellen som visas */
+  const expandedTables = new Map<string, string>();
 
   for (const system of flow.systems) {
     const members = flow.nodes.filter((n) => n.system === system.id);
@@ -157,10 +162,11 @@ function collapse(
       if (members.length > 0)
         groups.push({ id: system.id, kind: system.kind, label: system.label });
       for (const member of members) {
-        if (tables && member.tables && member.tables.length > 0) {
+        const shown = shownTables(flow, member, tables);
+        if (shown[0]) {
           // Lagringsnod med tabeller visas som en ruta per tabell
-          expandedTables.add(member.id);
-          for (const info of tablesOf(flow, [member])) {
+          expandedTables.set(member.id, shown[0].name);
+          for (const info of shown) {
             nodes.push({
               id: tableNodeId(member.id, info.name),
               level: 'table',
@@ -210,10 +216,11 @@ function collapse(
     }
   }
 
+  const answeredFrom = answeringTables(flow, expandedTables);
   const edges = flow.edges.map((edge) => ({
     ...edge,
-    from: nodeToTarget.get(edge.from) ?? edge.from,
-    to: targetForEdge(flow, edge, nodeToTarget, expandedTables),
+    from: answeredFrom.get(edge.id) ?? nodeToTarget.get(edge.from) ?? edge.from,
+    to: targetForEdge(edge, nodeToTarget, expandedTables),
   }));
   const edgeById = new Map(edges.map((e) => [e.id, e]));
   const steps = resolveSteps(flow.steps, choices).filter((step) => {
@@ -274,26 +281,57 @@ function systemFindings(
   );
 }
 
-function tableNodeId(nodeId: string, table: string): string {
+export function tableNodeId(nodeId: string, table: string): string {
   return `table:${nodeId}:${table}`;
 }
 
 /**
  * Målet för en kant. Går kanten till en lagringsnod som visas som tabeller
- * pekar den på den första tabellen kanten rör, annars på nodens första tabell.
+ * pekar den på den första tabellen kanten rör, annars på den första tabellen som visas.
  */
 function targetForEdge(
-  flow: Flow,
   edge: FlowEdge,
   nodeToTarget: Map<string, string>,
-  expandedTables: Set<string>,
+  expandedTables: ReadonlyMap<string, string>,
 ): string {
-  if (expandedTables.has(edge.to)) {
-    const node = flow.nodes.find((n) => n.id === edge.to);
-    const table = edge.tables?.[0] ?? node?.tables?.[0]?.name;
-    if (table) return tableNodeId(edge.to, table);
-  }
+  const first = expandedTables.get(edge.to);
+  if (first !== undefined) return tableNodeId(edge.to, edge.tables?.[0] ?? first);
   return nodeToTarget.get(edge.to) ?? edge.to;
+}
+
+/** Tabellerna en lagringsnod visas som, eller inga om den ska vara en vanlig nod. */
+function shownTables(
+  flow: Flow,
+  member: Flow['nodes'][number],
+  mode: 'all' | 'touched',
+): TableInfo[] {
+  const all = tablesOf(flow, [member]);
+  return mode === 'all' ? all : all.filter((table) => table.touchedBy.length > 0);
+}
+
+/**
+ * Var anrop från en lagringsnod som visas som tabeller utgår: från tabellen det senaste
+ * anropet in i noden rörde, i flödets ordning, annars från nodens första tabell.
+ */
+function answeringTables(
+  flow: Flow,
+  expandedTables: ReadonlyMap<string, string>,
+): Map<string, string> {
+  const result = new Map<string, string>();
+  if (expandedTables.size === 0) return result;
+  const edgeById = new Map(flow.edges.map((e) => [e.id, e]));
+  const lastTable = new Map<string, string>();
+  for (const step of allSteps(flow.steps)) {
+    const edge = edgeById.get(step.edgeId);
+    if (!edge) continue;
+    const first = expandedTables.get(edge.from);
+    if (first !== undefined && !result.has(edge.id)) {
+      result.set(edge.id, tableNodeId(edge.from, lastTable.get(edge.from) ?? first));
+    }
+    const touched = edge.tables?.[0];
+    if (expandedTables.has(edge.to) && touched) lastTable.set(edge.to, touched);
+  }
+  return result;
 }
 
 /** Tabellerna hos ett antal noder, med de kanter i flödet som rör varje tabell. */
