@@ -117,7 +117,6 @@ function OnboardingCard(): JSX.Element {
         )}
 
         <div className="onboarding__actions">
-          <span className="onboarding__hint">{t('onboarding.reopen')}</span>
           {step === 'builtin' ? (
             <>
               <button

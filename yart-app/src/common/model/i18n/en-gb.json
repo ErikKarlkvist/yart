@@ -299,7 +299,6 @@
   "onboarding.step.external": "MCP",
   "onboarding.skipText": "No built-in agent. Connect one over MCP in the next step.",
   "onboarding.externalTitle": "Use an external AI with MCP",
-  "onboarding.reopen": "Reopen with Guide in the window bar",
   "onboarding.skip": "Skip",
   "onboarding.next": "Next",
   "onboarding.back": "Back"
