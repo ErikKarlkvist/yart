@@ -10,6 +10,9 @@ them. You don't draw anything yourself: an AI agent reads your code and delivers
 flows, and yart checks that every file and line they point at exists before drawing
 them.
 
+<img width="1394" height="919" alt="image" src="https://github.com/user-attachments/assets/ed5acb6f-1f0c-409e-8916-264ef54698c8" />
+
+
 ## Two ways to use it
 
 - **Connect the AI on your machine.** yart runs Claude Code or Codex in the background
