@@ -10,8 +10,9 @@ them. You don't draw anything yourself: an AI agent reads your code and delivers
 flows, and yart checks that every file and line they point at exists before drawing
 them.
 
-<img width="1394" height="919" alt="image" src="https://github.com/user-attachments/assets/ed5acb6f-1f0c-409e-8916-264ef54698c8" />
+## TODO-app demo
 
+https://github.com/user-attachments/assets/1a56bd05-595d-4e38-992d-86b452784aa8
 
 ## Two ways to use it
 
