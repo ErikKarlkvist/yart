@@ -30,7 +30,7 @@ export const DEFAULT_LAYOUT: DockLayoutState = {
     panels: ['agent', 'connect'],
     closed: [],
     active: 'agent',
-    open: false,
+    open: true,
     size: 460,
   },
 } satisfies Record<
