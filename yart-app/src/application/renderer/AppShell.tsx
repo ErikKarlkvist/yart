@@ -25,7 +25,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
   const windowBar = useWindowBar();
   const [info, setInfo] = useState<AppInfo | null>(null);
   const { repo } = useRepo();
-  const { analyses, current, select } = useAnalyses();
+  const { analyses, current, select, setExpanded } = useAnalyses();
   const { layout, reveal } = useDock();
   const agent = useAgent();
   const { showGuide, agent: agentKind } = useSetup();
@@ -125,6 +125,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
             onAsk={onAsk}
             onActiveEdgeChange={onActiveEdgeChange}
             onPathsChange={setPaths}
+            onExpandedChange={setExpanded}
             onSelectSource={setSource}
             focusedFindingId={focusedFindingId}
             focusSeq={focusSeq}

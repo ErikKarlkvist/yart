@@ -82,6 +82,21 @@ export class AnalysisStore {
     });
   }
 
+  /**
+   * Sparar vilka system användaren fällt ut i ett flöde. Det är en vy, inte ett
+   * nytt innehåll, så analysen behåller sin tid och sin plats i listan.
+   */
+  async setExpanded(repoPath: string, id: string, expanded: string[]): Promise<SavedAnalysis[]> {
+    return this.locked(repoPath, async () => {
+      const list = await this.read(repoPath);
+      const next = list.map((a) =>
+        a.id === id && a.kind === 'flow' ? { ...a, flow: { ...a.flow, expanded } } : a,
+      );
+      await this.write(repoPath, next);
+      return sortAnalyses(next);
+    });
+  }
+
   async delete(repoPath: string, id: string): Promise<SavedAnalysis[]> {
     return this.locked(repoPath, async () => {
       const remaining = (await this.read(repoPath)).filter((a) => a.id !== id);

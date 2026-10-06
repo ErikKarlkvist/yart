@@ -37,12 +37,15 @@ som enda server, skillen och lägets instruktioner
   Flöden, dokument och reviewer sparas när användaren ber om dem eller när en separat
   artefakt behövs för uppgiften. Varje fråga får en dold instruktion att välja rätt form.
 
-Guiden vid första starten väljer mellan Claude Code, Codex och extern AI. Externa agenter
-levererar via MCP som vanligt.
+Guiden vid första starten har två steg: först Claude Code, Codex eller Skip (ingen agent i
+appen), sedan hur en extern AI kopplas via MCP. Externa agenter levererar via MCP som vanligt.
 
-## Innehåll: kort för människor, detaljer för AI
+## Innehåll: läsbart för människor, detaljer för AI
 
-Dokument och reviewer skrivs som kort markdown med rubriker och punktlistor. All markdown,
+Dokument förklarar sitt ämne ordentligt (rubriker, korta stycken och punktlistor, oftast
+300–800 ord); reviewer och fynd hålls korta. Ett sparat dokument ändras med MCP-verktyget
+`edit_document` (exakta textbyten, ett tillagt avsnitt, ny titel eller nya länkar) i stället
+för att skrivas om med `save_document`. All markdown,
 också agentens svar i chatten, ritas av `Markdown` i `src/common/renderer/Markdown.tsx`
 (react-markdown med GFM; länkar öppnas i webbläsaren, rå HTML blir text). Det en agent behöver ligger i egna fält som inte visas:
 `plan` på dokument och `fix` på fynd. Ur dem och flödena byggs implementationsplanen och
@@ -53,6 +56,10 @@ Flöden visas som sekvensdiagram (`features/flow-graph/model/sequence.ts`), med 
 alternativ vy. `steps` kan innehålla `alt` med en gren per utfall, också nästlade; spelaren
 spelar första grenen tills användaren väljer en annan. Hjälpfunktionerna för grenval ligger
 i `src/common/model/steps.ts`, och allt som spelar upp går via `resolveSteps`.
+Flödets `expanded` anger vilka system som är utfällda när det öppnas; AI:n väljer de
+intressanta. När användaren fäller ut eller ihop ett system sparas valet i samma fält
+(`analysis:set-expanded`), och en agent som sparar om flödet utan `expanded` behåller det.
+En utfälld databas visar en livlinje per tabell som flödets anrop rör.
 
 ## Design
 

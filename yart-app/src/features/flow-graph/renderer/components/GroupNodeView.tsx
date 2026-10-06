@@ -7,6 +7,7 @@ import { useZoomOut } from './GraphStateContext';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type GroupNodeData = {
+  systemId: string;
   kind: SystemKind;
   label: string;
 };
@@ -29,7 +30,7 @@ export const GroupNodeView = memo(function GroupNodeView({
           aria-label={t('graph.zoomOut')}
           onClick={(event) => {
             event.stopPropagation();
-            zoomOut();
+            zoomOut(data.systemId);
           }}
         >
           <Icon name="zoomOut" size="sm" />

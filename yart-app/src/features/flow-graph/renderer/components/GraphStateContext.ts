@@ -18,8 +18,8 @@ export interface GraphState {
   askingNodeId: string | null;
   /** Zoomar in i ett system, från förstoringsglaset på systemnoden */
   zoomInto: (systemId: string) => void;
-  /** Tillbaka till systemvyn, från förstoringsglaset på en systemram */
-  zoomOut: () => void;
+  /** Fäller ihop ett system, från förstoringsglaset på dess ram */
+  zoomOut: (systemId: string) => void;
   /** Fyndet som är valt i panelen Review, elementet det gäller ringas in */
   focusedFindingId: string | null;
   /** Klick på en fyndflagga öppnar fyndet i panelen Review */
@@ -72,7 +72,7 @@ export function useNodeState(
   };
 }
 
-export function useZoomOut(): () => void {
+export function useZoomOut(): (systemId: string) => void {
   return useContext(GraphStateContext).zoomOut;
 }
 

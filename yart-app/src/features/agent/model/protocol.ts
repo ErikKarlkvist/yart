@@ -58,6 +58,7 @@ const ALLOWED_TOOLS: readonly string[] = [
   'mcp__yart__get_analysis',
   'mcp__yart__save_flow',
   'mcp__yart__save_document',
+  'mcp__yart__edit_document',
   'mcp__yart__save_review',
   'mcp__yart__name_conversation',
 ];
@@ -179,9 +180,9 @@ export const codexRunner: AgentRunner = {
       ...(permission === 'manual' ? ['-c', 'approvals_reviewer="auto_review"'] : []),
       '-c',
       `mcp_servers.yart.url=${JSON.stringify(mcpUrl)}`,
-      ...(['save_flow', 'save_document', 'save_review', 'name_conversation'] as const).flatMap(
-        (tool) => ['-c', `mcp_servers.yart.tools.${tool}.approval_mode="approve"`],
-      ),
+      ...(
+        ['save_flow', 'save_document', 'edit_document', 'save_review', 'name_conversation'] as const
+      ).flatMap((tool) => ['-c', `mcp_servers.yart.tools.${tool}.approval_mode="approve"`]),
     ];
     // Allow all släpper sandlådan, så kommandon når även utanför repot och nätet.
     const sandbox = permission === 'all' ? 'danger-full-access' : 'workspace-write';

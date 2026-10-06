@@ -6,7 +6,7 @@ import { buildModel } from './graph';
 
 describe('buildAskPrompt', () => {
   it('describes a node with its source and the name the flow is saved under', () => {
-    const model = buildModel(addTodoFlow, { kind: 'detail' });
+    const model = buildModel(addTodoFlow, { expanded: 'all' });
     const node = model.nodes.find((n) => n.id === 'todo-service');
     if (!node) throw new Error('node missing');
     const prompt = buildAskPrompt(
@@ -37,7 +37,7 @@ describe('buildAskPrompt', () => {
   });
 
   it('omits the source for nodes without one', () => {
-    const model = buildModel(addTodoFlow, { kind: 'system' });
+    const model = buildModel(addTodoFlow, { expanded: [] });
     const node = model.nodes[0];
     if (!node) throw new Error('node missing');
     expect(buildAskPrompt(addTodoFlow, { kind: 'node', node }, 'x', undefined)).not.toContain('(');

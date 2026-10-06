@@ -67,8 +67,8 @@ interface Props {
   onAsk: (target: AskTarget) => void;
   /** Förstoringsglaset på en systemnod */
   onZoom?: ((systemId: string) => void) | undefined;
-  /** Förstoringsglaset på en systemram */
-  onZoomOut?: (() => void) | undefined;
+  /** Förstoringsglaset på en systemram: fäller ihop systemet */
+  onZoomOut?: ((systemId: string) => void) | undefined;
   /** Hopp i uppspelningen från listan över anrop på en linje, 0-baserat */
   onGoToStep: (index: number) => void;
   /** I en review: ändringar och fynd att rita på kanterna. Noderna bär sina i modellen. */
@@ -153,7 +153,7 @@ export function FlowGraph({
           zIndex: -1,
           selectable: false,
           draggable: false,
-          data: { kind: group.kind, label: group.label },
+          data: { systemId: group.id, kind: group.kind, label: group.label },
         },
       ];
     });
@@ -377,9 +377,12 @@ export function FlowGraph({
     },
     [onZoom],
   );
-  const zoomOut = useCallback(() => {
-    onZoomOut?.();
-  }, [onZoomOut]);
+  const zoomOut = useCallback(
+    (systemId: string) => {
+      onZoomOut?.(systemId);
+    },
+    [onZoomOut],
+  );
   const graphState = useMemo(
     () => ({
       hoveredNodeId: hoveredNode,

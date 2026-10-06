@@ -35,7 +35,8 @@ interface Props {
   asking: AskTarget | null;
   onAsk: (target: AskTarget) => void;
   onZoom?: ((systemId: string) => void) | undefined;
-  onZoomOut?: (() => void) | undefined;
+  /** Fäller ihop ett utfällt system, från förstoringsglaset i dess band */
+  onZoomOut?: ((systemId: string) => void) | undefined;
   diff: FlowDiff | null;
   findings: readonly ReviewFinding[];
   focusedFindingId: string | null;
@@ -234,7 +235,7 @@ export function SequenceDiagram({
     for (const message of sequence.messages) {
       const status = statusOf(message);
       if (status === 'skipped' || status === 'pending') continue;
-      for (const id of [message.from, message.to]) {
+      for (const id of [message.from, message.to, ...message.alsoTo.map((t) => t.id)]) {
         if (status === 'active' || result.get(id) !== 'active') result.set(id, status);
       }
     }
@@ -294,7 +295,9 @@ export function SequenceDiagram({
                       className="sequence-band__zoom-out"
                       title={t('graph.zoomOut')}
                       aria-label={t('graph.zoomOut')}
-                      onClick={onZoomOut}
+                      onClick={() => {
+                        onZoomOut(band.systemId);
+                      }}
                     >
                       <Icon name="zoomOut" size="sm" />
                     </button>
@@ -321,7 +324,9 @@ export function SequenceDiagram({
                     <span className="graph-node__header">
                       <Icon name={node.kind} size="sm" />
                       <span className="graph-node__kind">
-                        {node.role ?? t(`kind.${node.kind}`)}
+                        {node.level === 'table'
+                          ? t('sequence.table')
+                          : (node.role ?? t(`kind.${node.kind}`))}
                       </span>
                       <span className="graph-node__spacer" />
                       {node.level === 'system' && node.memberCount !== undefined && (
@@ -453,13 +458,23 @@ export function SequenceDiagram({
                 const highlight = messageHighlight(message, diff, findings);
                 const path = messagePath(message);
                 const marker = highlight ?? status;
+                const lineClass = `sequence-arrow-line is-${status}${message.isReturn ? ' is-return' : ''}${highlight ? ` is-highlight-${highlight}` : ''}${askingEdgeId === message.edge.id ? ' is-asking' : ''}`;
                 return (
                   <g key={message.id}>
                     <path
                       d={path}
-                      className={`sequence-arrow-line is-${status}${message.isReturn ? ' is-return' : ''}${highlight ? ` is-highlight-${highlight}` : ''}${askingEdgeId === message.edge.id ? ' is-asking' : ''}`}
+                      className={lineClass}
                       markerEnd={`url(#sequence-arrow-${marker})`}
                     />
+                    {/* Fler tabeller samma anrop skriver till eller läser från */}
+                    {message.alsoTo.map((table) => (
+                      <path
+                        key={table.id}
+                        d={straightPath(message.x1, table.x, message.y)}
+                        className={lineClass}
+                        markerEnd={`url(#sequence-arrow-${marker})`}
+                      />
+                    ))}
                     {status === 'active' && (
                       <circle
                         r="4"
@@ -582,10 +597,22 @@ export function SequenceDiagram({
   );
 }
 
-/** Det som skickas och kommer tillbaka, under etiketten när musen är över den. */
+/** Det som skickas, tabellerna anropet rör och det som kommer tillbaka, under etiketten. */
 function MessageDetails({ edge, onAsk }: { edge: FlowEdge; onAsk: () => void }): JSX.Element {
   return (
     <div className="sequence-message__details">
+      {edge.tables && edge.tables.length > 0 && (
+        <div className="graph-edge-label__row is-tables">
+          <span
+            className="graph-edge-label__arrow"
+            title={t('sequence.tables')}
+            aria-label={t('sequence.tables')}
+          >
+            <Icon name="db" size="sm" />
+          </span>
+          <span className="graph-edge-label__value">{edge.tables.join(', ')}</span>
+        </div>
+      )}
       {edge.payload && (
         <div className="graph-edge-label__row is-sends">
           <span
@@ -634,6 +661,10 @@ function messagePath(message: SequenceMessage): string {
     const bottom = y + SEQUENCE.selfHeight;
     return `M ${x1} ${y} L ${right} ${y} L ${right} ${bottom} L ${x1 + 2} ${bottom}`;
   }
+  return straightPath(x1, x2, y);
+}
+
+function straightPath(x1: number, x2: number, y: number): string {
   // Pilen stannar strax före livlinjen så spetsen syns
   const end = x2 > x1 ? x2 - 2 : x2 + 2;
   return `M ${x1} ${y} L ${end} ${y}`;

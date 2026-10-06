@@ -54,6 +54,9 @@ export async function intakeAnalysis(
   if (!parsed.ok) return { type: 'rejected', errors: parsed.errors };
 
   const existing = await store.get(repoPath, parsed.kind, name);
+  if (parsed.kind === 'flow' && existing?.kind === 'flow') {
+    parsed.flow = keepExpanded(parsed.flow, existing.flow);
+  }
   if (existing && existing.ref?.commit === parsed.ref?.commit && sameContent(existing, parsed)) {
     return { type: 'unchanged', analysis: existing };
   }
@@ -70,6 +73,16 @@ export async function intakeAnalysis(
             ...(parsed.compare ? { compare: parsed.compare } : {}),
           };
   return { type: 'imported', analysis: await store.upsert(repoPath, input) };
+}
+
+/**
+ * Användarens val av utfällda system följer med när en agent sparar om flödet
+ * utan att själv ange `expanded`, så en uppdatering inte nollställer vyn.
+ */
+function keepExpanded(flow: Flow, previous: Flow): Flow {
+  if (flow.expanded !== undefined || previous.expanded === undefined) return flow;
+  const ids = new Set(flow.systems.map((s) => s.id));
+  return { ...flow, expanded: previous.expanded.filter((id) => ids.has(id)) };
 }
 
 function sameContent(existing: SavedAnalysis, parsed: Parsed & { ok: true }): boolean {

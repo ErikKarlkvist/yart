@@ -81,6 +81,15 @@ export function installMockBridge(): void {
     },
     'analysis:list': (payload) =>
       (payload as { repoPath: string }).repoPath === demoPath ? [...saved, ...builtin] : [],
+    'analysis:set-expanded': (payload) => {
+      const { id, expanded } = payload as { id: string; expanded: string[] };
+      saved = saved.map((analysis) =>
+        analysis.id === id && analysis.kind === 'flow'
+          ? { ...analysis, flow: { ...(analysis.flow as object), expanded } }
+          : analysis,
+      );
+      return [...saved, ...builtin];
+    },
     'analysis:delete': (payload) => {
       const { id } = payload as { id: string };
       saved = saved.filter((analysis) => analysis.id !== id);

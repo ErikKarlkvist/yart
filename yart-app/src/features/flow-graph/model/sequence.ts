@@ -13,14 +13,22 @@ import {
   resolveSteps,
   selectedBranch,
 } from '@/common/model/steps';
-import { buildModel, type GraphNode, type GraphView, type ReviewAnnotations } from './graph';
+import {
+  buildModel,
+  type GraphNode,
+  type GraphView,
+  type ReviewAnnotations,
+  tableNodeId,
+} from './graph';
 
 /**
  * Flödet som sekvensdiagram: en livlinje per deltagare i den ordning flödet
  * når dem, och ett meddelande per steg uppifrån och ned. Anrop inom en
  * deltagare, som mellan två noder i ett hopslaget system, ritas som en ögla
  * på livlinjen. Alternativ ritas som alt-block med alla grenar; de som inte
- * spelas tonas ned. Allt här är koordinater, komponenten ritar bara ut dem.
+ * spelas tonas ned. En utfälld databas får en livlinje per tabell som flödet
+ * rör, och ett anrop som rör flera tabeller får en pil till var och en.
+ * Allt här är koordinater, komponenten ritar bara ut dem.
  */
 
 interface SequenceParticipant {
@@ -49,6 +57,8 @@ export interface SequenceMessage {
   to: string;
   x1: number;
   x2: number;
+  /** Fler tabeller anropet läser eller skriver, utöver den i `to`, när databasen är utfälld */
+  alsoTo: { id: string; x: number }[];
   y: number;
   /** Anrop inom samma deltagare, ritas som en ögla */
   self: boolean;
@@ -138,8 +148,17 @@ export function buildSequence(
   choices: AltChoices,
   removed: RemovedCalls | null = null,
 ): Sequence {
-  const model = buildModel(flow, view, annotations, { choices, tables: false });
+  const model = buildModel(flow, view, annotations, { choices, tables: 'touched' });
   const nodeById = new Map(model.nodes.map((n) => [n.id, n]));
+  const flowEdgeById = new Map(flow.edges.map((e) => [e.id, e]));
+  // Tabellerna efter den första, som kanten i modellen redan pekar på
+  const moreTables = (edge: FlowEdge): string[] => {
+    const original = flowEdgeById.get(edge.id);
+    if (!original) return [];
+    return (original.tables ?? [])
+      .map((table) => tableNodeId(original.to, table))
+      .filter((id) => id !== edge.to && nodeById.has(id));
+  };
   const edgeById = new Map(model.edges.map((e) => [e.id, e]));
   const steps = resolveSteps(flow.steps, choices);
   const playedIndex = new Map(steps.map((step, i) => [step, i]));
@@ -208,7 +227,7 @@ export function buildSequence(
   const seen: string[] = trigger ? [trigger.id] : [];
   for (const row of rows) {
     if (row.kind !== 'message') continue;
-    for (const id of [row.edge.from, row.edge.to]) {
+    for (const id of [row.edge.from, row.edge.to, ...moreTables(row.edge)]) {
       if (!seen.includes(id) && nodeById.has(id)) seen.push(id);
     }
   }
@@ -245,6 +264,10 @@ export function buildSequence(
       continue;
     }
     spans.push({ from: Math.min(a, b), to: Math.max(a, b), need: label + 40 });
+    for (const id of moreTables(row.edge)) {
+      const c = column.get(id);
+      if (c !== undefined) spans.push({ from: Math.min(a, c), to: Math.max(a, c), need: 0 });
+    }
   }
   spans.sort((p, q) => p.to - p.from - (q.to - q.from));
   for (const span of spans) {
@@ -324,6 +347,7 @@ export function buildSequence(
         const self = from === to;
         const x1 = xOf(from);
         const x2 = xOf(to);
+        const alsoTo = moreTables(row.edge).map((id) => ({ id, x: xOf(id) }));
         const isReturn = !self && seenPairs.has(`${to}>${from}`);
         if (!self) seenPairs.add(`${from}>${to}`);
         const top = y + (self ? SEQUENCE.messageRow - 16 : SEQUENCE.messageRow - 12);
@@ -335,6 +359,7 @@ export function buildSequence(
           to,
           x1,
           x2,
+          alsoTo,
           y: top,
           self,
           isReturn,
@@ -343,7 +368,10 @@ export function buildSequence(
         });
         y += self ? SEQUENCE.selfRow : SEQUENCE.messageRow;
         if (self) extend(x1, x1 + SEQUENCE.selfWidth + 12 + labelWidth(row.edge.label));
-        else extend(Math.min(x1, x2), Math.max(x1, x2));
+        else {
+          const ends = [x2, ...alsoTo.map((t) => t.x)];
+          extend(Math.min(x1, ...ends), Math.max(x1, ...ends));
+        }
         break;
       }
       case 'altStart': {
@@ -409,6 +437,7 @@ export function buildSequence(
     for (const m of messages) {
       m.x1 += shift;
       m.x2 += shift;
+      for (const t of m.alsoTo) t.x += shift;
     }
     for (const f of fragments) f.x += shift;
     if (triggerInfo) triggerInfo.x += shift;
