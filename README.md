@@ -10,6 +10,10 @@ them. You don't draw anything yourself: an AI agent reads your code and delivers
 flows, and yart checks that every file and line they point at exists before drawing
 them.
 
+## TODO-app demo
+
+https://github.com/user-attachments/assets/1a56bd05-595d-4e38-992d-86b452784aa8
+
 ## Two ways to use it
 
 - **Connect the AI on your machine.** yart runs Claude Code or Codex in the background
