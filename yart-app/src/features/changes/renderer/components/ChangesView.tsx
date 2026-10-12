@@ -323,31 +323,60 @@ interface FindingsProps {
   onOpenFinding: (finding: ReviewFinding) => void;
 }
 
-/** Fynden som pekar på raden, under den i allvarsgradens färg. */
+/**
+ * Fynden som pekar på raden, under den i allvarsgradens färg. Ihopfällda
+ * till ikon och titel så koden går att läsa; klick visar beskrivningen.
+ */
 function Findings({ line, findings, onOpenFinding }: FindingsProps): JSX.Element | null {
-  if (line === undefined) return null;
-  const here = findings.filter((f) => f.source?.line === line);
+  const here = line === undefined ? [] : findings.filter((f) => f.source?.line === line);
   if (here.length === 0) return null;
   return (
     <>
       {here.map((finding) => (
-        <button
-          key={finding.id}
-          type="button"
-          className={`changes__finding is-${finding.severity}`}
-          disabled={finding.flow === undefined}
-          title={t('review.openHint')}
-          onClick={() => {
-            onOpenFinding(finding);
-          }}
-        >
-          <Icon name={finding.severity} size="sm" />
-          <span className="changes__finding-body">
-            <span className="changes__finding-title">{finding.title}</span>
-            <span className="changes__finding-text">{finding.description}</span>
-          </span>
-        </button>
+        <FindingRow key={finding.id} finding={finding} onOpen={onOpenFinding} />
       ))}
     </>
+  );
+}
+
+function FindingRow({
+  finding,
+  onOpen,
+}: {
+  finding: ReviewFinding;
+  onOpen: (finding: ReviewFinding) => void;
+}): JSX.Element {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`changes__finding is-${finding.severity}${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="changes__finding-toggle"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((current) => !current);
+        }}
+      >
+        <Icon name={finding.severity} size="sm" />
+        <span className="changes__finding-title">{finding.title}</span>
+        <Icon name={open ? 'chevronDown' : 'chevronRight'} size="sm" />
+      </button>
+      {open && (
+        <div className="changes__finding-body">
+          <span className="changes__finding-text">{finding.description}</span>
+          {finding.flow !== undefined && (
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                onOpen(finding);
+              }}
+            >
+              {t('review.openHint')}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
