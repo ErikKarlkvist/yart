@@ -82,6 +82,45 @@
 }
 
 /* Reviewvyn: jämförelse, utfall och fynd per flöde */
+.document-view__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+/* Grupperade knappar: Review | Changes, vald fylld i accent */
+.document-view__switch {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+}
+
+.document-view__switch-option {
+  height: 22px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.document-view__switch-option + .document-view__switch-option {
+  border-left: 1px solid var(--border-strong);
+}
+
+.document-view__switch-option:hover:not(.is-current) {
+  color: var(--fg);
+}
+
+.document-view__switch-option.is-current {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
 .document-view__compare {
   color: var(--fg-muted);
   font-size: 12px;

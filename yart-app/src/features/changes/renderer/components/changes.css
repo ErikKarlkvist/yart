@@ -1,0 +1,331 @@
+/* Diffen i flödesordning: huvudytan när en review visar sina ändringar */
+.changes {
+  width: 100%;
+  height: 100%;
+  padding: 24px clamp(20px, 4vw, 48px) 48px;
+  overflow-y: auto;
+  color: var(--fg);
+}
+
+.changes > * {
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+.changes__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.changes__compare {
+  color: var(--fg-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.changes__progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Andelen avbockade chunks, fylld från vänster */
+.changes__progress-bar {
+  position: relative;
+  width: 120px;
+  height: 6px;
+  border: 1px solid var(--border-strong);
+}
+
+.changes__progress-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: var(--progress);
+  background: var(--accent);
+}
+
+.changes__muted {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.changes__error {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* En grupp per flöde, sist det inget flöde rör */
+.changes__group {
+  margin-top: 32px;
+}
+
+.changes__group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.changes__group-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.changes__group-count {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.changes__group-summary {
+  margin: 8px 0 14px;
+  color: var(--fg-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* En chunk: rubrikrad med plats i flödet och fil, sedan koden */
+.changes__chunk {
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.changes__chunk.is-reviewed {
+  opacity: 0.6;
+}
+
+.changes__chunk-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.changes__chunk-head input {
+  flex: none;
+  margin: 0;
+}
+
+/* Stegnumret och anropet chunken hör till */
+.changes__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  max-width: 40%;
+  color: var(--fg);
+}
+
+.changes__place-n {
+  padding: 1px 5px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.changes__place-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changes__file {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-muted);
+}
+
+.changes__line {
+  color: var(--accent);
+}
+
+.changes__tag {
+  flex: none;
+  padding: 1px 4px;
+  border: 1px solid currentcolor;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.changes__tag.is-added {
+  color: var(--added);
+}
+
+.changes__tag.is-deleted {
+  color: var(--danger);
+}
+
+.changes__tag.is-renamed {
+  color: var(--warn);
+}
+
+.changes__heading {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-faint);
+}
+
+.changes__also {
+  flex: none;
+  margin-left: auto;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.changes__code {
+  margin: 0;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+.changes__line-row {
+  display: flex;
+  padding: 0 10px;
+}
+
+.changes__line-row.is-added {
+  background: color-mix(in oklch, var(--added) 14%, transparent);
+}
+
+.changes__line-row.is-removed {
+  background: color-mix(in oklch, var(--danger) 14%, transparent);
+}
+
+/* Tecknet före raden sätts i CSS, inte i texten, så den går att kopiera ren */
+.changes__text::before {
+  content: ' ';
+  display: inline-block;
+  width: 1.2em;
+  color: var(--fg-muted);
+}
+
+.is-added .changes__text::before {
+  content: '+';
+  color: var(--added);
+}
+
+.is-removed .changes__text::before {
+  content: '−';
+  color: var(--danger);
+}
+
+.changes__n {
+  width: 3.5em;
+  flex-shrink: 0;
+  text-align: right;
+  padding-right: 10px;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.changes__text {
+  white-space: pre;
+  color: var(--fg-body);
+}
+
+/* Ett fynd på raden det pekar på, i allvarsgradens färg */
+.changes__finding {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0;
+  padding: 6px 10px 6px 7.3em;
+  border: none;
+  border-left: 3px solid var(--fg-muted);
+  background: var(--bg-panel);
+  color: var(--fg);
+  font: inherit;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-align: left;
+  white-space: normal;
+}
+
+.changes__finding:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.changes__finding:not(:disabled):hover .changes__finding-title {
+  text-decoration: underline;
+}
+
+.changes__finding.is-error {
+  border-left-color: var(--danger);
+}
+
+.changes__finding.is-error .icon {
+  color: var(--danger);
+}
+
+.changes__finding.is-warning {
+  border-left-color: var(--warn);
+}
+
+.changes__finding.is-warning .icon {
+  color: var(--warn);
+}
+
+.changes__finding.is-info {
+  border-left-color: var(--accent);
+}
+
+.changes__finding.is-info .icon {
+  color: var(--accent);
+}
+
+.changes__finding .icon {
+  margin-top: 3px;
+}
+
+.changes__finding-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.changes__finding-title {
+  font-weight: 600;
+}
+
+.changes__finding-text {
+  color: var(--fg-muted);
+  line-height: 1.45;
+}

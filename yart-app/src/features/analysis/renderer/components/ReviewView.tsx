@@ -8,6 +8,7 @@ import {
 } from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
 import { Markdown } from '@/common/renderer/Markdown';
+import { ChangesView, type ReviewedFlow } from '@/features/changes';
 import { type SavedFlowAnalysis, type SavedReviewAnalysis } from '../../model/analysis';
 import { buildReviewFixPlan } from '../../model/plan';
 import { AiActions } from './AiActions';
@@ -31,10 +32,15 @@ interface FindingGroup {
   findings: ReviewFinding[];
 }
 
+type ReviewViewMode = 'review' | 'changes';
+const MODES: readonly ReviewViewMode[] = ['review', 'changes'];
+
 /**
  * Reviewdokumentet: kort text om ändringen, flödena den rör och reviewpunkterna.
  * Punkterna man kryssar i blir en fix-plan för AI, att kopiera eller skicka.
- * Montera om med `key` när reviewn byts så valet börjar om.
+ * Växlaren högst upp byter till diffen i flödesordning; det man bockat av där
+ * lever så länge reviewn är öppen. Montera om med `key` när reviewn byts så
+ * valen börjar om.
  */
 export function ReviewView({
   analysis,
@@ -60,11 +66,63 @@ export function ReviewView({
     });
   };
   const linked = review.flows.flatMap((name) => flows.filter((f) => f.name === name));
+  const [mode, setMode] = useState<ReviewViewMode>('review');
+  const [reviewedChunks, setReviewedChunks] = useState<ReadonlySet<string>>(() => new Set());
+  const switcher = (
+    <span className="document-view__switch" role="group" aria-label={t('review.view')}>
+      {MODES.map((option) => (
+        <button
+          key={option}
+          type="button"
+          className={`document-view__switch-option${mode === option ? ' is-current' : ''}`}
+          aria-pressed={mode === option}
+          title={t(option === 'review' ? 'review.viewReviewHint' : 'review.viewChangesHint')}
+          onClick={() => {
+            setMode(option);
+          }}
+        >
+          {t(option === 'review' ? 'review.viewReview' : 'review.viewChanges')}
+        </button>
+      ))}
+    </span>
+  );
+
+  if (mode === 'changes') {
+    const reviewedFlows: ReviewedFlow[] = linked.map((f) => ({
+      name: f.name,
+      title: f.flow.title,
+      flow: f.flow,
+      base: f.compare?.base,
+    }));
+    return (
+      <ChangesView
+        review={review}
+        flows={reviewedFlows}
+        reviewed={reviewedChunks}
+        onToggleReviewed={(id) => {
+          setReviewedChunks((current) => {
+            const next = new Set(current);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+          });
+        }}
+        onOpenFinding={(finding) => {
+          const flow = linked.find((f) => f.name === finding.flow);
+          if (flow) onOpenFinding(flow.id, finding.id);
+        }}
+        toolbar={switcher}
+      />
+    );
+  }
 
   return (
     <article className="document-view">
       <header className="document-view__header">
-        <span className="analyses__tag">{t('analyses.review')}</span>{' '}
+        <div className="document-view__bar">
+          <span className="analyses__tag">{t('analyses.review')}</span>
+          {switcher}
+        </div>
         <span className="document-view__compare">
           {t('review.compare', { base: review.baseLabel, head: review.headLabel })}
         </span>

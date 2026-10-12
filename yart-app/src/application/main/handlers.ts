@@ -5,6 +5,7 @@ import { t } from '@/common/model/i18n';
 import { type AgentHandle, registerAgentHandlers } from '@/features/agent/main';
 import { registerAnalysisHandlers } from '@/features/analysis/main';
 import { buildGuide } from '@/features/analysis/model/skill';
+import { registerChangesHandlers } from '@/features/changes/main';
 import { registerMcpHandlers } from '@/features/mcp/main';
 import { registerRepoHandlers } from '@/features/repo/main';
 import { mcpDeps } from './mcp';
@@ -17,6 +18,7 @@ export function registerApplicationHandlers(): void {
   }));
 
   registerRepoHandlers();
+  registerChangesHandlers();
   const analyses = registerAnalysisHandlers();
   // Agenten registreras efter MCP-servern men svarar på dess godkännanden, därav den sena bindningen.
   let agent: AgentHandle | null = null;

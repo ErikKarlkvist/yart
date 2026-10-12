@@ -3,6 +3,42 @@ import { APP_NAME } from '@/common/model/brand';
 import { DEMO_REPO_RELATIVE_PATH, demoAnalyses } from '@/common/model/fixtures';
 import { t } from '@/common/model/i18n';
 import { type Conversation } from '@/features/agent/model/conversation';
+import { parseUnifiedDiff } from '@/features/changes/model/diff';
+
+/** En diff som rör demo-reviewns flöde, så vyn Changes går att se utan git. */
+const MOCK_DIFF = parseUnifiedDiff(
+  [
+    'diff --git a/backend/src/services/TodoService.ts b/backend/src/services/TodoService.ts',
+    '--- a/backend/src/services/TodoService.ts',
+    '+++ b/backend/src/services/TodoService.ts',
+    '@@ -20,6 +20,7 @@ export class TodoService {',
+    '   async create(input: CreateTodo): Promise<Todo> {',
+    '+    await this.lists.exists(input.listId);',
+    '     const todo = await this.repository.insert(input);',
+    '-    await this.cache.invalidate();',
+    '     await this.webhook.notify(todo);',
+    '     return todo;',
+    '   }',
+    'diff --git a/frontend/src/components/AddTodoForm.tsx b/frontend/src/components/AddTodoForm.tsx',
+    '--- a/frontend/src/components/AddTodoForm.tsx',
+    '+++ b/frontend/src/components/AddTodoForm.tsx',
+    '@@ -14,4 +14,6 @@ export function AddTodoForm() {',
+    '   const submit = (e) => {',
+    '     e.preventDefault();',
+    '-    add(title.trim());',
+    '+    add(title.trim(), listId);',
+    '+    setListId(null);',
+    '   };',
+    'diff --git a/README.md b/README.md',
+    '--- a/README.md',
+    '+++ b/README.md',
+    '@@ -1,2 +1,3 @@',
+    ' # todo-app',
+    '+Todos can belong to lists.',
+    ' A demo.',
+    '',
+  ].join('\n'),
+);
 
 /**
  * Ersätter preload-bryggan när renderern körs i en vanlig webbläsare under
@@ -95,6 +131,7 @@ export function installMockBridge(): void {
       saved = saved.filter((analysis) => analysis.id !== id);
       return [...saved, ...builtin];
     },
+    'changes:read-diff': () => MOCK_DIFF,
     'mcp:status': () => mockMcpStatus,
     'mcp:install-skill': (payload) => {
       const { target } = payload as { target: 'claude' | 'codex' };

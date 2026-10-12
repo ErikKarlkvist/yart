@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "renderer",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "yart-app", "exec", "--", "electron-vite", "dev", "--rendererOnly"],
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd yart-app && npm run dev -- --rendererOnly"],
       "port": 5173
     }
   ]
