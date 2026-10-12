@@ -3,14 +3,15 @@
  * finns inte i git, så appen visar den här i stället för att köra git diff
  * när repot är demot. Base-sidan är koden i demo/todo-app som den är, med
  * åtta rader runt varje ändring som den riktiga diffen får, och raderna i
- * head pekar dit flödets källhänvisningar och fynden pekar.
+ * head pekar dit flödets källhänvisningar och fynden pekar. Sammanhanget
+ * börjar efter filernas importer: electron-vite läser en rad som ser ut som en
+ * import som kod och stoppar in sina shims efter den, mitt i strängen.
  */
 export const TODO_LISTS_DIFF = [
   'diff --git a/frontend/src/components/AddTodoForm.tsx b/frontend/src/components/AddTodoForm.tsx',
   '--- a/frontend/src/components/AddTodoForm.tsx',
   '+++ b/frontend/src/components/AddTodoForm.tsx',
-  '@@ -1,24 +1,26 @@',
-  " import { useState, type FormEvent } from 'react';",
+  '@@ -2,23 +2,25 @@',
   ' ',
   ' interface Props {',
   '-  onAdd: (title: string) => Promise<void>;',
@@ -59,9 +60,7 @@ export const TODO_LISTS_DIFF = [
   'diff --git a/backend/src/routes/todos.ts b/backend/src/routes/todos.ts',
   '--- a/backend/src/routes/todos.ts',
   '+++ b/backend/src/routes/todos.ts',
-  '@@ -2,26 +2,26 @@',
-  " import { z } from 'zod';",
-  " import { TodoService } from '../services/TodoService';",
+  '@@ -4,24 +4,24 @@',
   ' ',
   '-const newTodoSchema = z.object({ title: z.string().trim().min(1).max(200) });',
   '+const newTodoSchema = z.object({ title: titleSchema, listId: z.number().int().nullable() });',

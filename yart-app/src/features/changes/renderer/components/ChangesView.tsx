@@ -99,12 +99,39 @@ export function ChangesView({ review, flows, onOpenFinding }: Props): JSX.Elemen
             {t('changes.position', { index: index + 1, total: stops.length })}
           </span>
         )}
+        {current && (
+          <nav className="changes__nav">
+            {done === stops.length && (
+              <span className="changes__all-done">{t('changes.allReviewed')}</span>
+            )}
+            <button
+              type="button"
+              className="button"
+              disabled={index === 0}
+              onClick={() => {
+                setPosition(index - 1);
+              }}
+            >
+              {t('changes.previous')}
+            </button>
+            <button
+              type="button"
+              className="button button--primary"
+              title={t('changes.nextHint')}
+              onClick={next}
+            >
+              {t(index === stops.length - 1 ? 'changes.finish' : 'changes.next')}
+            </button>
+          </nav>
+        )}
       </header>
 
-      {diff.status === 'loading' && <p className="changes__muted">{t('changes.reading')}</p>}
-      {diff.status === 'error' && <p className="changes__error">{diff.message}</p>}
+      {diff.status === 'loading' && (
+        <p className="changes__muted changes__notice">{t('changes.reading')}</p>
+      )}
+      {diff.status === 'error' && <p className="changes__error changes__notice">{diff.message}</p>}
       {diff.status === 'ready' && stops.length === 0 && (
-        <p className="changes__muted">
+        <p className="changes__muted changes__notice">
           {t('changes.empty', { base: review.baseLabel, head: review.headLabel })}
         </p>
       )}
@@ -117,31 +144,6 @@ export function ChangesView({ review, flows, onOpenFinding }: Props): JSX.Elemen
             layout={layout}
             findings={review.findings.filter((f) => f.source?.file === current.placed.chunk.file)}
             onOpenFinding={onOpenFinding}
-            footer={
-              <nav className="changes__nav">
-                <button
-                  type="button"
-                  className="button"
-                  disabled={index === 0}
-                  onClick={() => {
-                    setPosition(index - 1);
-                  }}
-                >
-                  {t('changes.previous')}
-                </button>
-                {done === stops.length && (
-                  <span className="changes__all-done">{t('changes.allReviewed')}</span>
-                )}
-                <button
-                  type="button"
-                  className="button button--primary"
-                  title={t('changes.nextHint')}
-                  onClick={next}
-                >
-                  {t(index === stops.length - 1 ? 'changes.finish' : 'changes.next')}
-                </button>
-              </nav>
-            }
           />
         </div>
       )}
@@ -202,11 +204,10 @@ interface StopProps {
   /** Fynden i chunkens fil */
   findings: readonly ReviewFinding[];
   onOpenFinding: (finding: ReviewFinding) => void;
-  footer: JSX.Element;
 }
 
 /** Den aktuella chunken: var i flödet, förklaringen, filen och koden. */
-function StopView({ stop, layout, findings, onOpenFinding, footer }: StopProps): JSX.Element {
+function StopView({ stop, layout, findings, onOpenFinding }: StopProps): JSX.Element {
   const { chunk, file, place, alsoIn } = stop.placed;
   const flow = stop.group.flow;
   return (
@@ -246,7 +247,6 @@ function StopView({ stop, layout, findings, onOpenFinding, footer }: StopProps):
           <InlineCode chunk={chunk} findings={findings} onOpenFinding={onOpenFinding} />
         )}
       </div>
-      {footer}
     </article>
   );
 }
