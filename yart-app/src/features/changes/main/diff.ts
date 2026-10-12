@@ -3,6 +3,9 @@ import { isDemoRepo } from '@/common/main/demo';
 import { TODO_LISTS_DIFF } from '@/common/model/fixtures';
 import { type FileDiff, parseUnifiedDiff } from '../model/diff';
 
+/** Rader runt varje ändring, fler än gits tre så funktionen runt syns. Samma som panelen Code. */
+const CONTEXT_LINES = 8;
+
 /**
  * Det head ändrat sedan det skildes från base, med sökvägar relativa repots
  * mapp så de matchar flödenas källhänvisningar också när repot ligger i en
@@ -12,6 +15,7 @@ export async function readDiff(repoPath: string, base: string, head: string): Pr
   if (isDemoRepo(repoPath)) return parseUnifiedDiff(TODO_LISTS_DIFF);
   const text = await simpleGit(repoPath).diff([
     '--no-color',
+    `--unified=${CONTEXT_LINES}`,
     '--find-renames',
     '--relative',
     `${base}...${head}`,
