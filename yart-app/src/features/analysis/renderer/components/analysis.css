@@ -202,6 +202,12 @@
   color: var(--plan);
 }
 
+/* Diffen för en review, i reviewlägets färg */
+.analyses__tag.is-changes {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
 /* Reviewn fylls med fyndens värsta allvarsgrad */
 .analyses__tag.is-error,
 .analyses__tag.is-warning,

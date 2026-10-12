@@ -5,7 +5,14 @@ import { allSteps } from '@/common/model/steps';
 import { ContextMenu, type ContextMenuItem } from '@/common/renderer/ContextMenu';
 import { Icon } from '@/common/renderer/Icon';
 import { readStoredJson, writeStored } from '@/common/renderer/storage';
-import { analysisTitle, findingsForFlow, refLabel, type SavedAnalysis } from '../../model/analysis';
+import {
+  analysisTitle,
+  findingsForFlow,
+  type ListEntry,
+  listEntries,
+  refLabel,
+  type SavedAnalysis,
+} from '../../model/analysis';
 import {
   applyLayout,
   EMPTY_LAYOUT,
@@ -46,7 +53,7 @@ type Editing = { type: 'item'; id: string } | { type: 'group'; key: string };
  * titel sparas i analysen.
  */
 export function AnalysisList({ repoPath, conversationTitle }: Props): JSX.Element {
-  const { analyses, current, error, rejection, select, remove, rename, dismissRejection } =
+  const { analyses, currentId, error, rejection, select, remove, rename, dismissRejection } =
     useAnalyses();
   const [layout, setLayout] = useListLayout(repoPath);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
@@ -223,34 +230,34 @@ export function AnalysisList({ repoPath, conversationTitle }: Props): JSX.Elemen
               <ul
                 className={`analyses__list${drop?.type === 'item' && drop.group === group.key && drop.index === group.items.length ? ' is-drop-after' : ''}`}
               >
-                {group.items.map((analysis, index) => (
+                {group.items.map((entry, index) => (
                   <AnalysisRow
-                    key={analysis.id}
-                    analysis={analysis}
+                    key={entry.id}
+                    entry={entry}
                     analyses={analyses}
-                    active={analysis.id === current?.id}
+                    active={entry.id === currentId}
                     dropBefore={
                       drop?.type === 'item' && drop.group === group.key && drop.index === index
                     }
-                    editing={editing?.type === 'item' && editing.id === analysis.id}
+                    editing={editing?.type === 'item' && editing.id === entry.id}
                     onSelect={() => {
-                      select(analysis.id === current?.id ? null : analysis.id);
+                      select(entry.id === currentId ? null : entry.id);
                     }}
                     onRename={(title) => {
                       setEditing(null);
-                      void rename(analysis.id, title);
+                      void rename(entry.id, title);
                     }}
                     onCancelRename={() => {
                       setEditing(null);
                     }}
-                    onRemove={() => void remove(analysis.id)}
+                    onRemove={() => void remove(entry.id)}
                     onDragStart={(event) => {
                       dragging.current = {
                         type: 'item',
-                        id: analysis.id,
-                        home: home.get(analysis.id) ?? group.key,
+                        id: entry.id,
+                        home: home.get(entry.id) ?? group.key,
                       };
-                      event.dataTransfer.setData(ITEM_DRAG_TYPE, analysis.id);
+                      event.dataTransfer.setData(ITEM_DRAG_TYPE, entry.id);
                       event.dataTransfer.effectAllowed = 'move';
                     }}
                     onDragOver={(event) => {
@@ -258,10 +265,11 @@ export function AnalysisList({ repoPath, conversationTitle }: Props): JSX.Elemen
                     }}
                     onContextMenu={(event) => {
                       event.preventDefault();
+                      if (entry.kind === 'changes') return;
                       setMenu({
                         x: event.clientX,
                         y: event.clientY,
-                        target: { type: 'item', analysis },
+                        target: { type: 'item', analysis: entry },
                       });
                     }}
                   />
@@ -292,7 +300,7 @@ function half(event: DragEvent): number {
 }
 
 interface RowProps {
-  analysis: SavedAnalysis;
+  entry: ListEntry;
   analyses: readonly SavedAnalysis[];
   active: boolean;
   dropBefore: boolean;
@@ -307,7 +315,7 @@ interface RowProps {
 }
 
 function AnalysisRow({
-  analysis,
+  entry,
   analyses,
   active,
   dropBefore,
@@ -320,6 +328,37 @@ function AnalysisRow({
   onDragOver,
   onContextMenu,
 }: RowProps): JSX.Element {
+  if (entry.kind === 'changes') {
+    return (
+      <li
+        className={`analyses__item${active ? ' is-active' : ''}${dropBefore ? ' is-drop-before' : ''}`}
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onContextMenu={onContextMenu}
+      >
+        <button
+          type="button"
+          className="analyses__open"
+          title={`${entry.review.review.summary} — ${t('analyses.reorder')}`}
+          onClick={onSelect}
+        >
+          <span className="analyses__title">
+            <span className="analyses__tag is-changes">{t('analyses.changes')}</span>
+            <span className="analyses__title-text">{entry.review.review.title}</span>
+          </span>
+          <span className="analyses__meta">
+            {t('review.compare', {
+              base: entry.review.review.baseLabel,
+              head: entry.review.review.headLabel,
+            })}{' '}
+            · {t('analyses.changesMeta')}
+          </span>
+        </button>
+      </li>
+    );
+  }
+  const analysis = entry;
   const title = analysisTitle(analysis);
   const compare =
     analysis.kind === 'review'
@@ -464,7 +503,7 @@ interface Group {
   /** Rubriken är branch och commit, inte ett namn */
   isRef: boolean;
   title: string;
-  items: SavedAnalysis[];
+  items: ListEntry[];
 }
 
 /**
@@ -478,7 +517,7 @@ function groupAnalyses(
   analyses: readonly SavedAnalysis[],
   conversationTitle: Props['conversationTitle'],
 ): Group[] {
-  const groups = new Map<string, Group>();
+  const groups = new Map<string, Omit<Group, 'items'> & { items: SavedAnalysis[] }>();
   for (const analysis of analyses) {
     const conversation =
       analysis.conversationId !== undefined
@@ -502,7 +541,9 @@ function groupAnalyses(
     groups.set(key, group);
   }
   const order = (g: Group): number => (g.key === 'builtin' ? 0 : g.key === 'worktree' ? 2 : 1);
-  return [...groups.values()].sort((a, b) => order(a) - order(b));
+  return [...groups.values()]
+    .sort((a, b) => order(a) - order(b))
+    .map((group) => ({ ...group, items: listEntries(group.items) }));
 }
 
 function analysisSummary(analysis: SavedAnalysis): string {

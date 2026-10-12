@@ -25,7 +25,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
   const windowBar = useWindowBar();
   const [info, setInfo] = useState<AppInfo | null>(null);
   const { repo } = useRepo();
-  const { analyses, current, select, setExpanded } = useAnalyses();
+  const { analyses, current, currentChanges, select, setExpanded } = useAnalyses();
   const { layout, reveal } = useDock();
   const agent = useAgent();
   const { showGuide, agent: agentKind } = useSetup();
@@ -92,7 +92,12 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
     onFocusFinding: onFocusInCurrent,
   });
 
-  useTabTitle(repo ? (current ? `${repo.name} · ${analysisTitle(current)}` : repo.name) : null);
+  const shown = current
+    ? analysisTitle(current)
+    : currentChanges
+      ? t('changes.title', { title: currentChanges.review.title })
+      : null;
+  useTabTitle(repo ? (shown ? `${repo.name} · ${shown}` : repo.name) : null);
 
   useEffect(() => {
     void invokeChannel(appInfoChannel, undefined).then((value) => {
@@ -118,6 +123,7 @@ export function AppShell({ active }: { active: boolean }): JSX.Element {
         <DockLayout panels={panels}>
           <Workspace
             analysis={current}
+            changes={currentChanges}
             analyses={analyses}
             findings={findings}
             onOpenFlow={select}

@@ -1,4 +1,4 @@
-import { type CSSProperties, type JSX, type ReactNode, useMemo } from 'react';
+import { type CSSProperties, type JSX, useMemo, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { type Review, type ReviewFinding } from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
@@ -17,29 +17,27 @@ interface Props {
   review: Review;
   /** Reviewns flöden som finns sparade, i reviewns ordning */
   flows: readonly ReviewedFlow[];
-  /** Chunks användaren bockat av, på chunkens id */
-  reviewed: ReadonlySet<string>;
-  onToggleReviewed: (chunkId: string) => void;
   /** Öppnar fyndet i dess flöde. Fynd utan flöde kan inte öppnas. */
   onOpenFinding: (finding: ReviewFinding) => void;
-  /** Vyväxlaren, som ägs av reviewvyn och visas högst upp */
-  toolbar: ReactNode;
 }
 
 /**
  * Diffen för en review i flödesordning: en grupp per flöde med chunks som
  * stegen spelas, sedan det inget flöde rör. Avbockade chunks fälls ihop,
- * fynden visas på sin rad i koden.
+ * fynden visas på sin rad i koden. Det avbockade lever så länge vyn är
+ * monterad; montera om med `key` när reviewn byts.
  */
-export function ChangesView({
-  review,
-  flows,
-  reviewed,
-  onToggleReviewed,
-  onOpenFinding,
-  toolbar,
-}: Props): JSX.Element {
+export function ChangesView({ review, flows, onOpenFinding }: Props): JSX.Element {
   const { repo } = useRepo();
+  const [reviewed, setReviewed] = useState<ReadonlySet<string>>(() => new Set());
+  const onToggleReviewed = (id: string): void => {
+    setReviewed((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   const base = review.baseCommit ?? review.baseLabel;
   const head = review.headCommit ?? review.headLabel;
   const diff = useDiff(repo?.path ?? null, base, head);
@@ -56,17 +54,17 @@ export function ChangesView({
   return (
     <div className="changes">
       <header className="changes__head">
-        {toolbar}
+        <h2 className="changes__title">{t('changes.title', { title: review.title })}</h2>
         <span className="changes__compare">
           {t('review.compare', { base: review.baseLabel, head: review.headLabel })}
         </span>
         {total > 0 && (
-          <span className="changes__progress">
+          <span className="changes__progress" title={t('changes.progress', { done, total })}>
             <span
               className="changes__progress-bar"
               style={{ '--progress': `${(done / total) * 100}%` } as CSSProperties}
             />
-            {t('changes.progress', { done, total })}
+            {t('changes.count', { done, total })}
           </span>
         )}
       </header>

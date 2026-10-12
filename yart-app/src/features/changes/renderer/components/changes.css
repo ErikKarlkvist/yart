@@ -19,7 +19,17 @@
   margin-bottom: 24px;
 }
 
+.changes__title {
+  flex: none;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
 .changes__compare {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--fg-muted);
   font-size: 12px;
   white-space: nowrap;
@@ -41,7 +51,7 @@
 /* Andelen avbockade chunks, fylld från vänster */
 .changes__progress-bar {
   position: relative;
-  width: 120px;
+  width: 80px;
   height: 6px;
   border: 1px solid var(--border-strong);
 }

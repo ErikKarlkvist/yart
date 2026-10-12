@@ -308,11 +308,6 @@
   "onboarding.skip": "Skip",
   "onboarding.next": "Next",
   "onboarding.back": "Back",
-  "review.viewReview": "Review",
-  "review.viewChanges": "Changes",
-  "review.viewReviewHint": "The review document",
-  "review.viewChangesHint": "The diff, in the order the flows run",
-  "review.view": "View",
   "changes.reading": "Reading the changes…",
   "changes.empty": "No changes between {base} and {head}.",
   "changes.progress": "{done} of {total} chunks reviewed",
@@ -332,5 +327,9 @@
   "analyses.renameGroup": "Rename group…",
   "analyses.renameTitle": "New title",
   "analyses.reorder": "Drag to reorder or move to another group",
-  "analyses.groupReorder": "Drag to reorder groups"
+  "analyses.groupReorder": "Drag to reorder groups",
+  "analyses.changes": "Changes",
+  "analyses.changesMeta": "the diff in flow order",
+  "review.openChanges": "View the changes",
+  "changes.title": "{title}: changes"
 }

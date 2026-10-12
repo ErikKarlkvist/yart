@@ -4,5 +4,5 @@ export { ReviewView } from './renderer/components/ReviewView';
 export { DeliveryLog } from './renderer/components/DeliveryLog';
 export { AnalysisProvider } from './renderer/AnalysisProvider';
 export { useAnalyses } from './renderer/AnalysisContext';
-export type { SavedAnalysis, SavedFlowAnalysis } from './model/analysis';
-export { analysisTitle, findingsForFlow } from './model/analysis';
+export type { SavedAnalysis, SavedFlowAnalysis, SavedReviewAnalysis } from './model/analysis';
+export { analysisTitle, changesId, findingsForFlow } from './model/analysis';

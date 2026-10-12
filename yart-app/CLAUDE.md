@@ -52,9 +52,11 @@ också agentens svar i chatten, ritas av `Markdown` i `src/common/renderer/Markd
 fix-planen som kopieras eller skickas till agenten (`src/features/analysis/model/plan.ts`).
 Flöden har en `trigger`, det som startar dem, som ritas på startnoden.
 
-En review har en växlare Review | Changes. Changes är diffen `base...head` (`src/features/changes/`)
-i flödesordning: en grupp per flöde i reviewn med de chunks (gits hunks) som rör flödets
-noder och anrop, sorterade som stegen spelas, sedan det inget flöde rör i filordning.
+Varje review får en egen rad Changes i listan, direkt under sig (`listEntries` i
+`features/analysis/model/analysis.ts`, id `changes:<reviewId>`, inget sparat). Den visar diffen
+`base...head` (`src/features/changes/`) i flödesordning: en grupp per flöde i reviewn med de
+chunks (gits hunks) som rör flödets noder och anrop, sorterade som stegen spelas, sedan det
+inget flöde rör i filordning.
 Matchningen går på källhänvisningarnas rader mot chunkens rader i head, och base-flödets
 mot base. Fynd med `source` visas på sin rad i koden; avbockade chunks fälls ihop.
 

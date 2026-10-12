@@ -12,7 +12,14 @@ import {
   setExpandedChannel,
 } from '../../ipc/channels';
 import { t } from '@/common/model/i18n';
-import { analysisTitle, type SavedAnalysis } from '../../model/analysis';
+import {
+  analysisTitle,
+  changesId,
+  changesReview,
+  listEntries,
+  type SavedAnalysis,
+  type SavedReviewAnalysis,
+} from '../../model/analysis';
 import { errorMessage } from '@/common/model/json';
 
 /** En rad i leveransloggen: en sparad analys eller ett avvisat försök. */
@@ -28,6 +35,10 @@ function describeVia(via: DeliveredVia): string {
 export interface AnalysisState {
   analyses: SavedAnalysis[];
   current: SavedAnalysis | null;
+  /** Det valda id:t, också när det pekar på en reviews diff och inte en analys */
+  currentId: string | null;
+  /** Reviewn vars diff är vald, null när en analys eller inget är valt */
+  currentChanges: SavedReviewAnalysis | null;
   error: string | null;
   /** Nyast först */
   deliveries: DeliveryEntry[];
@@ -93,7 +104,7 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
         setLoaded({ repoPath, list });
         // Återta analysen som var vald senast, om den fortfarande finns.
         const last = readStoredJson(lastAnalysisKey, isSelection);
-        if (last?.repoPath === repoPath && list.some((a) => a.id === last.value))
+        if (last?.repoPath === repoPath && listEntries(list).some((e) => e.id === last.value))
           setSelection(last);
       })
       .catch(fail);
@@ -156,7 +167,9 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
       if (!repoPath) return;
       const list = await invokeChannel(deleteAnalysisChannel, { repoPath, id });
       setLoaded({ repoPath, list });
-      setSelection((current) => (current?.value === id ? null : current));
+      setSelection((current) =>
+        current?.value === id || current?.value === changesId(id) ? null : current,
+      );
     },
     [repoPath],
   );
@@ -192,6 +205,8 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
   return {
     analyses,
     current,
+    currentId,
+    currentChanges: changesReview(analyses, currentId),
     error,
     deliveries,
     rejection,

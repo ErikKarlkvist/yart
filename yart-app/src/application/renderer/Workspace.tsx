@@ -4,15 +4,20 @@ import { BrandMark } from '@/common/renderer/BrandMark';
 import { t } from '@/common/model/i18n';
 import { type ReviewFinding } from '@/common/model/review';
 import {
+  changesId,
   DocumentView,
   ReviewView,
   type SavedAnalysis,
   type SavedFlowAnalysis,
+  type SavedReviewAnalysis,
 } from '@/features/analysis';
+import { ChangesView, type ReviewedFlow } from '@/features/changes';
 import { type FlowPaths, FlowPlayer } from '@/features/flow-graph';
 
 interface Props {
   analysis: SavedAnalysis | null;
+  /** Reviewn vars diff är vald, när ingen analys är det */
+  changes: SavedReviewAnalysis | null;
   analyses: readonly SavedAnalysis[];
   /** Fynden som pekar på det valda flödet */
   findings: readonly ReviewFinding[];
@@ -40,6 +45,7 @@ interface Props {
 /** Huvudytan i mitten: grafen, dokumentet eller reviewn för den valda analysen. */
 export function Workspace({
   analysis,
+  changes,
   analyses,
   findings,
   onOpenFlow,
@@ -57,10 +63,26 @@ export function Workspace({
   onSendToAgent,
 }: Props): JSX.Element {
   const relatedFlows = analyses.filter((item): item is SavedFlowAnalysis => item.kind === 'flow');
+  const reviewedFlows = (review: SavedReviewAnalysis): ReviewedFlow[] =>
+    review.review.flows.flatMap((name) =>
+      relatedFlows
+        .filter((f) => f.name === name)
+        .map((f) => ({ name: f.name, title: f.flow.title, flow: f.flow, base: f.compare?.base })),
+    );
 
   return (
     <main className="workspace">
-      {analysis?.kind === 'flow' ? (
+      {changes ? (
+        <ChangesView
+          key={changes.id}
+          review={changes.review}
+          flows={reviewedFlows(changes)}
+          onOpenFinding={(finding) => {
+            const flow = relatedFlows.find((f) => f.name === finding.flow);
+            if (flow) onFocusFindingIn(flow.id, finding.id);
+          }}
+        />
+      ) : analysis?.kind === 'flow' ? (
         <FlowPlayer
           key={analysis.id}
           flow={analysis.flow}
@@ -92,6 +114,9 @@ export function Workspace({
           analysis={analysis}
           flows={relatedFlows}
           onOpenFlow={onOpenFlow}
+          onOpenChanges={() => {
+            onOpenFlow(changesId(analysis.id));
+          }}
           onOpenFinding={onFocusFindingIn}
           onSendToAgent={onSendToAgent}
         />

@@ -120,6 +120,44 @@ export function analysisTitle(analysis: SavedAnalysis): string {
   }
 }
 
+/**
+ * Diffen för en review visas som en egen rad i listan, under reviewn. Den
+ * sparas inte, utan härleds ur reviewn och får ett id med reviewns id i.
+ */
+interface ChangesEntry {
+  kind: 'changes';
+  id: string;
+  review: SavedReviewAnalysis;
+}
+
+export type ListEntry = SavedAnalysis | ChangesEntry;
+
+const CHANGES_PREFIX = 'changes:';
+
+export function changesId(reviewId: string): string {
+  return `${CHANGES_PREFIX}${reviewId}`;
+}
+
+/** Analyserna med en rad för diffen efter varje review. */
+export function listEntries(analyses: readonly SavedAnalysis[]): ListEntry[] {
+  return analyses.flatMap((analysis): ListEntry[] =>
+    analysis.kind === 'review'
+      ? [analysis, { kind: 'changes', id: changesId(analysis.id), review: analysis }]
+      : [analysis],
+  );
+}
+
+/** Reviewn vars diff ett id pekar på, null för andra id. */
+export function changesReview(
+  analyses: readonly SavedAnalysis[],
+  id: string | null,
+): SavedReviewAnalysis | null {
+  if (!id?.startsWith(CHANGES_PREFIX)) return null;
+  const reviewId = id.slice(CHANGES_PREFIX.length);
+  const review = analyses.find((a) => a.id === reviewId);
+  return review?.kind === 'review' ? review : null;
+}
+
 /** Fynden i repots reviewer som pekar på ett flöde, för grafen och panelen Review. */
 export function findingsForFlow(analyses: readonly SavedAnalysis[], name: string): ReviewFinding[] {
   return analyses.flatMap((analysis) =>
