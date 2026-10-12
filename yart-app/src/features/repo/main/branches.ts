@@ -30,8 +30,3 @@ export async function listBranches(path: string): Promise<BranchList> {
     branches: [...local.all, ...remote],
   };
 }
-
-/** Hämtar från alla fjärrar och rensar bort borttagna brancher. */
-export async function fetchRepo(path: string): Promise<void> {
-  await simpleGit(path).fetch(['--all', '--prune']);
-}

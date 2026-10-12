@@ -47,6 +47,3 @@ export const listBranchesChannel = defineChannel<{ repoPath: string }, BranchLis
 export const currentBranchChannel = defineChannel<{ repoPath: string }, string | null>(
   'repo:current-branch',
 );
-
-/** Kör git fetch och läser om repot, så nya brancher syns. */
-export const fetchRepoChannel = defineChannel<{ repoPath: string }, RepoInfo>('repo:fetch');

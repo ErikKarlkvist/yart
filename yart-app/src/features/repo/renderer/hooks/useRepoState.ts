@@ -3,7 +3,6 @@ import { invokeChannel } from '@/common/renderer/ipc';
 import { readStored, useScopedKey, writeStored } from '@/common/renderer/storage';
 import {
   currentBranchChannel,
-  fetchRepoChannel,
   forgetRepoChannel,
   listRecentReposChannel,
   openDemoRepoChannel,
@@ -25,8 +24,6 @@ export interface RepoState {
   open: (path: string) => Promise<void>;
   forget: (path: string) => Promise<void>;
   clearError: () => void;
-  /** git fetch och omläsning av repot */
-  fetch: () => Promise<void>;
 }
 
 export function useRepoState(): RepoState {
@@ -138,11 +135,6 @@ export function useRepoState(): RepoState {
     };
   }, [repoPath, repo?.branch, repo?.isGit]);
 
-  const fetch = useCallback(() => {
-    if (!repoPath) return Promise.resolve();
-    return run(() => invokeChannel(fetchRepoChannel, { repoPath }));
-  }, [repoPath, run]);
-
   const forget = useCallback(
     async (path: string) => {
       setRecent(await invokeChannel(forgetRepoChannel, { path }));
@@ -165,6 +157,5 @@ export function useRepoState(): RepoState {
     open,
     forget,
     clearError,
-    fetch,
   };
 }
