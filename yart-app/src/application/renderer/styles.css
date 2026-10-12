@@ -442,7 +442,7 @@ textarea:focus {
   align-items: center;
   max-width: 260px;
   height: 30px;
-  padding: 0 6px 0 12px;
+  padding: 0 12px 0 6px;
   border: 1px solid transparent;
   border-bottom: none;
   border-radius: var(--radius);
@@ -465,6 +465,7 @@ textarea:focus {
 }
 
 .tab__open {
+  flex: 1;
   min-width: 0;
   height: 100%;
   padding: 0;
@@ -500,7 +501,7 @@ textarea:focus {
   place-items: center;
   width: 20px;
   height: 20px;
-  margin-left: 4px;
+  margin-right: 4px;
   padding: 0;
   border: none;
   background: none;

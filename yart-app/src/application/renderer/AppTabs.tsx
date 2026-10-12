@@ -134,6 +134,19 @@ export function AppTabs(): JSX.Element {
                 data-app-tab
                 className={`tab app-tab${active ? ' is-active' : ''}${dropIndex === index ? ' is-drop-before' : ''}${dropIndex === tabs.ids.length && index === tabs.ids.length - 1 ? ' is-drop-after' : ''}`}
               >
+                {tabs.ids.length > 1 && (
+                  <button
+                    type="button"
+                    className="tab__close"
+                    title={t('tabs.close')}
+                    aria-label={t('tabs.close')}
+                    onClick={() => {
+                      close(id);
+                    }}
+                  >
+                    <Icon name="close" size="sm" />
+                  </button>
+                )}
                 <button
                   type="button"
                   role="tab"
@@ -161,19 +174,6 @@ export function AppTabs(): JSX.Element {
                 >
                   {titles.get(id) ?? t('tabs.empty')}
                 </button>
-                {tabs.ids.length > 1 && (
-                  <button
-                    type="button"
-                    className="tab__close"
-                    title={t('tabs.close')}
-                    aria-label={t('tabs.close')}
-                    onClick={() => {
-                      close(id);
-                    }}
-                  >
-                    <Icon name="close" size="sm" />
-                  </button>
-                )}
               </div>
             );
           })}

@@ -20,6 +20,7 @@ import { Icon } from '@/common/renderer/Icon';
 import { useStoredChoice } from '@/common/renderer/useStored';
 import {
   buildModel,
+  drawnSystems,
   expandedSystems,
   type GraphNode,
   type GraphView,
@@ -310,7 +311,8 @@ export function FlowPlayer({
     [onSelectSource],
   );
 
-  const allExpanded = expanded.length === flow.systems.length;
+  // Allt är utfällt när varje ritat system är det; system utan noder ritas inte och räknas inte
+  const allExpanded = drawnSystems(flow).every((system) => expanded.includes(system.id));
   const viewKey = expanded.length === 0 ? 'system' : expanded.join(',');
 
   const movedInView = useMemo(() => {

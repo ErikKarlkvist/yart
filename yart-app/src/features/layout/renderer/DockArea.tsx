@@ -142,6 +142,17 @@ export function DockArea({ side, panels }: Props): JSX.Element {
               >
                 <button
                   type="button"
+                  className="tab__close"
+                  title={closeLabel}
+                  aria-label={closeLabel}
+                  onClick={() => {
+                    close(id);
+                  }}
+                >
+                  <Icon name="close" size="sm" />
+                </button>
+                <button
+                  type="button"
                   role="tab"
                   aria-selected={id === shown}
                   aria-disabled={!available}
@@ -151,17 +162,6 @@ export function DockArea({ side, panels }: Props): JSX.Element {
                   }}
                 >
                   {panel.title}
-                </button>
-                <button
-                  type="button"
-                  className="tab__close"
-                  title={closeLabel}
-                  aria-label={closeLabel}
-                  onClick={() => {
-                    close(id);
-                  }}
-                >
-                  <Icon name="close" size="sm" />
                 </button>
               </div>
             );

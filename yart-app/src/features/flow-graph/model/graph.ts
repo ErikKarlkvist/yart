@@ -101,6 +101,11 @@ export function initialView(flow: Flow): GraphView {
   return { expanded: (flow.expanded ?? []).filter((id) => ids.has(id)) };
 }
 
+/** Systemen som ritas: de med noder. Ett system utan noder deltar inte i flödet. */
+export function drawnSystems(flow: Flow): Flow['systems'] {
+  return flow.systems.filter((system) => flow.nodes.some((n) => n.system === system.id));
+}
+
 /** De utfällda systemens id:n, i flödets ordning. */
 export function expandedSystems(flow: Flow, view: GraphView): string[] {
   const ids = flow.systems.map((s) => s.id);
