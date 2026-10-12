@@ -73,6 +73,19 @@ describe('AnalysisStore', () => {
     expect(await store.list('/repo')).toHaveLength(2);
   });
 
+  it('byter titel men behåller namnet och id', async () => {
+    const saved = await store.upsert('/repo', {
+      name: 'add-todo',
+      kind: 'flow',
+      flow: addTodoFlow,
+    });
+    const list = await store.rename('/repo', saved.id, 'Create a todo');
+    const renamed = list.find((a) => a.id === saved.id);
+    expect(renamed?.kind === 'flow' && renamed.flow.title).toBe('Create a todo');
+    expect(renamed?.name).toBe('add-todo');
+    expect(await store.get('/repo', 'flow', 'add-todo')).toEqual(renamed);
+  });
+
   it('tappar inget när flera sparar samtidigt', async () => {
     await Promise.all(
       Array.from({ length: 5 }, (_, i) =>

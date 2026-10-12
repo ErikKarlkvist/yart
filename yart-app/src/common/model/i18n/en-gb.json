@@ -327,5 +327,10 @@
   "changes.status.renamed": "RENAMED",
   "changes.renamedFrom": "from {file}",
   "changes.binary": "Binary file",
-  "changes.noChunks": "Nothing in this flow changed."
+  "changes.noChunks": "Nothing in this flow changed.",
+  "analyses.rename": "Rename…",
+  "analyses.renameGroup": "Rename group…",
+  "analyses.renameTitle": "New title",
+  "analyses.reorder": "Drag to reorder or move to another group",
+  "analyses.groupReorder": "Drag to reorder groups"
 }

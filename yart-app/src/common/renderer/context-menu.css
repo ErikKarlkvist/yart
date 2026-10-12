@@ -1,0 +1,29 @@
+/* Högerklicksmeny: panelbakgrund, stark kant och hård skugga som andra popovers */
+.context-menu {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-panel);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 50%);
+}
+
+.context-menu__item {
+  padding: 5px 8px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font-size: 12px;
+  text-align: left;
+}
+
+.context-menu__item:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.context-menu__item:disabled {
+  opacity: 0.4;
+}

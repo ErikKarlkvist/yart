@@ -41,6 +41,8 @@ export const demoAnalyses: readonly DemoAnalysis[] = [
   { kind: 'document', name: 'due-dates-plan', document: dueDatesPlan },
 ];
 
+export { TODO_LISTS_DIFF } from './todo-lists-diff';
+
 /** Sökväg till demo-repot relativt Yart-roten. */
 export const DEMO_REPO_RELATIVE_PATH = 'demo/todo-app';
 

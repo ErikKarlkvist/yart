@@ -29,7 +29,7 @@ export function AnalysesPanel(): JSX.Element {
         </button>
       )}
       {repo ? (
-        <AnalysisList conversationTitle={conversationTitle} />
+        <AnalysisList repoPath={repo.path} conversationTitle={conversationTitle} />
       ) : (
         <p className="shell__empty">{t('app.chooseRepo')}</p>
       )}

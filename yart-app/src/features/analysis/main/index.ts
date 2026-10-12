@@ -6,6 +6,7 @@ import {
   type DeliveredVia,
   deliveryEvent,
   listAnalysesChannel,
+  renameAnalysisChannel,
   setExpandedChannel,
 } from '../ipc/channels';
 import { type SavedAnalysis } from '../model/analysis';
@@ -41,6 +42,10 @@ export function registerAnalysisHandlers(): AnalysisApi {
   handleChannel(listAnalysesChannel, ({ repoPath }) => listAll(repoPath));
   handleChannel(setExpandedChannel, async ({ repoPath, id, expanded }) => {
     await store.setExpanded(repoPath, id, expanded);
+    return listAll(repoPath);
+  });
+  handleChannel(renameAnalysisChannel, async ({ repoPath, id, title }) => {
+    await store.rename(repoPath, id, title);
     return listAll(repoPath);
   });
   handleChannel(deleteAnalysisChannel, async ({ repoPath, id }) => {

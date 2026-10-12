@@ -67,6 +67,13 @@ intressanta. När användaren fäller ut eller ihop ett system sparas valet i sa
 (`analysis:set-expanded`), och en agent som sparar om flödet utan `expanded` behåller det.
 En utfälld databas visar en livlinje per tabell som flödets anrop rör.
 
+Panelen Analyses listar analyserna grupperade på konversation eller branch. Användaren drar
+analyser och grupper till egen ordning, flyttar analyser mellan grupper och döper om båda via
+högerklick (`src/common/renderer/ContextMenu.tsx`). Ordning, flyttar och grupprubriker sparas
+per repo i localStorage (`yart.analysesLayout:<repo>`, ren logik i
+`features/analysis/model/listLayout.ts`); en ny titel sparas i analysen via `analysis:rename`,
+namnet den sparades under består.
+
 ## Design
 
 Appen har ett enda, mörkt tema: Ink. Läs `docs/design/STYLEGUIDE.md` innan du ändrar eller

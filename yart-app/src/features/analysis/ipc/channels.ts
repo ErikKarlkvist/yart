@@ -17,6 +17,12 @@ export const setExpandedChannel = defineChannel<
   SavedAnalysis[]
 >('analysis:set-expanded');
 
+/** Användaren döpte om en analys; titeln byts i innehållet, namnet agenten sparade under består. */
+export const renameAnalysisChannel = defineChannel<
+  { repoPath: string; id: string; title: string },
+  SavedAnalysis[]
+>('analysis:rename');
+
 /** Vem som levererade: MCP-verktyget och klienten som anropade det. */
 export interface DeliveredVia {
   tool: string;

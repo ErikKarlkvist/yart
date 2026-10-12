@@ -8,6 +8,7 @@ import {
   type DeliveryEvent,
   deliveryEvent,
   listAnalysesChannel,
+  renameAnalysisChannel,
   setExpandedChannel,
 } from '../../ipc/channels';
 import { t } from '@/common/model/i18n';
@@ -34,6 +35,8 @@ export interface AnalysisState {
   rejection: DeliveryEntry | null;
   select: (id: string | null) => void;
   remove: (id: string) => Promise<void>;
+  /** Byter titeln på en analys */
+  rename: (id: string, title: string) => Promise<void>;
   /** Sparar vilka system som är utfällda i ett flöde */
   setExpanded: (id: string, expanded: string[]) => void;
   dismissRejection: () => void;
@@ -158,6 +161,15 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
     [repoPath],
   );
 
+  const rename = useCallback(
+    async (id: string, title: string) => {
+      if (!repoPath) return;
+      const list = await invokeChannel(renameAnalysisChannel, { repoPath, id, title });
+      setLoaded({ repoPath, list });
+    },
+    [repoPath],
+  );
+
   const setExpanded = useCallback(
     (id: string, expanded: string[]) => {
       if (!repoPath) return;
@@ -185,6 +197,7 @@ export function useAnalysisState(repoPath: string | null): AnalysisState {
     rejection,
     select,
     remove,
+    rename,
     setExpanded,
     dismissRejection,
   };

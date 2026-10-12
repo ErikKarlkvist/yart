@@ -23,6 +23,17 @@ export type NewAnalysis = {
   | { kind: 'review'; review: Review }
 );
 
+function retitle(analysis: SavedAnalysis, title: string): SavedAnalysis {
+  switch (analysis.kind) {
+    case 'flow':
+      return { ...analysis, flow: { ...analysis.flow, title } };
+    case 'document':
+      return { ...analysis, document: { ...analysis.document, title } };
+    case 'review':
+      return { ...analysis, review: { ...analysis.review, title } };
+  }
+}
+
 /**
  * Sparar analyser som en JSON-fil per repo under en basmapp. Basmappen
  * skickas in så att lagringen går att testa utan Electron. Skrivningar till
@@ -92,6 +103,16 @@ export class AnalysisStore {
       const next = list.map((a) =>
         a.id === id && a.kind === 'flow' ? { ...a, flow: { ...a.flow, expanded } } : a,
       );
+      await this.write(repoPath, next);
+      return sortAnalyses(next);
+    });
+  }
+
+  /** Byter titeln på en analys. Namnet den sparades under består, så agenten hittar den. */
+  async rename(repoPath: string, id: string, title: string): Promise<SavedAnalysis[]> {
+    return this.locked(repoPath, async () => {
+      const list = await this.read(repoPath);
+      const next = list.map((a) => (a.id === id ? retitle(a, title) : a));
       await this.write(repoPath, next);
       return sortAnalyses(next);
     });
