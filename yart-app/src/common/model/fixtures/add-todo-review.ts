@@ -33,6 +33,8 @@ export const addTodoWithListFlow: Flow = {
     {
       ...node('add-form'),
       description: 'The form with the text field, a list picker and the Add button',
+      // Hela komponenten, så ändringar var som helst i formuläret hör till flödet
+      source: { file: 'frontend/src/components/AddTodoForm.tsx', line: 7, endLine: 36 },
     },
     node('use-todos'),
     node('todos-api'),
