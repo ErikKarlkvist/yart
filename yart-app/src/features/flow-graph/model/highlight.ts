@@ -1,15 +1,18 @@
 import { type FlowChange, type ReviewFinding } from '@/common/model/review';
+import { type FlowEdge } from '@/common/model/flow';
 
 export type FlowHighlight = FlowChange | 'problem' | 'warning';
 
-/** A real review issue takes precedence over a change marker. */
+/** Ett problem på anropet eller från en review går före ändringsmarkeringen. */
 export function edgeHighlight(
   change: FlowChange | undefined,
   findings: readonly ReviewFinding[],
+  highlight?: FlowEdge['highlight'],
 ): FlowHighlight | undefined {
-  if (findings.some((finding) => finding.severity === 'error')) return 'problem';
+  if (highlight === 'problem' || findings.some((finding) => finding.severity === 'error'))
+    return 'problem';
   if (findings.some((finding) => finding.severity === 'warning')) return 'warning';
-  return change;
+  return change ?? highlight;
 }
 
 /** Several calls can share one drawn line; show the most urgent annotation. */

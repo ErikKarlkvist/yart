@@ -244,7 +244,8 @@ export function FlowGraph({
         response: m.response,
         status: view.edges.get(m.id) ?? 'pending',
         steps: stepsByEdge.get(m.id) ?? [],
-        change: diff?.edges.get(m.id) ?? m.highlight,
+        change: diff?.edges.get(m.id) ?? (m.highlight === 'problem' ? undefined : m.highlight),
+        highlight: m.highlight,
         findings: findings.filter((f) => f.edgeId === m.id),
       }));
       return {
@@ -268,7 +269,9 @@ export function FlowGraph({
           pinned: pinnedEdge === edge.id,
           onTogglePinned: togglePinned,
           onGoToStep,
-          highlight: combinedHighlight(members.map((m) => edgeHighlight(m.change, m.findings))),
+          highlight: combinedHighlight(
+            members.map((m) => edgeHighlight(m.change, m.findings, m.highlight)),
+          ),
           focused:
             focusedFindingId !== null &&
             members.some((m) => m.findings.some((f) => f.id === focusedFindingId)),

@@ -142,15 +142,15 @@ const flowEdgeSchema = z
     payload: z.string().optional().describe('What is sent: free text or example JSON'),
     response: z.string().optional().describe('What comes back, if anything'),
     highlight: z
-      .enum(['added', 'changed'])
+      .enum(['added', 'changed', 'problem'])
       .optional()
       .describe(
-        'For a proposed plan: added means a new call; changed means an existing call to update. Omit for current behavior and reviews with compare.',
+        'In analysis, planning or review, problem marks a call with a concrete problem and shows a red arrow. Explain the problem in its playback step. For a proposed plan: added means a new call; changed means an existing call to update. Omit when no marker applies.',
       ),
     source: sourceRefSchema
       .optional()
       .describe(
-        'The line where the call exists. Required except for a proposed new call with highlight added; never invent a source for future code.',
+        'The line where the call exists, or where a summarised local phase begins. Required except for a proposed new call with highlight added; never invent a source for future code.',
       ),
     tables: z
       .array(z.string().min(1))
@@ -158,7 +158,7 @@ const flowEdgeSchema = z
       .describe('Tables the call reads or writes, tables[].name on the target node'),
   })
   .describe(
-    'A call from one node to another. A response is an edge of its own back to the caller, e.g. "200 OK with the todo".',
+    'A relevant call from one node to another, or a summary arrow for preparation, intermediate work or follow-up work. For local work, use the same from and to node. A response is an edge of its own back to the caller, e.g. "200 OK with the todo".',
   );
 
 const flowStepSchema = z
@@ -168,7 +168,7 @@ const flowStepSchema = z
       .string()
       .min(1)
       .describe(
-        'Two or three explanatory, plain-language sentences in the language the user chose, or the language of their request if none was chosen. Explain what happens to the user or data, why it happens, and why this step matters to the flow. Avoid filler, repetition, method names, variable names, request IDs and unexplained acronyms; put technical details on nodes and edges. Describe actual behavior, not suggestions or hypothetical failures.',
+        'One or two concise explanatory, plain-language sentences in the language the user chose, or the language of their request if none was chosen. Explain what happens to the user or data and why it matters. For a summary arrow, briefly explain the preparation, intermediate work or follow-up work represented by that phase. Avoid filler, repetition, method names, variable names, request IDs and unexplained acronyms; put technical details on nodes and edges. Describe actual behavior, not suggestions or hypothetical failures.',
       ),
   })
   .describe('One step of the playback, in the order the flow actually runs');

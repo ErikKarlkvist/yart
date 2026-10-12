@@ -15,16 +15,20 @@ export function conversationInstructions(
   branches?: ReviewBranches,
 ): string {
   return brandText(
-    `${modeInstructions(mode, branches)} ${RESPONSE} ${COMPLETE_FLOWS} ${naming(mode)}`,
+    `${modeInstructions(mode, branches)} ${RESPONSE} ${COMPLETE_FLOWS} ${PROBLEM_ARROWS} ${naming(mode)}`,
   );
 }
+
+/** Problempilar fungerar även utan en sparad review. */
+const PROBLEM_ARROWS =
+  'In analysis, planning and review, mark calls with concrete problems using highlight: "problem" on the edge. These arrows are red even without a saved review. Briefly explain the problem and its effect in the playback step. Use this for an identified defect or problematic path, not every normal alternative or handled error. A proposed fix uses added or changed; do not mark a fixed call as a problem.';
 
 const RESPONSE =
   'Decide per request whether to deliver in {appName} or answer in chat. The first request of a conversation starts a new analysis, review or plan: deliver it in {appName} with the save tools, unless it is only a greeting or a quick factual question. For later requests, save or update when the request changes what a saved artifact should show (another path, a correction, more detail, a failure case, a proposed change) or asks to see, draw, map or trace something; answer in chat when it asks for an explanation, an opinion or a clarification. Decide yourself; do not ask whether to save. After saving, briefly explain what was saved. Never modify repository files unless the user asks for implementation.';
 
-/** Hur fullständigt ett flöde ska vara; gäller alla lägen som sparar flöden. */
+/** Relevant detaljnivå i alla lägen som sparar flöden. */
 const COMPLETE_FLOWS =
-  'A saved flow must cover every call on the path: each hop between components, calls between modules inside a service, every database, cache, queue and external request, and the response back to each caller. Do not merge or skip calls to keep it short. Before saving, walk the code again from the trigger to the final response and check that every call has an edge and a step, and that each part of the request is answered.';
+  "A saved flow must include the requests and responses relevant to the user's question. Keep calls separate when they explain an important system boundary, data change, decision or failure. Summarise preparation, intermediate work and follow-up work as one arrow per meaningful phase, with one or two concise sentences explaining what happens. For work within one component, use a self-call edge with the same source and target, anchored to the real source where that phase begins. Do not invent requests or enumerate routine helper calls or setup and cleanup unless they matter to the question. Before saving, walk the code from the trigger to the final response and check that the relevant calls and outcomes remain visible, summaries preserve the execution order, and each part of the request is answered.";
 
 /**
  * En kort påminnelse om valet mellan chatt och sparning. Följer med frågan men

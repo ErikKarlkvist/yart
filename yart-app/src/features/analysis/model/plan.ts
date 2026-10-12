@@ -125,7 +125,7 @@ function proposed(flow: Flow): string[] {
     .filter((node) => node.highlight !== undefined)
     .map((node) => `[${node.highlight ?? ''}] ${describeNode(node)}`);
   const edges = flow.edges
-    .filter((edge) => edge.highlight !== undefined)
+    .filter((edge) => edge.highlight === 'added' || edge.highlight === 'changed')
     .map((edge) => `[${edge.highlight ?? ''}] call ${describeEdge(edge, flow)}`);
   return [...nodes, ...edges];
 }

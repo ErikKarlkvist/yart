@@ -74,6 +74,19 @@ describe('buildReviewFixPlan', () => {
 });
 
 describe('buildImplementationPlan', () => {
+  it('räknar inte ett markerat problem som en föreslagen ändring', () => {
+    const problemFlow: SavedFlowAnalysis = {
+      ...addFlow,
+      flow: {
+        ...addTodoFlow,
+        edges: addTodoFlow.edges.map((edge) => ({ ...edge, highlight: 'problem' })),
+      },
+    };
+    expect(hasImplementationPlan(document(), [problemFlow])).toBe(false);
+    expect(buildImplementationPlan(document('1. Fix the problem'), [problemFlow])).not.toContain(
+      '[problem] call',
+    );
+  });
   it('bär den dolda planen, bakgrunden och flödenas steg', () => {
     const text = buildImplementationPlan(document('1. Add a column'), [addFlow]);
     expect(text).toContain('## Plan\n\n1. Add a column');

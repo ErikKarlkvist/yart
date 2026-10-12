@@ -536,7 +536,9 @@ export function SequenceDiagram({
             {sequence.messages.map((message) => {
               const status = statusOf(message);
               const memberFindings = findings.filter((f) => f.edgeId === message.edge.id);
-              const change = diff?.edges.get(message.edge.id) ?? message.edge.highlight;
+              const change =
+                diff?.edges.get(message.edge.id) ??
+                (message.edge.highlight === 'problem' ? undefined : message.edge.highlight);
               const highlight = messageHighlight(message, diff, findings);
               const open = hovered === message.id || askingEdgeId === message.edge.id;
               const focused =
@@ -648,8 +650,9 @@ function messageHighlight(
   findings: readonly ReviewFinding[],
 ): FlowHighlight | undefined {
   return edgeHighlight(
-    diff?.edges.get(message.edge.id) ?? message.edge.highlight,
+    diff?.edges.get(message.edge.id),
     findings.filter((f) => f.edgeId === message.edge.id),
+    message.edge.highlight,
   );
 }
 

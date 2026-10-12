@@ -142,8 +142,9 @@ export function FlowPlayer({
     const result = new Map<string, FlowHighlight>();
     for (const edge of model.edges) {
       const highlight = edgeHighlight(
-        diff?.edges.get(edge.id) ?? edge.highlight,
+        diff?.edges.get(edge.id),
         findings.filter((finding) => finding.edgeId === edge.id),
+        edge.highlight,
       );
       if (highlight) result.set(edge.id, highlight);
     }

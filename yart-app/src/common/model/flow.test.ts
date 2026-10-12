@@ -25,6 +25,22 @@ describe('fixturer', () => {
 describe('validateFlow', () => {
   const base: Flow = addTodoFlow;
 
+  it('accepts problem arrows without a review and still requires their source', () => {
+    const flow = {
+      ...base,
+      edges: base.edges.map((edge, index) =>
+        index === 0 ? { ...edge, highlight: 'problem' as const } : edge,
+      ),
+    };
+    expect(validateFlow(flow)).toEqual({ ok: true, flow });
+    const first = flow.edges[0];
+    if (!first) throw new Error('fixture is missing an edge');
+    const { source: _source, ...withoutSource } = first;
+    expect(errorsOf({ ...flow, edges: [withoutSource, ...flow.edges.slice(1)] })).toContainEqual(
+      expect.stringContaining('must have a source reference'),
+    );
+  });
+
   it('allows proposed new nodes and calls without invented source references', () => {
     const firstNode = base.nodes[0];
     const firstEdge = base.edges[0];

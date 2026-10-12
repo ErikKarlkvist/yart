@@ -34,6 +34,12 @@ describe('buildSkill', () => {
 describe('buildGuide', () => {
   const guide = buildGuide();
 
+  it('documents red problem arrows in analysis, planning and review', () => {
+    expect(guide).toContain("highlight: 'problem'");
+    expect(guide).toContain("'added' | 'changed' | 'problem'");
+    expect(guide).toContain('without a saved review');
+  });
+
   it('keeps the review rule for requests that do not mention yart', () => {
     expect(guide).toContain('A review asked for without mentioning yart is answered the usual way');
   });
@@ -55,11 +61,13 @@ describe('buildGuide', () => {
   it('chooses between documents, flows and reviews', () => {
     expect(guide).toContain('Choose the requested deliverable');
     expect(guide).toContain('Do not create Mermaid');
-    expect(guide).toContain('two or three clear, explanatory sentences in active voice');
+    expect(guide).toContain('one or two concise, explanatory sentences in active voice');
     expect(guide).toContain('for someone who has not read the code');
     expect(guide).toContain('Do not turn playback steps into suggestions');
     expect(guide).toContain('one companion document with all');
-    expect(guide).toContain('two or three clear, explanatory sentences');
+    expect(guide).toContain('Summarise preparation, intermediate work and follow-up work');
+    expect(guide).toContain('use a self-call edge');
+    expect(guide).not.toContain('Do not merge or skip calls');
     expect(guide).toContain('before/after differences');
     expect(guide).toContain('interface Review {');
     expect(guide).toContain('interface FlowCompare {');

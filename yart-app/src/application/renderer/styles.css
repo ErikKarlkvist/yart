@@ -483,6 +483,18 @@ textarea:focus {
   color: var(--accent);
 }
 
+.app-tab .tab__open[draggable='true'] {
+  cursor: grab;
+}
+
+.app-tab.is-drop-before {
+  box-shadow: inset 2px 0 var(--accent);
+}
+
+.app-tab.is-drop-after {
+  box-shadow: inset -2px 0 var(--accent);
+}
+
 .tab__close {
   display: grid;
   place-items: center;

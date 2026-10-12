@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { conversationInstructions, responseHint } from './conversationInstructions';
 
 describe('conversation instructions', () => {
+  it('asks all flow-producing modes to mark problems as red arrows', () => {
+    for (const mode of ['analyse', 'review', 'plan'] as const) {
+      expect(conversationInstructions(mode)).toContain('highlight: "problem"');
+      expect(conversationInstructions(mode)).toContain('red even without a saved review');
+    }
+  });
   it('keeps review branches and required outputs in the background context', () => {
     const instructions = conversationInstructions('review', { head: 'feature/a', base: 'main' });
     expect(instructions).toContain('feature/a');
@@ -39,7 +45,9 @@ describe('conversation instructions', () => {
       const instructions = conversationInstructions(mode, { head: 'a', base: 'b' });
       expect(instructions).toContain('The first request of a conversation starts a new analysis');
       expect(instructions).toContain('do not ask whether to save');
-      expect(instructions).toContain('Do not merge or skip calls');
+      expect(instructions).toContain('requests and responses relevant');
+      expect(instructions).toContain('Summarise preparation, intermediate work and follow-up work');
+      expect(instructions).not.toContain('Do not merge or skip calls');
     }
     expect(responseHint(true)).toContain('starts the conversation');
     expect(responseHint(false)).toContain('follow-up');

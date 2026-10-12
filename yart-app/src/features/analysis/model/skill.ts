@@ -30,13 +30,16 @@ const HOW_TO_BUILD = `## How to build a good flow
    migration or schema file that defines it.
 5. Order \`steps\` the way the flow actually runs. Responses are edges of their own going
    back to the caller, e.g. "200 OK with the todo". Every step references an edge id.
-   Cover every call on the path: each hop between components, calls between modules
-   inside a service, every database, cache, queue and external request, and the response
-   back to each caller. Do not merge or skip calls to keep the flow short. Before saving,
-   walk the code again from the trigger to the final response and check that every call
-   has an edge and a step.
-   {appName} draws the flow as a sequence diagram, one lifeline per node, so calls inside
-   one system are shown too: include them.
+   Include the requests and responses relevant to the user's question. Keep calls
+   separate when they explain an important system boundary, data change, decision or
+   failure. Summarise preparation, intermediate work and follow-up work as one arrow
+   per meaningful phase, with a short step description of what the code does there.
+   For work within one component, use a self-call edge (the same source and target).
+   Anchor a summary arrow to the real source where that phase begins; do not invent
+   a request or imply that local work calls another system. Do not enumerate routine
+   helper calls or setup and cleanup unless they matter to the question. Before saving,
+   walk the code from the trigger to the final response and check that the relevant
+   calls and outcomes remain visible and that summaries preserve the execution order.
    Where the code takes one of several paths (a cache hit or miss, valid or invalid input,
    found or not found, success or error), use an \`alt\` entry in \`steps\` instead of
    picking one path: a short question as \`alt\` and one branch per outcome, each with a
@@ -45,14 +48,17 @@ const HOW_TO_BUILD = `## How to build a good flow
    nothing more, and a branch may hold another \`alt\`. Steps after the \`alt\` run after
    whichever branch was taken. Branches may reuse the same edge.
 6. Keep labels short and use the code's own names (component, function, route, table).
-   Write each step description in two or three clear, explanatory sentences in active voice, in the
+   Write each step description in one or two concise, explanatory sentences in active voice, in the
    language the user chose (or the language of their request if none was chosen),
    for someone who has not read the code. Explain what happens to the
    user or data, why it happens, and why this step matters to the flow. Avoid filler,
    repetition, method and variable names, request IDs,
    unexplained acronyms and implementation order unless essential to the outcome.
    Do not turn playback steps into suggestions or hypothetical failure analysis:
-   describe the behavior that actually occurs, and put findings in the review.
+   describe the behavior that actually occurs. In analysis, planning and review,
+   mark calls with concrete problems using \`highlight: 'problem'\` and briefly explain
+   the problem and its effect in the step description. These arrows are red even
+   without a saved review. Keep detailed review findings in the review.
    For example, in English, prefer "The webshop prepares the payment before
    contacting Swish" over "Generate a Swish request ID and reuse SetReference
    before the PSP call." Translate the plain-language style, not the exact wording.
@@ -167,14 +173,14 @@ interface Edge {
   label: string;      // short, e.g. "POST /api/todos" or "INSERT todos"
   payload?: string;   // what is sent, free text or example JSON
   response?: string;  // what comes back, if anything
-  highlight?: 'added' | 'changed'; // proposed new or updated call
+  highlight?: 'added' | 'changed' | 'problem'; // new/updated call, or a red problem arrow in any mode
   source?: Source;    // required except for a proposed new call
   tables?: string[];  // Table.name on the target node
 }
 
 interface Step {
   edgeId: string;     // Edge.id
-  description: string; // two or three explanatory sentences, without code identifiers
+  description: string; // one or two concise explanatory sentences, without code identifiers
 }
 
 interface Alt {       // where the flow takes one of several paths

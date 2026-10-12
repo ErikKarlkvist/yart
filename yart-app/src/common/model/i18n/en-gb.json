@@ -7,6 +7,7 @@
   "tabs.empty": "New tab",
   "tabs.new": "New tab",
   "tabs.close": "Close tab",
+  "tabs.reorder": "Drag to reorder, or use Alt + Left/Right",
   "side.copy": "Copy",
   "side.copied": "Copied",
   "panel.code": "Code",

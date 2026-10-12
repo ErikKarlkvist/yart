@@ -1,4 +1,4 @@
-import { type JSX, useCallback, useMemo, useState } from 'react';
+import { type JSX, useCallback, useMemo, useRef, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { Icon } from '@/common/renderer/Icon';
 import { readStoredJson, StorageScopeContext, writeStored } from '@/common/renderer/storage';
@@ -9,6 +9,7 @@ import { RepoProvider, useRepo } from '@/features/repo';
 import { AppShell } from './AppShell';
 import { AppTabsContext } from './AppTabsContext';
 import { WindowBarContext } from './WindowBarContext';
+import { reorderTabs } from './tabOrder';
 
 interface TabsState {
   ids: number[];
@@ -17,6 +18,7 @@ interface TabsState {
 }
 
 const TABS_KEY = 'yart.tabs';
+const TAB_DRAG_TYPE = 'application/x-yart-app-tab';
 const FRESH: TabsState = { ids: [1], active: 1, next: 2 };
 
 function isTabsState(value: unknown): value is TabsState {
@@ -41,6 +43,9 @@ export function AppTabs(): JSX.Element {
   const [tabs, setTabs] = useState<TabsState>(() => readStoredJson(TABS_KEY, isTabsState) ?? FRESH);
   const [titles, setTitles] = useState<ReadonlyMap<number, string>>(() => new Map());
   const [windowActions, setWindowActions] = useState<HTMLDivElement | null>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   const update = useCallback((next: (current: TabsState) => TabsState) => {
     setTabs((current) => {
@@ -80,19 +85,76 @@ export function AppTabs(): JSX.Element {
     });
   }, []);
 
+  const move = (id: number, index: number): void => {
+    update((current) => ({ ...current, ids: reorderTabs(current.ids, id, index) }));
+  };
+  const indexAt = (x: number): number => {
+    const elements = stripRef.current?.querySelectorAll<HTMLElement>('[data-app-tab]') ?? [];
+    let index = 0;
+    for (const element of elements) {
+      const rect = element.getBoundingClientRect();
+      if (x < rect.left + rect.width / 2) return index;
+      index += 1;
+    }
+    return index;
+  };
+
   return (
     <div className="app">
       <div className="tab-strip app__tabs">
-        <div className="app__tab-list" role="tablist">
-          {tabs.ids.map((id) => {
+        <div
+          ref={stripRef}
+          className="app__tab-list"
+          role="tablist"
+          onDragOver={(event) => {
+            if (dragging.current === null || !event.dataTransfer.types.includes(TAB_DRAG_TYPE))
+              return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            setDropIndex(indexAt(event.clientX));
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+              setDropIndex(null);
+          }}
+          onDrop={(event) => {
+            if (dragging.current === null || !event.dataTransfer.types.includes(TAB_DRAG_TYPE))
+              return;
+            event.preventDefault();
+            move(dragging.current, indexAt(event.clientX));
+            dragging.current = null;
+            setDropIndex(null);
+          }}
+        >
+          {tabs.ids.map((id, index) => {
             const active = id === tabs.active;
             return (
-              <div key={id} className={`tab${active ? ' is-active' : ''}`}>
+              <div
+                key={id}
+                data-app-tab
+                className={`tab app-tab${active ? ' is-active' : ''}${dropIndex === index ? ' is-drop-before' : ''}${dropIndex === tabs.ids.length && index === tabs.ids.length - 1 ? ' is-drop-after' : ''}`}
+              >
                 <button
                   type="button"
                   role="tab"
                   aria-selected={active}
                   className="tab__open"
+                  title={`${titles.get(id) ?? t('tabs.empty')} — ${t('tabs.reorder')}`}
+                  draggable={tabs.ids.length > 1}
+                  onDragStart={(event) => {
+                    dragging.current = id;
+                    event.dataTransfer.setData(TAB_DRAG_TYPE, String(id));
+                    event.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragEnd={() => {
+                    dragging.current = null;
+                    setDropIndex(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (!event.altKey || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+                    event.preventDefault();
+                    move(id, event.key === 'ArrowLeft' ? index - 1 : index + 2);
+                  }}
                   onClick={() => {
                     activate(id);
                   }}

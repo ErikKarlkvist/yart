@@ -8,6 +8,7 @@ import {
 import { type JSX, memo } from 'react';
 import { t } from '@/common/model/i18n';
 import { type FlowChange, type ReviewFinding } from '@/common/model/review';
+import { type FlowEdge } from '@/common/model/flow';
 import { formatPayload } from '../../model/format';
 import { type Direction } from '../../model/layout';
 import { type StepStatus } from '../../model/playback';
@@ -24,6 +25,7 @@ export interface EdgeMemberData {
   /** Stegnummer (1-baserade) i aktuell vy där anropet spelas upp */
   steps: number[];
   change: FlowChange | undefined;
+  highlight: FlowEdge['highlight'];
   findings: ReviewFinding[];
 }
 
@@ -169,7 +171,7 @@ export const FlowEdgeView = memo(function FlowEdgeView({
             {shown.map((member) => (
               <div
                 key={member.id}
-                className={`graph-edge-label__member is-${member.status}${member.id === data.askingId ? ' is-asking' : ''}${edgeHighlight(member.change, member.findings) ? ` is-highlight-${edgeHighlight(member.change, member.findings)}` : ''}`}
+                className={`graph-edge-label__member is-${member.status}${member.id === data.askingId ? ' is-asking' : ''}${edgeHighlight(member.change, member.findings, member.highlight) ? ` is-highlight-${edgeHighlight(member.change, member.findings, member.highlight)}` : ''}`}
               >
                 <span className="graph-edge-label__text">
                   {open && member.steps.length > 0 && (
