@@ -21,6 +21,8 @@ export interface ReviewedFlow {
 interface FlowPlace {
   index: number;
   label: string;
+  /** Stegets beskrivning: vad som händer här, som förklaring till ändringen */
+  description?: string | undefined;
   /** Hänvisningens plats i flödets ordning, så anropet kommer före noden det når */
   order: number;
 }
@@ -114,13 +116,15 @@ function flowAnchors(reviewed: ReviewedFlow): Anchor[] {
   steps.forEach((step, i) => {
     const edge = edges.get(step.edgeId);
     if (!edge) return;
-    const place = { index: i + 1, label: edge.label };
+    const place = { index: i + 1, label: edge.label, description: step.description };
     if (edge.source) add(edge.source, 'head', place);
     addNode(edge.to, place);
   });
 
   const after = steps.length + 1;
-  for (const node of flow.nodes) addNode(node.id, { index: after, label: node.label });
+  for (const node of flow.nodes) {
+    addNode(node.id, { index: after, label: node.label, description: node.description });
+  }
   for (const edge of base?.edges ?? []) {
     if (edge.source && !edges.has(edge.id))
       add(edge.source, 'base', { index: after, label: edge.label });

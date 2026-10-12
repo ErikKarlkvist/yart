@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newRange, oldRange, parseUnifiedDiff } from './diff';
+import { newRange, oldRange, parseUnifiedDiff, splitRows } from './diff';
 
 const SAMPLE = [
   'diff --git a/backend/src/services/TodoService.ts b/backend/src/services/TodoService.ts',
@@ -86,6 +86,24 @@ describe('parseUnifiedDiff', () => {
 
   it('ger tom lista för tom diff', () => {
     expect(parseUnifiedDiff('')).toEqual([]);
+  });
+});
+
+describe('splitRows', () => {
+  it('ställer borttaget och tillagt bredvid varandra och fyller ut', () => {
+    const chunk = parseUnifiedDiff(SAMPLE)[0]?.chunks[0];
+    if (!chunk) throw new Error('chunk');
+    expect(
+      splitRows(chunk).map((r) => [r.old?.oldNumber ?? null, r.new?.newNumber ?? null]),
+    ).toEqual([
+      [20, 20],
+      [null, 21],
+      [21, 22],
+      [22, null],
+      [23, 23],
+      [24, 24],
+      [25, 25],
+    ]);
   });
 });
 

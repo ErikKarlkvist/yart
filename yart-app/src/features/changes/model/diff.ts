@@ -133,6 +133,40 @@ function stripPrefix(path: string): string {
   return trimmed.startsWith('a/') || trimmed.startsWith('b/') ? trimmed.slice(2) : trimmed;
 }
 
+/** En rad i en delad vy: base till vänster, head till höger, tomt där sidan saknar rad. */
+export interface SplitRow {
+  old: DiffLine | null;
+  new: DiffLine | null;
+}
+
+/**
+ * Chunkens rader som par för en delad vy. Sammanhang står på båda sidor; en
+ * följd av borttagna och tillagda rader ställs bredvid varandra radvis, och
+ * den sida som har färre rader fylls ut med tomma.
+ */
+export function splitRows(chunk: Chunk): SplitRow[] {
+  const rows: SplitRow[] = [];
+  let removed: DiffLine[] = [];
+  let added: DiffLine[] = [];
+  const flush = (): void => {
+    for (let i = 0; i < Math.max(removed.length, added.length); i++) {
+      rows.push({ old: removed[i] ?? null, new: added[i] ?? null });
+    }
+    removed = [];
+    added = [];
+  };
+  for (const line of chunk.lines) {
+    if (line.kind === 'removed') removed.push(line);
+    else if (line.kind === 'added') added.push(line);
+    else {
+      flush();
+      rows.push({ old: line, new: line });
+    }
+  }
+  flush();
+  return rows;
+}
+
 /** Raderna en chunk täcker i head. En chunk som bara tar bort täcker raden före. */
 export function newRange(chunk: Chunk): { from: number; to: number } {
   return { from: chunk.newStart, to: chunk.newStart + Math.max(chunk.newLines, 1) - 1 };

@@ -56,7 +56,9 @@ Varje review får en egen rad Changes i listan, direkt under sig (`listEntries` 
 `features/analysis/model/analysis.ts`, id `changes:<reviewId>`, inget sparat). Den visar diffen
 `base...head` (`src/features/changes/`) i flödesordning: en grupp per flöde i reviewn med de
 chunks (gits hunks) som rör flödets noder och anrop, sorterade som stegen spelas, sedan det
-inget flöde rör i filordning.
+inget flöde rör i filordning. Vyn är en genomgång: en chunk i taget med stegets beskrivning
+som förklaring, Previous/Next (Next bockar av), en översikt till vänster och valet inline
+eller split (`yart.diffLayout`).
 Matchningen går på källhänvisningarnas rader mot chunkens rader i head, och base-flödets
 mot base. Fynd med `source` visas på sin rad i koden; avbockade chunks fälls ihop.
 

@@ -2,8 +2,9 @@ import { type CSSProperties, type JSX, useMemo, useState } from 'react';
 import { t } from '@/common/model/i18n';
 import { type Review, type ReviewFinding } from '@/common/model/review';
 import { Icon } from '@/common/renderer/Icon';
+import { useStoredChoice } from '@/common/renderer/useStored';
 import { useRepo } from '@/features/repo';
-import { type Chunk, type FileDiff, type FileStatus } from '../../model/diff';
+import { type Chunk, type FileDiff, type FileStatus, splitRows } from '../../model/diff';
 import {
   type ChangeGroup,
   groupChunks,
@@ -21,35 +22,48 @@ interface Props {
   onOpenFinding: (finding: ReviewFinding) => void;
 }
 
+type DiffLayout = 'inline' | 'split';
+const LAYOUTS: readonly DiffLayout[] = ['inline', 'split'];
+
+/** En chunk med gruppen den visas i, i den ordning genomgången går. */
+interface Stop {
+  group: ChangeGroup;
+  placed: PlacedChunk;
+}
+
 /**
- * Diffen för en review i flödesordning: en grupp per flöde med chunks som
- * stegen spelas, sedan det inget flöde rör. Avbockade chunks fälls ihop,
- * fynden visas på sin rad i koden. Det avbockade lever så länge vyn är
- * monterad; montera om med `key` när reviewn byts.
+ * Diffen för en review som en genomgång: en chunk i taget i flödesordning,
+ * med stegets beskrivning som förklaring och fynden på sina rader. Next
+ * bockar av chunken och går vidare; översikten till vänster hoppar fritt.
+ * Det avbockade lever så länge vyn är monterad; montera om med `key` när
+ * reviewn byts.
  */
 export function ChangesView({ review, flows, onOpenFinding }: Props): JSX.Element {
   const { repo } = useRepo();
-  const [reviewed, setReviewed] = useState<ReadonlySet<string>>(() => new Set());
-  const onToggleReviewed = (id: string): void => {
-    setReviewed((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
   const base = review.baseCommit ?? review.baseLabel;
   const head = review.headCommit ?? review.headLabel;
   const diff = useDiff(repo?.path ?? null, base, head);
-  const groups = useMemo(
-    () => (diff.status === 'ready' ? groupChunks(diff.files, flows) : []),
+  const stops = useMemo<Stop[]>(
+    () =>
+      diff.status === 'ready'
+        ? groupChunks(diff.files, flows).flatMap((group) =>
+            group.chunks.map((placed) => ({ group, placed })),
+          )
+        : [],
     [diff, flows],
   );
-  const total = groups.reduce((sum, group) => sum + group.chunks.length, 0);
-  const done = groups.reduce(
-    (sum, group) => sum + group.chunks.filter((c) => reviewed.has(c.chunk.id)).length,
-    0,
-  );
+  const [reviewed, setReviewed] = useState<ReadonlySet<string>>(() => new Set());
+  const [position, setPosition] = useState(0);
+  const [layout, setLayout] = useStoredChoice<DiffLayout>('yart.diffLayout', LAYOUTS, 'inline');
+  const index = Math.min(position, Math.max(stops.length - 1, 0));
+  const current = stops[index] ?? null;
+  const done = stops.filter((s) => reviewed.has(s.placed.chunk.id)).length;
+
+  const next = (): void => {
+    if (!current) return;
+    setReviewed((set) => new Set(set).add(current.placed.chunk.id));
+    if (index < stops.length - 1) setPosition(index + 1);
+  };
 
   return (
     <div className="changes">
@@ -58,134 +72,181 @@ export function ChangesView({ review, flows, onOpenFinding }: Props): JSX.Elemen
         <span className="changes__compare">
           {t('review.compare', { base: review.baseLabel, head: review.headLabel })}
         </span>
-        {total > 0 && (
-          <span className="changes__progress" title={t('changes.progress', { done, total })}>
+        <span className="changes__layouts" role="group" aria-label={t('changes.layout')}>
+          {LAYOUTS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={`changes__layout${layout === option ? ' is-current' : ''}`}
+              aria-pressed={layout === option}
+              onClick={() => {
+                setLayout(option);
+              }}
+            >
+              {t(option === 'inline' ? 'changes.layoutInline' : 'changes.layoutSplit')}
+            </button>
+          ))}
+        </span>
+        {stops.length > 0 && (
+          <span
+            className="changes__progress"
+            title={t('changes.progress', { done, total: stops.length })}
+          >
             <span
               className="changes__progress-bar"
-              style={{ '--progress': `${(done / total) * 100}%` } as CSSProperties}
+              style={{ '--progress': `${(done / stops.length) * 100}%` } as CSSProperties}
             />
-            {t('changes.count', { done, total })}
+            {t('changes.position', { index: index + 1, total: stops.length })}
           </span>
         )}
       </header>
 
       {diff.status === 'loading' && <p className="changes__muted">{t('changes.reading')}</p>}
       {diff.status === 'error' && <p className="changes__error">{diff.message}</p>}
-      {diff.status === 'ready' && total === 0 && (
+      {diff.status === 'ready' && stops.length === 0 && (
         <p className="changes__muted">
           {t('changes.empty', { base: review.baseLabel, head: review.headLabel })}
         </p>
       )}
-      {groups.map((group) => (
-        <GroupSection
-          key={group.key}
-          group={group}
-          findings={review.findings}
-          reviewed={reviewed}
-          onToggleReviewed={onToggleReviewed}
-          onOpenFinding={onOpenFinding}
-        />
-      ))}
+      {current && (
+        <div className="changes__body">
+          <Outline stops={stops} index={index} reviewed={reviewed} onJump={setPosition} />
+          <StopView
+            key={current.placed.chunk.id}
+            stop={current}
+            layout={layout}
+            findings={review.findings.filter((f) => f.source?.file === current.placed.chunk.file)}
+            onOpenFinding={onOpenFinding}
+            footer={
+              <nav className="changes__nav">
+                <button
+                  type="button"
+                  className="button"
+                  disabled={index === 0}
+                  onClick={() => {
+                    setPosition(index - 1);
+                  }}
+                >
+                  {t('changes.previous')}
+                </button>
+                {done === stops.length && (
+                  <span className="changes__all-done">{t('changes.allReviewed')}</span>
+                )}
+                <button
+                  type="button"
+                  className="button button--primary"
+                  title={t('changes.nextHint')}
+                  onClick={next}
+                >
+                  {t(index === stops.length - 1 ? 'changes.finish' : 'changes.next')}
+                </button>
+              </nav>
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-interface GroupProps {
-  group: ChangeGroup;
-  findings: readonly ReviewFinding[];
+interface OutlineProps {
+  stops: readonly Stop[];
+  index: number;
   reviewed: ReadonlySet<string>;
-  onToggleReviewed: (chunkId: string) => void;
-  onOpenFinding: (finding: ReviewFinding) => void;
+  onJump: (index: number) => void;
 }
 
-function GroupSection({
-  group,
-  findings,
-  reviewed,
-  onToggleReviewed,
-  onOpenFinding,
-}: GroupProps): JSX.Element {
-  const done = group.chunks.filter((c) => reviewed.has(c.chunk.id)).length;
+/** Alla chunks i genomgångens ordning, grupperade på flöde, med den aktuella markerad. */
+function Outline({ stops, index, reviewed, onJump }: OutlineProps): JSX.Element {
   return (
-    <section className="changes__group">
-      <header className="changes__group-head">
-        <h3 className="changes__group-title">
-          {group.flow ? group.flow.title : t('changes.otherHeading')}
-        </h3>
-        <span className="changes__group-count">
-          {t('changes.count', { done, total: group.chunks.length })}
-        </span>
-      </header>
-      <p className="changes__group-summary">
-        {group.flow ? group.flow.flow.summary : t('changes.otherHint')}
-      </p>
-      {group.chunks.length === 0 && <p className="changes__muted">{t('changes.noChunks')}</p>}
-      {group.chunks.map((placed) => (
-        <ChunkCard
-          key={placed.chunk.id}
-          placed={placed}
-          findings={findings.filter((f) => f.source?.file === placed.chunk.file)}
-          reviewed={reviewed.has(placed.chunk.id)}
-          onToggle={() => {
-            onToggleReviewed(placed.chunk.id);
-          }}
-          onOpenFinding={onOpenFinding}
-        />
-      ))}
-    </section>
+    <nav className="changes__outline" aria-label={t('changes.outline')}>
+      {stops.map((stop, i) => {
+        const first = i === 0 || stops[i - 1]?.group !== stop.group;
+        const { chunk, place } = stop.placed;
+        return (
+          <div key={chunk.id}>
+            {first && (
+              <h3 className="changes__outline-group">
+                {stop.group.flow ? stop.group.flow.title : t('changes.otherHeading')}
+              </h3>
+            )}
+            <button
+              type="button"
+              className={`changes__outline-item${i === index ? ' is-current' : ''}${reviewed.has(chunk.id) ? ' is-reviewed' : ''}`}
+              aria-current={i === index}
+              title={chunk.file}
+              onClick={() => {
+                onJump(i);
+              }}
+            >
+              <span className="changes__outline-n">
+                {place ? String(place.index).padStart(2, '0') : '··'}
+              </span>
+              <span className="changes__outline-file">{baseName(chunk.file)}</span>
+              {reviewed.has(chunk.id) && <Icon name="check" size="sm" />}
+            </button>
+          </div>
+        );
+      })}
+    </nav>
   );
 }
 
-interface ChunkProps {
-  placed: PlacedChunk;
-  /** Fynden i chunkens fil */
-  findings: readonly ReviewFinding[];
-  reviewed: boolean;
-  onToggle: () => void;
-  onOpenFinding: (finding: ReviewFinding) => void;
+function baseName(file: string): string {
+  return file.slice(file.lastIndexOf('/') + 1);
 }
 
-function ChunkCard({
-  placed,
-  findings,
-  reviewed,
-  onToggle,
-  onOpenFinding,
-}: ChunkProps): JSX.Element {
-  const { chunk, file, place, alsoIn } = placed;
+interface StopProps {
+  stop: Stop;
+  layout: DiffLayout;
+  /** Fynden i chunkens fil */
+  findings: readonly ReviewFinding[];
+  onOpenFinding: (finding: ReviewFinding) => void;
+  footer: JSX.Element;
+}
+
+/** Den aktuella chunken: var i flödet, förklaringen, filen och koden. */
+function StopView({ stop, layout, findings, onOpenFinding, footer }: StopProps): JSX.Element {
+  const { chunk, file, place, alsoIn } = stop.placed;
+  const flow = stop.group.flow;
   return (
-    <article className={`changes__chunk${reviewed ? ' is-reviewed' : ''}`}>
-      <header className="changes__chunk-head">
-        <input
-          type="checkbox"
-          checked={reviewed}
-          aria-label={t('changes.markReviewed', { file: chunk.file })}
-          onChange={onToggle}
-        />
-        {place && (
-          <span className="changes__place">
-            <span className="changes__place-n">{String(place.index).padStart(2, '0')}</span>
-            <span className="changes__place-label">{place.label}</span>
-          </span>
-        )}
-        <span className="changes__file">
-          {chunk.file}
-          <span className="changes__line">:{chunk.newStart}</span>
+    <article className="changes__stop">
+      <header className="changes__stop-head">
+        <span className="changes__stop-flow">
+          {flow ? flow.title : t('changes.otherHeading')}
+          {place && (
+            <>
+              {' · '}
+              {place.index === 0 ? t('changes.start') : t('changes.step', { index: place.index })}
+            </>
+          )}
         </span>
-        <FileTag file={file} />
-        {chunk.heading && <span className="changes__heading">{chunk.heading}</span>}
+        {place && <h3 className="changes__stop-title">{place.label}</h3>}
+        <p className="changes__stop-explanation">
+          {place?.description ?? (flow ? flow.flow.summary : t('changes.noExplanation'))}
+        </p>
         {alsoIn.length > 0 && (
-          <span className="changes__also">{t('changes.alsoIn', { flows: alsoIn.join(', ') })}</span>
+          <p className="changes__also">{t('changes.alsoIn', { flows: alsoIn.join(', ') })}</p>
         )}
       </header>
-      {!reviewed && (
-        <ChunkCode
-          chunk={chunk}
-          binary={file.binary}
-          findings={findings}
-          onOpenFinding={onOpenFinding}
-        />
-      )}
+      <div className="changes__chunk">
+        <div className="changes__chunk-head">
+          <span className="changes__file">
+            {chunk.file}
+            <span className="changes__line">:{chunk.newStart}</span>
+          </span>
+          <FileTag file={file} />
+          {chunk.heading && <span className="changes__heading">{chunk.heading}</span>}
+        </div>
+        {file.binary ? (
+          <p className="changes__muted">{t('changes.binary')}</p>
+        ) : layout === 'split' ? (
+          <SplitCode chunk={chunk} findings={findings} onOpenFinding={onOpenFinding} />
+        ) : (
+          <InlineCode chunk={chunk} findings={findings} onOpenFinding={onOpenFinding} />
+        )}
+      </div>
+      {footer}
     </article>
   );
 }
@@ -208,48 +269,85 @@ function FileTag({ file }: { file: FileDiff }): JSX.Element | null {
 
 interface CodeProps {
   chunk: Chunk;
-  binary: boolean;
   findings: readonly ReviewFinding[];
   onOpenFinding: (finding: ReviewFinding) => void;
 }
 
-function ChunkCode({ chunk, binary, findings, onOpenFinding }: CodeProps): JSX.Element {
-  if (binary) return <p className="changes__muted">{t('changes.binary')}</p>;
+function InlineCode({ chunk, findings, onOpenFinding }: CodeProps): JSX.Element {
   return (
     <pre className="changes__code">
-      {chunk.lines.map((line, i) => {
-        const here =
-          line.newNumber === undefined
-            ? []
-            : findings.filter((f) => f.source?.line === line.newNumber);
-        return (
-          <div key={i} className="changes__row">
-            <div className={`changes__line-row is-${line.kind}`}>
-              <span className="changes__n">{line.oldNumber ?? ''}</span>
-              <span className="changes__n">{line.newNumber ?? ''}</span>
-              <span className="changes__text">{line.text || ' '}</span>
-            </div>
-            {here.map((finding) => (
-              <button
-                key={finding.id}
-                type="button"
-                className={`changes__finding is-${finding.severity}`}
-                disabled={finding.flow === undefined}
-                title={t('review.openHint')}
-                onClick={() => {
-                  onOpenFinding(finding);
-                }}
-              >
-                <Icon name={finding.severity} size="sm" />
-                <span className="changes__finding-body">
-                  <span className="changes__finding-title">{finding.title}</span>
-                  <span className="changes__finding-text">{finding.description}</span>
-                </span>
-              </button>
-            ))}
+      {chunk.lines.map((line, i) => (
+        <div key={i} className="changes__row">
+          <div className={`changes__line-row is-${line.kind}`}>
+            <span className="changes__n">{line.oldNumber ?? ''}</span>
+            <span className="changes__n">{line.newNumber ?? ''}</span>
+            <span className="changes__text">{line.text || ' '}</span>
           </div>
-        );
-      })}
+          <Findings line={line.newNumber} findings={findings} onOpenFinding={onOpenFinding} />
+        </div>
+      ))}
     </pre>
+  );
+}
+
+function SplitCode({ chunk, findings, onOpenFinding }: CodeProps): JSX.Element {
+  return (
+    <pre className="changes__code changes__code--split">
+      <div className="changes__split-heads">
+        <span>{t('changes.base')}</span>
+        <span>{t('changes.head')}</span>
+      </div>
+      {splitRows(chunk).map((row, i) => (
+        <div key={i} className="changes__row">
+          <div className="changes__split-row">
+            <div className={`changes__line-row is-${row.old?.kind ?? 'empty'}`}>
+              <span className="changes__n">{row.old?.oldNumber ?? ''}</span>
+              <span className="changes__text">{row.old ? row.old.text || ' ' : ' '}</span>
+            </div>
+            <div className={`changes__line-row is-${row.new?.kind ?? 'empty'}`}>
+              <span className="changes__n">{row.new?.newNumber ?? ''}</span>
+              <span className="changes__text">{row.new ? row.new.text || ' ' : ' '}</span>
+            </div>
+          </div>
+          <Findings line={row.new?.newNumber} findings={findings} onOpenFinding={onOpenFinding} />
+        </div>
+      ))}
+    </pre>
+  );
+}
+
+interface FindingsProps {
+  /** Radnumret i head, undefined på borttagna rader */
+  line: number | undefined;
+  findings: readonly ReviewFinding[];
+  onOpenFinding: (finding: ReviewFinding) => void;
+}
+
+/** Fynden som pekar på raden, under den i allvarsgradens färg. */
+function Findings({ line, findings, onOpenFinding }: FindingsProps): JSX.Element | null {
+  if (line === undefined) return null;
+  const here = findings.filter((f) => f.source?.line === line);
+  if (here.length === 0) return null;
+  return (
+    <>
+      {here.map((finding) => (
+        <button
+          key={finding.id}
+          type="button"
+          className={`changes__finding is-${finding.severity}`}
+          disabled={finding.flow === undefined}
+          title={t('review.openHint')}
+          onClick={() => {
+            onOpenFinding(finding);
+          }}
+        >
+          <Icon name={finding.severity} size="sm" />
+          <span className="changes__finding-body">
+            <span className="changes__finding-title">{finding.title}</span>
+            <span className="changes__finding-text">{finding.description}</span>
+          </span>
+        </button>
+      ))}
+    </>
   );
 }

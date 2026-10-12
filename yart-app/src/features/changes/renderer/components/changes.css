@@ -79,47 +79,167 @@
   font-size: 12px;
 }
 
-/* En grupp per flöde, sist det inget flöde rör */
-.changes__group {
-  margin-top: 32px;
+/* Växlaren inline | split, grupperade knappar med vald fylld i accent */
+.changes__layouts {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--border-strong);
 }
 
-.changes__group-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-}
-
-.changes__group-title {
-  margin: 0;
-  font-size: 16px;
-}
-
-.changes__group-count {
+.changes__layout {
+  height: 22px;
+  padding: 0 8px;
+  border: none;
+  background: none;
   color: var(--fg-muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.changes__layout + .changes__layout {
+  border-left: 1px solid var(--border-strong);
+}
+
+.changes__layout:hover:not(.is-current) {
+  color: var(--fg);
+}
+
+.changes__layout.is-current {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Översikten till vänster och den aktuella chunken till höger */
+.changes__body {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.changes__outline {
+  position: sticky;
+  top: 0;
+  flex: none;
+  width: 220px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+
+.changes__outline-group {
+  margin: 12px 0 4px;
+  padding: 0 10px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.changes__outline > div:first-child .changes__outline-group {
+  margin-top: 0;
+}
+
+.changes__outline-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 10px;
+  border: none;
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: left;
+}
+
+.changes__outline-item:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+
+/* Vald rad som i listorna: hover-bakgrund och accentkant till vänster */
+.changes__outline-item.is-current {
+  background: var(--bg-hover);
+  box-shadow: inset 2px 0 0 var(--accent);
+  color: var(--fg);
+}
+
+.changes__outline-item.is-reviewed {
+  color: var(--fg-faint);
+}
+
+.changes__outline-item .icon {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.changes__outline-n {
+  flex: none;
+  color: var(--fg-faint);
   font-variant-numeric: tabular-nums;
 }
 
-.changes__group-summary {
-  margin: 8px 0 14px;
-  color: var(--fg-muted);
-  font-size: 13px;
-  line-height: 1.5;
+.changes__outline-item.is-current .changes__outline-n {
+  color: var(--accent);
 }
 
-/* En chunk: rubrikrad med plats i flödet och fil, sedan koden */
+.changes__outline-file {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changes__stop {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Var i flödet chunken hör hemma och vad som händer där */
+.changes__stop-head {
+  margin-bottom: 16px;
+}
+
+.changes__stop-flow {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.changes__stop-title {
+  margin: 6px 0 8px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.changes__stop-explanation {
+  max-width: 720px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.changes__also {
+  margin: 8px 0 0;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Chunken: fil och funktion som rubrikrad, sedan koden */
 .changes__chunk {
-  margin-bottom: 12px;
   border: 1px solid var(--border);
   background: var(--bg-panel);
-}
-
-.changes__chunk.is-reviewed {
-  opacity: 0.6;
 }
 
 .changes__chunk-head {
@@ -130,35 +250,6 @@
   padding: 4px 10px;
   font-family: var(--font-mono);
   font-size: 11px;
-}
-
-.changes__chunk-head input {
-  flex: none;
-  margin: 0;
-}
-
-/* Stegnumret och anropet chunken hör till */
-.changes__place {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  max-width: 40%;
-  color: var(--fg);
-}
-
-.changes__place-n {
-  padding: 1px 5px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.changes__place-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .changes__file {
@@ -196,19 +287,28 @@
 
 .changes__heading {
   min-width: 0;
+  margin-left: auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--fg-faint);
 }
 
-.changes__also {
-  flex: none;
-  margin-left: auto;
-  color: var(--fg-muted);
+/* Föregående och Next under chunken */
+.changes__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.changes__all-done {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 10px;
 }
 
 .changes__code {
@@ -266,6 +366,43 @@
 .changes__text {
   white-space: pre;
   color: var(--fg-body);
+}
+
+/* Delad vy: base till vänster och head till höger, en avdelare emellan */
+.changes__split-heads {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0 10px 6px;
+  color: var(--fg-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.changes__split-heads span + span {
+  padding-left: 10px;
+}
+
+.changes__split-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.changes__split-row .changes__line-row {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.changes__split-row .changes__line-row + .changes__line-row {
+  border-left: 1px solid var(--border);
+}
+
+.changes__line-row.is-empty {
+  background: color-mix(in oklch, var(--fg-faint) 8%, transparent);
+}
+
+.changes__line-row.is-empty .changes__text::before {
+  content: ' ';
 }
 
 /* Ett fynd på raden det pekar på, i allvarsgradens färg */
